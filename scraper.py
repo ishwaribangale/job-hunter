@@ -1,5 +1,5 @@
 """
-PJIS – Playwright Scraper (STABLE VERSION)
+PJIS – Playwright Scraper (STABLE + FIXED)
 """
 
 import json
@@ -11,6 +11,12 @@ from playwright.sync_api import sync_playwright
 class JobScraper:
     def __init__(self):
         self.jobs = []
+
+    # -------------------------------
+    # UTIL
+    # -------------------------------
+    def _now(self):
+        return datetime.utcnow().isoformat()
 
     # -------------------------------
     # REMOTIVE (API)
@@ -39,7 +45,7 @@ class JobScraper:
         print(f"✅ Remotive jobs added: {count}")
 
     # -------------------------------
-    # WE WORK REMOTELY (PLAYWRIGHT)
+    # WE WORK REMOTELY (PLAYWRIGHT – FIXED)
     # -------------------------------
     def scrape_weworkremotely(self, page):
         print("🌍 Scraping WeWorkRemotely")
@@ -52,22 +58,26 @@ class JobScraper:
 
         page.wait_for_selector("section.jobs", timeout=20000)
 
-        links = page.query_selector_all("section.jobs li a")
-        print(f"🔎 WWR links found: {len(links)}")
+        items = page.query_selector_all("section.jobs li")
+        print(f"🔎 WWR job items found: {len(items)}")
 
         count = 0
-        for link in links:
-            title_el = link.query_selector("span.title")
-            company_el = link.query_selector("span.company")
-            href = link.get_attribute("href")
+        for li in items:
+            link = li.query_selector("a")
+            title_el = li.query_selector("span.title")
+            company_el = li.query_selector("span.company")
 
-            if not title_el or not company_el or not href:
+            if not link or not title_el:
+                continue
+
+            href = link.get_attribute("href")
+            if not href:
                 continue
 
             self.jobs.append({
                 "id": f"wwr_{hash(href)}",
                 "title": title_el.inner_text().strip(),
-                "company": company_el.inner_text().strip(),
+                "company": company_el.inner_text().strip() if company_el else "Unknown",
                 "location": "Remote",
                 "source": "WeWorkRemotely",
                 "applyLink": "https://weworkremotely.com" + href,
@@ -79,20 +89,27 @@ class JobScraper:
         print(f"✅ WeWorkRemotely jobs added: {count}")
 
     # -------------------------------
-    # WELLFOUND (PLAYWRIGHT + SCROLL)
+    # WELLFOUND (PLAYWRIGHT – FIXED)
     # -------------------------------
     def scrape_wellfound(self, page):
         print("🌍 Scraping Wellfound")
 
         page.goto("https://wellfound.com/jobs", timeout=60000)
-        page.wait_for_timeout(4000)
+        page.wait_for_timeout(5000)
 
-        for _ in range(6):
-            page.mouse.wheel(0, 3000)
+        # Target the actual virtualized results container
+        container = page.query_selector("div[data-test='JobSearchResults']")
+        if not container:
+            print("❌ Wellfound job container not found")
+            return
+
+        # Scroll INSIDE the container to trigger React rendering
+        for _ in range(8):
+            page.evaluate("(el) => el.scrollBy(0, 3000)", container)
             page.wait_for_timeout(2000)
 
         links = page.query_selector_all("a[href^='/jobs/']")
-        print(f"🔎 Wellfound links found: {len(links)}")
+        print(f"🔎 Wellfound job links found: {len(links)}")
 
         count = 0
         for link in links:
@@ -117,13 +134,15 @@ class JobScraper:
         print(f"✅ Wellfound jobs added: {count}")
 
     # -------------------------------
-    # RUNNER (ONLY PLACE PAGE EXISTS)
+    # RUNNER
     # -------------------------------
     def run(self):
         print("🚀 PJIS SCRAPER STARTED")
 
+        # API-based sources
         self.scrape_remotive()
 
+        # Playwright-based sources
         with sync_playwright() as p:
             browser = p.chromium.launch(headless=True)
             context = browser.new_context()
@@ -142,11 +161,9 @@ class JobScraper:
 
         print("💾 Jobs saved to data/jobs.json")
 
-    def _now(self):
-        return datetime.utcnow().isoformat()
-
 
 if __name__ == "__main__":
     scraper = JobScraper()
     scraper.run()
     scraper.save()
+
