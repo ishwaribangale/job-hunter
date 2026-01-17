@@ -95,34 +95,35 @@ class JobScraper:
     # WELLFOUND (PLAYWRIGHT – DEEP CRAWL)
     # =========================================================
     def scrape_wellfound(self, page):
-        print("\n🌍 Scraping Wellfound (Playwright deep crawl)")
+    print("\n🌍 Scraping Wellfound (Playwright – fixed with scroll)")
 
-        page.goto("https://wellfound.com/jobs", timeout=60000)
-        page.wait_for_timeout(5000)
+    page.goto("https://wellfound.com/jobs", timeout=60000)
+    page.wait_for_timeout(4000)
 
-        job_cards = page.query_selector_all("a[data-test='StartupResult-jobTitle']")
-        print(f"🔎 Job cards found: {len(job_cards)}")
+    # Scroll to load jobs
+    for _ in range(6):
+        page.mouse.wheel(0, 3000)
+        page.wait_for_timeout(2000)
 
-        count = 0
-        for card in job_cards:
-            href = card.get_attribute("href")
+    page.wait_for_selector("a[href^='/jobs/']", timeout=20000)
+
+    job_links = page.query_selector_all("a[href^='/jobs/']")
+    print(f"🔎 Wellfound job links found: {len(job_links)}")
+
+    count = 0
+    for link in job_links:
+        try:
+            href = link.get_attribute("href")
             if not href:
                 continue
 
             job_url = "https://wellfound.com" + href
-
-            title = card.inner_text().strip()
-
-            company_el = card.locator(
-                "xpath=../../..//a[@data-test='StartupResult-companyName']"
-            ).first
-
-            company = company_el.inner_text().strip() if company_el else None
+            title = link.inner_text().strip()
 
             self.jobs.append({
                 "id": f"wellfound_{hash(job_url)}",
                 "title": title,
-                "company": company,
+                "company": None,
                 "location": None,
                 "remote": None,
                 "source": "Wellfound",
@@ -131,8 +132,11 @@ class JobScraper:
                 "fetchedAt": self._now()
             })
             count += 1
+        except Exception:
+            continue
 
-        print(f"✅ Wellfound jobs added: {count}")
+    print(f"✅ Wellfound jobs added: {count}")
+
 
     # =========================================================
     # RUNNER (ONE BROWSER FOR ALL)
