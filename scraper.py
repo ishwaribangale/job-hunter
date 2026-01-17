@@ -64,7 +64,23 @@ class JobScraper:
 
     def is_real_job_url(self, url):
         url = url.lower()
-        allowed = ["jobs", "lever", "greenhouse", "ashby", "workday"]
+        allowed = [
+                # core job paths
+                "job", "jobs", "career", "careers", "position", "positions",
+                "role", "roles", "opening", "openings", "opportunity", "opportunities",
+            
+                # ATS / hiring systems
+                "lever", "greenhouse", "ashby", "workday", "smartrecruiters",
+                "icims", "successfactors", "bamboohr",
+            
+                # startup / custom hiring pages
+                "hiring", "join-us", "joinus", "join", "work-with-us",
+                "vacancy", "vacancies", "apply", "apply-now", "application",
+            
+                # role-specific pages
+                "product-manager", "product", "pm", "apm"
+            ]
+
         blocked = ["blog", "about", "privacy", "terms", "medium"]
 
         if any(b in url for b in blocked):
@@ -79,8 +95,9 @@ class JobScraper:
                 timeout=10,
                 allow_redirects=True
             )
-            if r.status_code != 200:
+            if r.status_code in [404, 410]:
                 return False
+
 
             text = r.text.lower()
             invalid_markers = [
@@ -204,14 +221,9 @@ class JobScraper:
     def run(self, profile):
         print("🚀 Starting job scrape...")
         self.scrape_career_pages()
+        print(f"🧪 Jobs before validation: {len(self.jobs)}")
         self.dedupe()
-        self.remove_expired(days=7)
-
-        # Final safety PM-only filter
-        self.jobs = [
-            job for job in self.jobs
-            if self.is_pm_role(job["title"])
-        ]
+        print(f"🧪 Jobs after dedupe: {len(self.jobs)}")
 
         for job in self.jobs:
             job["matchScore"] = self.calculate_match_score(job, profile)
