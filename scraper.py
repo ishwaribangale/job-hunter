@@ -59,7 +59,7 @@ class JobScraper:
     page.wait_for_selector("section.jobs", timeout=20000)
 
     job_links = page.query_selector_all("section.jobs li a")
-        print(f"🔎 WeWorkRemotely job links found: {len(job_links)}")
+    print(f"🔎 WeWorkRemotely job links found: {len(job_links)}")
 
     count = 0
     for job in job_links:
@@ -109,7 +109,7 @@ class JobScraper:
     page.wait_for_selector("a[href^='/jobs/']", timeout=20000)
 
     job_links = page.query_selector_all("a[href^='/jobs/']")
-        print(f"🔎 Wellfound job links found: {len(job_links)}")
+    print(f"🔎 Wellfound job links found: {len(job_links)}")
 
     count = 0
     for link in job_links:
