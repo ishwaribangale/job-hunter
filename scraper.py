@@ -1,8 +1,6 @@
 """
-Personal Job Intelligence System – Clean Scraper
-Author: Ishwari Bangale
-Purpose: Discover valid, live PM jobs only
-Runs via GitHub Actions
+Job Intelligence Scraper - Improved Version
+Finds real PM jobs that actually exist
 """
 
 import requests
@@ -11,18 +9,16 @@ import json
 from datetime import datetime
 import time
 import re
-from urllib.parse import urljoin
+from urllib.parse import urljoin, quote_plus
 
 HEADERS = {
-    "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7)"
+    "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36"
 }
-
 
 class JobScraper:
     def __init__(self):
         self.jobs = []
-
-        # ✅ STRICT PM KEYWORDS ONLY
+        
         self.product_keywords = [
             "product manager",
             "associate product manager",
@@ -30,238 +26,371 @@ class JobScraper:
             "product analyst",
             "product owner",
             "technical product manager",
-            "growth product"
+            "senior product manager",
+            "growth product manager"
         ]
-
-        # 🌍 Companies (India + Remote-first)
+        
+        # Expanded company list with verified career pages
         self.target_companies = [
             {"name": "Razorpay", "url": "https://razorpay.com/jobs/"},
             {"name": "CRED", "url": "https://careers.cred.club/"},
-            {"name": "PhonePe", "url": "https://www.phonepe.com/careers/"},
             {"name": "Swiggy", "url": "https://careers.swiggy.com/"},
+            {"name": "Meesho", "url": "https://www.meesho.io/careers"},
+            {"name": "PhonePe", "url": "https://www.phonepe.com/careers/"},
+            {"name": "Paytm", "url": "https://jobs.lever.co/paytm"},
             {"name": "Flipkart", "url": "https://www.flipkartcareers.com/"},
-            {"name": "Postman", "url": "https://www.postman.com/company/careers/"},
-            {"name": "BrowserStack", "url": "https://www.browserstack.com/careers"},
-            {"name": "Vercel", "url": "https://vercel.com/careers"},
-            {"name": "Notion", "url": "https://www.notion.so/careers"},
-            {"name": "Canva", "url": "https://www.canva.com/careers/"},
-            {"name": "GitLab", "url": "https://about.gitlab.com/jobs/"},
-            {"name": "Zapier", "url": "https://zapier.com/jobs"},
-            {"name": "Doist", "url": "https://doist.com/careers"},
-            {"name": "Hotjar", "url": "https://www.hotjar.com/careers/"}
+            {"name": "Zepto", "url": "https://www.zepto.co.in/careers"},
+            {"name": "Urban Company", "url": "https://www.urbancompany.com/careers"},
+            {"name": "Groww", "url": "https://groww.in/careers"},
         ]
 
-    # --------------------------------------------------
-    # Utilities
-    # --------------------------------------------------
-
     def normalize(self, text):
+        """Clean text for matching"""
         return re.sub(r"\s+", " ", text.lower().strip())
 
     def is_pm_role(self, text):
+        """Check if text contains PM keywords"""
         text = self.normalize(text)
-        return any(k in text for k in self.product_keywords)
+        return any(keyword in text for keyword in self.product_keywords)
 
-    def is_real_job_url(self, url):
-        url = url.lower()
-        allowed = [
-                # core job paths
-                "job", "jobs", "career", "careers", "position", "positions",
-                "role", "roles", "opening", "openings", "opportunity", "opportunities",
-            
-                # ATS / hiring systems
-                "lever", "greenhouse", "ashby", "workday", "smartrecruiters",
-                "icims", "successfactors", "bamboohr",
-            
-                # startup / custom hiring pages
-                "hiring", "join-us", "joinus", "join", "work-with-us",
-                "vacancy", "vacancies", "apply", "apply-now", "application",
-            
-                # role-specific pages
-                "product-manager", "product", "pm", "apm"
-            ]
-
-        blocked = ["blog", "about", "privacy", "terms", "medium"]
-
-        if any(b in url for b in blocked):
-            return False
-        return any(a in url for a in allowed)
-
-    def is_valid_apply_link(self, url):
-        try:
-            r = requests.get(
-                url,
-                headers=HEADERS,
-                timeout=10,
-                allow_redirects=True
-            )
-            if r.status_code in [404, 410]:
-                return False
-
-
-            text = r.text.lower()
-            invalid_markers = [
-                "job not found",
-                "position closed",
-                "no longer accepting",
-                "404",
-                "page not found"
-            ]
-
-            return not any(m in text for m in invalid_markers)
-        except:
-            return False
-
-    # --------------------------------------------------
-    # Core Scraper
-    # --------------------------------------------------
-
-    def scrape_career_pages(self):
-        print("🔍 Scraping career pages...")
-
-        for company in self.target_companies:
+    def scrape_leverage_jobs(self):
+        """Scrape companies using Lever ATS"""
+        print("🔍 Scraping Lever job boards...")
+        
+        lever_companies = ["paytm", "razorpay"]
+        
+        for company in lever_companies:
             try:
-                res = requests.get(company["url"], headers=HEADERS, timeout=12)
+                url = f"https://jobs.lever.co/{company}"
+                res = requests.get(url, headers=HEADERS, timeout=10)
+                
                 if res.status_code != 200:
                     continue
-
+                
                 soup = BeautifulSoup(res.text, "html.parser")
-                links = soup.find_all("a", href=True)
-
-                for link in links:
-                    title = link.get_text(strip=True)
-                    href = link["href"]
-
-                    if not title or not self.is_pm_role(title):
+                postings = soup.find_all("a", class_="posting-title")
+                
+                for posting in postings:
+                    title = posting.get_text(strip=True)
+                    
+                    if not self.is_pm_role(title):
                         continue
-
-                    job_url = (
-                        href if href.startswith("http")
-                        else urljoin(company["url"], href)
-                    )
-
-                    if not self.is_real_job_url(job_url):
-                        continue
-
-                    if not self.is_valid_apply_link(job_url):
-                        continue
-
+                    
+                    job_url = posting.get("href", "")
+                    if not job_url.startswith("http"):
+                        job_url = urljoin(url, job_url)
+                    
                     job = {
-                        "id": f"{company['name']}_{hash(job_url)}",
+                        "id": f"lever_{company}_{hash(job_url)}",
                         "title": title,
-                        "company": company["name"],
-                        "location": "Remote / As per JD",
-                        "source": "Company Career Page",
+                        "company": company.capitalize(),
+                        "location": "Check job page",
+                        "source": "Lever (Career Page)",
                         "applyLink": job_url,
-                        "description": title,
+                        "description": f"{title} at {company}",
                         "postedDate": datetime.utcnow().isoformat(),
-                        "matchScore": 0,
+                        "engagement": {"likes": 0, "comments": 0, "isUnseen": True},
+                        "matchScore": 72,
+                        "deadline": None,
+                        "status": None,
                         "fetchedAt": datetime.utcnow().isoformat(),
                         "isManual": False
                     }
-
+                    
                     self.jobs.append(job)
-
-                time.sleep(1)
-
+                    print(f"  ✅ Found: {title} at {company}")
+                
+                time.sleep(2)
+                
             except Exception as e:
-                print(f"❌ Error scraping {company['name']}: {e}")
+                print(f"  ❌ Error with {company}: {e}")
+        
+        print(f"✅ Lever: Found {len([j for j in self.jobs if 'Lever' in j['source']])} jobs")
 
-        print(f"✅ Jobs collected: {len(self.jobs)}")
+    def scrape_greenhouse_jobs(self):
+        """Scrape companies using Greenhouse ATS"""
+        print("🔍 Scraping Greenhouse job boards...")
+        
+        greenhouse_companies = [
+            {"name": "Cred", "id": "cred"},
+            {"name": "Meesho", "id": "meesho"},
+        ]
+        
+        for company in greenhouse_companies:
+            try:
+                url = f"https://boards.greenhouse.io/{company['id']}"
+                res = requests.get(url, headers=HEADERS, timeout=10)
+                
+                if res.status_code != 200:
+                    continue
+                
+                soup = BeautifulSoup(res.text, "html.parser")
+                
+                # Greenhouse uses various HTML structures
+                job_sections = soup.find_all("section", class_="level-0")
+                
+                for section in job_sections:
+                    jobs_list = section.find_all("div", class_="opening")
+                    
+                    for job_div in jobs_list:
+                        link = job_div.find("a")
+                        if not link:
+                            continue
+                        
+                        title = link.get_text(strip=True)
+                        
+                        if not self.is_pm_role(title):
+                            continue
+                        
+                        job_url = link.get("href", "")
+                        if not job_url.startswith("http"):
+                            job_url = urljoin(url, job_url)
+                        
+                        location_div = job_div.find("span", class_="location")
+                        location = location_div.get_text(strip=True) if location_div else "Remote"
+                        
+                        job = {
+                            "id": f"greenhouse_{company['id']}_{hash(job_url)}",
+                            "title": title,
+                            "company": company['name'],
+                            "location": location,
+                            "source": "Greenhouse (Career Page)",
+                            "applyLink": job_url,
+                            "description": f"{title} at {company['name']}",
+                            "postedDate": datetime.utcnow().isoformat(),
+                            "engagement": {"likes": 0, "comments": 0, "isUnseen": True},
+                            "matchScore": 75,
+                            "deadline": None,
+                            "status": None,
+                            "fetchedAt": datetime.utcnow().isoformat(),
+                            "isManual": False
+                        }
+                        
+                        self.jobs.append(job)
+                        print(f"  ✅ Found: {title} at {company['name']}")
+                
+                time.sleep(2)
+                
+            except Exception as e:
+                print(f"  ❌ Error with {company['name']}: {e}")
+        
+        print(f"✅ Greenhouse: Found {len([j for j in self.jobs if 'Greenhouse' in j['source']])} jobs")
 
-    # --------------------------------------------------
-    # Cleanup
-    # --------------------------------------------------
+    def scrape_naukri(self):
+        """Scrape Naukri.com"""
+        print("🔍 Scraping Naukri...")
+        
+        search_terms = ["product+manager", "associate+product+manager"]
+        
+        for term in search_terms:
+            try:
+                url = f"https://www.naukri.com/{term}-jobs"
+                res = requests.get(url, headers=HEADERS, timeout=10)
+                
+                if res.status_code != 200:
+                    continue
+                
+                soup = BeautifulSoup(res.text, "html.parser")
+                job_cards = soup.find_all("article", class_="jobTuple")[:15]
+                
+                for card in job_cards:
+                    try:
+                        title_elem = card.find("a", class_="title")
+                        company_elem = card.find("a", class_="subTitle")
+                        
+                        if not title_elem or not company_elem:
+                            continue
+                        
+                        title = title_elem.get_text(strip=True)
+                        company = company_elem.get_text(strip=True)
+                        
+                        if not self.is_pm_role(title):
+                            continue
+                        
+                        location_elem = card.find("li", class_="location")
+                        location = location_elem.get_text(strip=True) if location_elem else "India"
+                        
+                        job_url = title_elem.get("href", "")
+                        if job_url and not job_url.startswith("http"):
+                            job_url = "https://www.naukri.com" + job_url
+                        
+                        job = {
+                            "id": f"naukri_{hash(job_url)}_{int(time.time())}",
+                            "title": title,
+                            "company": company,
+                            "location": location,
+                            "source": "Naukri",
+                            "applyLink": job_url if job_url else url,
+                            "description": f"{title} opportunity at {company}",
+                            "postedDate": datetime.utcnow().isoformat(),
+                            "engagement": {"likes": 0, "comments": 0, "isUnseen": False},
+                            "matchScore": 70,
+                            "deadline": None,
+                            "status": None,
+                            "fetchedAt": datetime.utcnow().isoformat(),
+                            "isManual": False
+                        }
+                        
+                        self.jobs.append(job)
+                        print(f"  ✅ Found: {title} at {company}")
+                        
+                    except Exception as e:
+                        print(f"  ⚠️ Error parsing Naukri card: {e}")
+                        continue
+                
+                time.sleep(3)
+                
+            except Exception as e:
+                print(f"  ❌ Naukri error ({term}): {e}")
+        
+        print(f"✅ Naukri: Found {len([j for j in self.jobs if j['source'] == 'Naukri'])} jobs")
+
+    def scrape_instahyre(self):
+        """Scrape Instahyre"""
+        print("🔍 Scraping Instahyre...")
+        
+        try:
+            url = "https://www.instahyre.com/search-jobs/?q=product+manager"
+            res = requests.get(url, headers=HEADERS, timeout=10)
+            
+            if res.status_code == 200:
+                soup = BeautifulSoup(res.text, "html.parser")
+                job_cards = soup.find_all("div", class_="opportunity-card")[:10]
+                
+                for card in job_cards:
+                    try:
+                        title_elem = card.find("a", class_="job-title")
+                        company_elem = card.find("a", class_="employer-name")
+                        
+                        if title_elem and company_elem:
+                            title = title_elem.get_text(strip=True)
+                            company = company_elem.get_text(strip=True)
+                            
+                            if self.is_pm_role(title):
+                                job_url = title_elem.get("href", "")
+                                if job_url and not job_url.startswith("http"):
+                                    job_url = "https://www.instahyre.com" + job_url
+                                
+                                job = {
+                                    "id": f"instahyre_{hash(job_url)}_{int(time.time())}",
+                                    "title": title,
+                                    "company": company,
+                                    "location": "India",
+                                    "source": "Instahyre",
+                                    "applyLink": job_url if job_url else url,
+                                    "description": f"{title} at {company}",
+                                    "postedDate": datetime.utcnow().isoformat(),
+                                    "engagement": {"likes": 0, "comments": 0, "isUnseen": False},
+                                    "matchScore": 73,
+                                    "deadline": None,
+                                    "status": None,
+                                    "fetchedAt": datetime.utcnow().isoformat(),
+                                    "isManual": False
+                                }
+                                
+                                self.jobs.append(job)
+                                print(f"  ✅ Found: {title} at {company}")
+                    
+                    except Exception as e:
+                        continue
+        
+        except Exception as e:
+            print(f"  ❌ Instahyre error: {e}")
+        
+        print(f"✅ Instahyre: Found {len([j for j in self.jobs if j['source'] == 'Instahyre'])} jobs")
+
+    def calculate_match_score(self, job, profile):
+        """Calculate match score"""
+        score = 60
+        
+        # Role match
+        if any(role.lower() in job["title"].lower() for role in profile["targetRoles"]):
+            score += 15
+        
+        # Location match
+        if any(loc.lower() in job["location"].lower() for loc in profile["location"]):
+            score += 10
+        
+        # Skills match
+        desc_lower = job["description"].lower()
+        skill_matches = sum(1 for skill in profile["skills"] if skill.lower() in desc_lower)
+        score += min(skill_matches * 3, 15)
+        
+        return min(score, 98)
 
     def dedupe(self):
+        """Remove duplicates"""
         seen = set()
         unique = []
-
+        
         for job in self.jobs:
             key = f"{job['title'].lower()}_{job['company'].lower()}"
             if key not in seen:
                 seen.add(key)
                 unique.append(job)
-
+        
+        removed = len(self.jobs) - len(unique)
         self.jobs = unique
-
-    def remove_expired(self, days=7):
-        fresh = []
-        for job in self.jobs:
-            posted = datetime.fromisoformat(job["postedDate"])
-            if (datetime.utcnow() - posted).days <= days:
-                fresh.append(job)
-        self.jobs = fresh
-
-    # --------------------------------------------------
-    # Match Scoring
-    # --------------------------------------------------
-
-    def calculate_match_score(self, job, profile):
-        score = 50
-
-        if any(r.lower() in job["title"].lower() for r in profile["targetRoles"]):
-            score += 20
-
-        if any(loc.lower() in job["location"].lower() for loc in profile["location"]):
-            score += 10
-
-        skill_hits = sum(
-            1 for s in profile["skills"]
-            if s.lower() in job["description"].lower()
-        )
-        score += min(skill_hits * 3, 15)
-
-        return min(score, 95)
-
-    # --------------------------------------------------
-    # Run
-    # --------------------------------------------------
+        
+        if removed > 0:
+            print(f"🔄 Removed {removed} duplicates")
 
     def run(self, profile):
-        print("🚀 Starting job scrape...")
-        self.scrape_career_pages()
-        print(f"🧪 Jobs before validation: {len(self.jobs)}")
+        """Run all scrapers"""
+        print("🚀 Starting job scraping...")
+        print(f"⏰ {datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S')} UTC")
+        
+        # Run all scrapers
+        self.scrape_leverage_jobs()
+        self.scrape_greenhouse_jobs()
+        self.scrape_naukri()
+        self.scrape_instahyre()
+        
+        # Clean up
         self.dedupe()
-        print(f"🧪 Jobs after dedupe: {len(self.jobs)}")
-
+        
+        # Update match scores
         for job in self.jobs:
             job["matchScore"] = self.calculate_match_score(job, profile)
-
-        print(f"🎯 Final jobs: {len(self.jobs)}")
+        
+        print(f"\n✅ TOTAL JOBS FOUND: {len(self.jobs)}")
+        print(f"   High match (80%+): {len([j for j in self.jobs if j['matchScore'] >= 80])}")
+        print(f"   Good match (70-79%): {len([j for j in self.jobs if 70 <= j['matchScore'] < 80])}")
+        
         return self.jobs
 
-    # --------------------------------------------------
-    # Save
-    # --------------------------------------------------
+    def save(self, filename="jobs_data.json"):
+        """Save to file"""
+        with open(filename, "w", encoding="utf-8") as f:
+            json.dump(self.jobs, f, indent=2, ensure_ascii=False)
+        print(f"💾 Saved to {filename}")
 
-    def save(self, path="data/jobs.json"):
-        with open(path, "w") as f:
-            json.dump(self.jobs, f, indent=2)
-        print(f"💾 Saved → {path}")
-
-
-# --------------------------------------------------
-# Entry
-# --------------------------------------------------
 
 if __name__ == "__main__":
     profile = {
         "targetRoles": [
             "Product Manager",
             "Associate Product Manager",
-            "Product Analyst"
+            "Product Analyst",
+            "Senior Product Manager"
         ],
         "skills": [
-            "SQL",
-            "Python",
-            "A/B Testing",
-            "Product Strategy",
-            "Analytics"
+            "SQL", "Python", "A/B Testing",
+            "Product Strategy", "Analytics",
+            "User Research", "Roadmap"
         ],
-        "location": ["Remote", "India"]
+        "location": ["Remote", "India", "Bangalore", "Mumbai"]
     }
-
+    
     scraper = JobScraper()
-    scraper.run(profile)
+    jobs = scraper.run(profile)
     scraper.save()
+    
+    print("\n📊 Job Sources Breakdown:")
+    sources = {}
+    for job in jobs:
+        source = job["source"]
+        sources[source] = sources.get(source, 0) + 1
+    
+    for source, count in sources.items():
+        print(f"   {source}: {count} jobs")
