@@ -48,7 +48,7 @@ class JobScraper:
     # WE WORK REMOTELY (PLAYWRIGHT)
     # =========================================================
     def scrape_weworkremotely(self, page):
-    print("\n🌍 Scraping WeWorkRemotely (Playwright – fixed)")
+        print("\n🌍 Scraping WeWorkRemotely (Playwright – fixed)")
 
     page.goto(
         "https://weworkremotely.com/categories/remote-product-jobs",
@@ -59,7 +59,7 @@ class JobScraper:
     page.wait_for_selector("section.jobs", timeout=20000)
 
     job_links = page.query_selector_all("section.jobs li a")
-    print(f"🔎 WeWorkRemotely job links found: {len(job_links)}")
+        print(f"🔎 WeWorkRemotely job links found: {len(job_links)}")
 
     count = 0
     for job in job_links:
@@ -96,7 +96,7 @@ class JobScraper:
     # WELLFOUND (PLAYWRIGHT – DEEP CRAWL)
     # =========================================================
     def scrape_wellfound(self, page):
-    print("\n🌍 Scraping Wellfound (Playwright – fixed with scroll)")
+        print("\n🌍 Scraping Wellfound (Playwright – fixed with scroll)")
 
     page.goto("https://wellfound.com/jobs", timeout=60000)
     page.wait_for_timeout(4000)
@@ -109,7 +109,7 @@ class JobScraper:
     page.wait_for_selector("a[href^='/jobs/']", timeout=20000)
 
     job_links = page.query_selector_all("a[href^='/jobs/']")
-    print(f"🔎 Wellfound job links found: {len(job_links)}")
+        print(f"🔎 Wellfound job links found: {len(job_links)}")
 
     count = 0
     for link in job_links:
