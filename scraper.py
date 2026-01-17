@@ -1,5 +1,5 @@
 """
-PJIS – Playwright Scraper (STABLE + FIXED)
+PJIS – Playwright Scraper (PRODUCTION FIXED)
 """
 
 import json
@@ -12,9 +12,6 @@ class JobScraper:
     def __init__(self):
         self.jobs = []
 
-    # -------------------------------
-    # UTIL
-    # -------------------------------
     def _now(self):
         return datetime.utcnow().isoformat()
 
@@ -23,9 +20,7 @@ class JobScraper:
     # -------------------------------
     def scrape_remotive(self):
         print("🌍 Scraping Remotive (API)")
-        url = "https://remotive.com/api/remote-jobs"
-
-        res = requests.get(url, timeout=30)
+        res = requests.get("https://remotive.com/api/remote-jobs", timeout=30)
         data = res.json()
 
         count = 0
@@ -45,7 +40,7 @@ class JobScraper:
         print(f"✅ Remotive jobs added: {count}")
 
     # -------------------------------
-    # WE WORK REMOTELY (PLAYWRIGHT – FIXED)
+    # WE WORK REMOTELY (RELAXED PARSER)
     # -------------------------------
     def scrape_weworkremotely(self, page):
         print("🌍 Scraping WeWorkRemotely")
@@ -56,28 +51,28 @@ class JobScraper:
             timeout=60000
         )
 
-        page.wait_for_selector("section.jobs", timeout=20000)
-
         items = page.query_selector_all("section.jobs li")
         print(f"🔎 WWR job items found: {len(items)}")
 
         count = 0
         for li in items:
             link = li.query_selector("a")
-            title_el = li.query_selector("span.title")
-            company_el = li.query_selector("span.company")
-
-            if not link or not title_el:
+            if not link:
                 continue
 
             href = link.get_attribute("href")
-            if not href:
+            title = link.inner_text().strip()
+
+            company_el = li.query_selector("span.company")
+            company = company_el.inner_text().strip() if company_el else "Unknown"
+
+            if not href or not title:
                 continue
 
             self.jobs.append({
                 "id": f"wwr_{hash(href)}",
-                "title": title_el.inner_text().strip(),
-                "company": company_el.inner_text().strip() if company_el else "Unknown",
+                "title": title,
+                "company": company,
                 "location": "Remote",
                 "source": "WeWorkRemotely",
                 "applyLink": "https://weworkremotely.com" + href,
@@ -89,47 +84,51 @@ class JobScraper:
         print(f"✅ WeWorkRemotely jobs added: {count}")
 
     # -------------------------------
-    # WELLFOUND (PLAYWRIGHT – FIXED)
+    # WELLFOUND (NETWORK INTERCEPTION)
     # -------------------------------
     def scrape_wellfound(self, page):
-        print("🌍 Scraping Wellfound")
+        print("🌍 Scraping Wellfound (XHR mode)")
 
+        jobs = []
+
+        def handle_response(response):
+            try:
+                if "graphql" in response.url and response.request.method == "POST":
+                    data = response.json()
+                    text = json.dumps(data)
+                    if "job" in text.lower():
+                        jobs.append(data)
+            except Exception:
+                pass
+
+        page.on("response", handle_response)
         page.goto("https://wellfound.com/jobs", timeout=60000)
-        page.wait_for_timeout(5000)
+        page.wait_for_timeout(8000)
 
-        # Target the actual virtualized results container
-        container = page.query_selector("div[data-test='JobSearchResults']")
-        if not container:
-            print("❌ Wellfound job container not found")
-            return
-
-        # Scroll INSIDE the container to trigger React rendering
-        for _ in range(8):
-            page.evaluate("(el) => el.scrollBy(0, 3000)", container)
-            page.wait_for_timeout(2000)
-
-        links = page.query_selector_all("a[href^='/jobs/']")
-        print(f"🔎 Wellfound job links found: {len(links)}")
+        print(f"🔎 Wellfound network payloads captured: {len(jobs)}")
 
         count = 0
-        for link in links:
-            href = link.get_attribute("href")
-            title = link.inner_text().strip()
+        seen = set()
 
-            if not href or not title:
-                continue
+        for payload in jobs:
+            text = json.dumps(payload)
+            for part in text.split("https://wellfound.com/jobs/"):
+                slug = part.split('"')[0]
+                if len(slug) > 5 and slug not in seen:
+                    seen.add(slug)
+                    url = f"https://wellfound.com/jobs/{slug}"
 
-            self.jobs.append({
-                "id": f"wellfound_{hash(href)}",
-                "title": title,
-                "company": None,
-                "location": None,
-                "source": "Wellfound",
-                "applyLink": "https://wellfound.com" + href,
-                "postedDate": self._now(),
-                "fetchedAt": self._now()
-            })
-            count += 1
+                    self.jobs.append({
+                        "id": f"wellfound_{hash(url)}",
+                        "title": slug.replace("-", " ").title(),
+                        "company": None,
+                        "location": None,
+                        "source": "Wellfound",
+                        "applyLink": url,
+                        "postedDate": self._now(),
+                        "fetchedAt": self._now()
+                    })
+                    count += 1
 
         print(f"✅ Wellfound jobs added: {count}")
 
@@ -139,10 +138,8 @@ class JobScraper:
     def run(self):
         print("🚀 PJIS SCRAPER STARTED")
 
-        # API-based sources
         self.scrape_remotive()
 
-        # Playwright-based sources
         with sync_playwright() as p:
             browser = p.chromium.launch(headless=True)
             context = browser.new_context()
@@ -166,4 +163,3 @@ if __name__ == "__main__":
     scraper = JobScraper()
     scraper.run()
     scraper.save()
-
