@@ -5,7 +5,7 @@ function App() {
     const loadData = async () => {
       try {
         const response = await fetch(
-          "https://raw.githubusercontent.com/YOUR-USERNAME/job-hunter/main/data/jobs.json"
+          "https://raw.githubusercontent.com/ishwaribangale/job-hunter/main/data/jobs.json"
         );
         const githubJobs = await response.json();
 
