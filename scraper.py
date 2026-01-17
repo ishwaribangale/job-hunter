@@ -1,13 +1,13 @@
 """
-PJIS – DEBUG SCRAPER (LOUD LOGGING)
-Purpose: Identify why jobs = 0
+Personal Job Intelligence System (PJIS)
+Playwright-enabled Scraper (Source Expansion Phase)
+Author: Ishwari Bangale
 """
 
-import requests
-from bs4 import BeautifulSoup
 import json
 from datetime import datetime
-import traceback
+import requests
+from playwright.sync_api import sync_playwright
 
 HEADERS = {
     "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7)"
@@ -18,164 +18,146 @@ class JobScraper:
         self.jobs = []
 
     # =========================================================
-    # REMOTIVE DEBUG SCRAPER
+    # REMOTIVE (API – KEEP FAST)
     # =========================================================
     def scrape_remotive(self):
-        print("\n==============================")
-        print("🌍 REMOTIVE SCRAPER START")
-        print("==============================")
+        print("\n🌍 Scraping Remotive (API)")
 
         url = "https://remotive.com/api/remote-jobs"
-        print(f"➡️ Requesting: {url}")
+        res = requests.get(url, timeout=30)
+        data = res.json()
 
-        try:
-            res = requests.get(url, headers=HEADERS, timeout=30)
-            print(f"✅ HTTP status: {res.status_code}")
-        except Exception as e:
-            print("❌ REQUEST FAILED")
-            print(e)
-            return
-
-        print(f"📦 Response size: {len(res.text)} chars")
-
-        try:
-            data = res.json()
-            print("✅ JSON parsed successfully")
-        except Exception as e:
-            print("❌ JSON PARSE FAILED")
-            print(e)
-            print(res.text[:500])
-            return
-
-        jobs_list = data.get("jobs", [])
-        print(f"🔎 Jobs received from API: {len(jobs_list)}")
-
-        added = 0
-        skipped = 0
-
-        for job in jobs_list[:50]:  # inspect first 50
-            title = job.get("title", "")
-            location = job.get("candidate_required_location", "")
-
-            print("\n--- JOB ---")
-            print(f"Title: {title}")
-            print(f"Company: {job.get('company_name')}")
-            print(f"Location: {location}")
-
-            # TEMPORARILY DISABLE FILTERS
+        count = 0
+        for job in data.get("jobs", []):
             self.jobs.append({
-                "id": f"remotive_{job.get('id')}",
-                "title": title,
+                "id": f"remotive_{job['id']}",
+                "title": job.get("title"),
                 "company": job.get("company_name"),
-                "location": location,
+                "location": job.get("candidate_required_location") or "Remote",
                 "remote": True,
-                "remoteType": "unknown",
-                "role": "Unknown",
                 "source": "Remotive",
                 "applyLink": job.get("url"),
                 "postedDate": job.get("publication_date"),
                 "fetchedAt": self._now()
             })
-            added += 1
+            count += 1
 
-        print(f"\n✅ REMOTIVE JOBS ADDED (NO FILTERS): {added}")
-        print("==============================")
+        print(f"✅ Remotive jobs added: {count}")
 
     # =========================================================
-    # WE WORK REMOTELY DEBUG SCRAPER
+    # WE WORK REMOTELY (PLAYWRIGHT)
     # =========================================================
-    def scrape_weworkremotely(self):
-        print("\n==============================")
-        print("🌍 WE WORK REMOTELY SCRAPER START")
-        print("==============================")
+    def scrape_weworkremotely(self, page):
+        print("\n🌍 Scraping WeWorkRemotely (Playwright)")
 
-        url = "https://weworkremotely.com/categories/remote-product-jobs"
-        print(f"➡️ Requesting: {url}")
+        page.goto("https://weworkremotely.com/categories/remote-product-jobs", timeout=60000)
+        page.wait_for_timeout(3000)
 
-        try:
-            res = requests.get(url, headers=HEADERS, timeout=30)
-            print(f"✅ HTTP status: {res.status_code}")
-            print(f"📦 HTML size: {len(res.text)} chars")
-        except Exception as e:
-            print("❌ REQUEST FAILED")
-            print(e)
-            return
+        jobs = page.query_selector_all("section.jobs li a")
+        count = 0
 
-        soup = BeautifulSoup(res.text, "html.parser")
-        links = soup.select("section.jobs li a")
-
-        print(f"🔎 Job link elements found: {len(links)}")
-
-        added = 0
-
-        for li in links[:20]:
-            title_el = li.find("span", class_="title")
-            company_el = li.find("span", class_="company")
+        for job in jobs:
+            title_el = job.query_selector("span.title")
+            company_el = job.query_selector("span.company")
 
             if not title_el or not company_el:
-                print("⚠️ Missing title or company")
                 continue
 
-            title = title_el.get_text(strip=True)
-            company = company_el.get_text(strip=True)
-            job_url = "https://weworkremotely.com" + li.get("href")
-
-            print("\n--- JOB ---")
-            print(f"Title: {title}")
-            print(f"Company: {company}")
-            print(f"URL: {job_url}")
+            href = job.get_attribute("href")
+            job_url = "https://weworkremotely.com" + href
 
             self.jobs.append({
                 "id": f"wwr_{hash(job_url)}",
-                "title": title,
-                "company": company,
+                "title": title_el.inner_text().strip(),
+                "company": company_el.inner_text().strip(),
                 "location": "Remote",
                 "remote": True,
-                "remoteType": "global",
-                "role": "Unknown",
                 "source": "WeWorkRemotely",
                 "applyLink": job_url,
                 "postedDate": self._now(),
                 "fetchedAt": self._now()
             })
-            added += 1
+            count += 1
 
-        print(f"\n✅ WWR JOBS ADDED (NO FILTERS): {added}")
-        print("==============================")
-
-    def _now(self):
-        return datetime.utcnow().isoformat()
+        print(f"✅ WeWorkRemotely jobs added: {count}")
 
     # =========================================================
-    # RUNNER
+    # WELLFOUND (PLAYWRIGHT – DEEP CRAWL)
+    # =========================================================
+    def scrape_wellfound(self, page):
+        print("\n🌍 Scraping Wellfound (Playwright deep crawl)")
+
+        page.goto("https://wellfound.com/jobs", timeout=60000)
+        page.wait_for_timeout(5000)
+
+        job_cards = page.query_selector_all("a[data-test='StartupResult-jobTitle']")
+        print(f"🔎 Job cards found: {len(job_cards)}")
+
+        count = 0
+        for card in job_cards:
+            href = card.get_attribute("href")
+            if not href:
+                continue
+
+            job_url = "https://wellfound.com" + href
+
+            title = card.inner_text().strip()
+
+            company_el = card.locator(
+                "xpath=../../..//a[@data-test='StartupResult-companyName']"
+            ).first
+
+            company = company_el.inner_text().strip() if company_el else None
+
+            self.jobs.append({
+                "id": f"wellfound_{hash(job_url)}",
+                "title": title,
+                "company": company,
+                "location": None,
+                "remote": None,
+                "source": "Wellfound",
+                "applyLink": job_url,
+                "postedDate": self._now(),
+                "fetchedAt": self._now()
+            })
+            count += 1
+
+        print(f"✅ Wellfound jobs added: {count}")
+
+    # =========================================================
+    # RUNNER (ONE BROWSER FOR ALL)
     # =========================================================
     def run(self):
-        print("\n🚀 PJIS DEBUG SCRAPER STARTED")
-        print("====================================")
+        print("\n🚀 PJIS SCRAPER STARTED (Playwright Enabled)")
 
-        try:
-            self.scrape_remotive()
-        except Exception:
-            print("🔥 REMOTIVE CRASHED")
-            traceback.print_exc()
+        # API-based (fast)
+        self.scrape_remotive()
 
-        try:
-            self.scrape_weworkremotely()
-        except Exception:
-            print("🔥 WWR CRASHED")
-            traceback.print_exc()
+        # Browser-based (JS-heavy)
+        with sync_playwright() as p:
+            browser = p.chromium.launch(headless=True)
+            context = browser.new_context(user_agent=HEADERS["User-Agent"])
+            page = context.new_page()
 
-        print("\n====================================")
+            self.scrape_weworkremotely(page)
+            self.scrape_wellfound(page)
+
+            browser.close()
+
+        print("\n==============================")
         print(f"✅ TOTAL JOBS COLLECTED: {len(self.jobs)}")
-        print("====================================")
+        print("==============================")
 
         return self.jobs
 
-    def save(self, filename="jobs_data.json"):
+    def save(self, filename="data/jobs.json"):
         with open(filename, "w", encoding="utf-8") as f:
             json.dump(self.jobs, f, indent=2, ensure_ascii=False)
 
-        print(f"\n💾 Saved {len(self.jobs)} jobs to {filename}")
+        print(f"💾 Jobs saved to {filename}")
+
+    def _now(self):
+        return datetime.utcnow().isoformat()
 
 
 if __name__ == "__main__":
