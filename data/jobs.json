@@ -1,1 +1,102 @@
-[]
+[
+  {
+    "id": "fallback_razorpay_pm",
+    "title": "Product Manager",
+    "company": "Razorpay",
+    "location": "Bangalore / Remote",
+    "source": "Career Page (Manual)",
+    "applyLink": "https://razorpay.com/jobs/",
+    "description": "Product Manager role at Razorpay. Check career page for current openings.",
+    "postedDate": "2026-01-17T13:11:32.183635",
+    "engagement": {
+      "likes": 0,
+      "comments": 0,
+      "isUnseen": true
+    },
+    "matchScore": 72,
+    "deadline": null,
+    "status": null,
+    "fetchedAt": "2026-01-17T13:11:32.183647",
+    "isManual": false
+  },
+  {
+    "id": "fallback_cred_apm",
+    "title": "Associate Product Manager",
+    "company": "CRED",
+    "location": "Bangalore",
+    "source": "Career Page (Manual)",
+    "applyLink": "https://careers.cred.club/",
+    "description": "APM role at CRED. Check career page for current openings.",
+    "postedDate": "2026-01-17T13:11:32.183651",
+    "engagement": {
+      "likes": 0,
+      "comments": 0,
+      "isUnseen": true
+    },
+    "matchScore": 78,
+    "deadline": null,
+    "status": null,
+    "fetchedAt": "2026-01-17T13:11:32.183654",
+    "isManual": false
+  },
+  {
+    "id": "fallback_swiggy_pm",
+    "title": "Product Manager - Growth",
+    "company": "Swiggy",
+    "location": "Bangalore",
+    "source": "Career Page (Manual)",
+    "applyLink": "https://careers.swiggy.com/",
+    "description": "Growth PM role at Swiggy. Check career page for current openings.",
+    "postedDate": "2026-01-17T13:11:32.183656",
+    "engagement": {
+      "likes": 0,
+      "comments": 0,
+      "isUnseen": true
+    },
+    "matchScore": 75,
+    "deadline": null,
+    "status": null,
+    "fetchedAt": "2026-01-17T13:11:32.183658",
+    "isManual": false
+  },
+  {
+    "id": "fallback_phonepe_pm",
+    "title": "Senior Product Manager",
+    "company": "PhonePe",
+    "location": "Bangalore",
+    "source": "Career Page (Manual)",
+    "applyLink": "https://www.phonepe.com/careers/",
+    "description": "Senior PM role at PhonePe. Check career page for current openings.",
+    "postedDate": "2026-01-17T13:11:32.183660",
+    "engagement": {
+      "likes": 0,
+      "comments": 0,
+      "isUnseen": true
+    },
+    "matchScore": 80,
+    "deadline": null,
+    "status": null,
+    "fetchedAt": "2026-01-17T13:11:32.183662",
+    "isManual": false
+  },
+  {
+    "id": "fallback_meesho_analyst",
+    "title": "Product Analyst",
+    "company": "Meesho",
+    "location": "Bangalore / Remote",
+    "source": "Career Page (Manual)",
+    "applyLink": "https://www.meesho.io/careers",
+    "description": "Product Analyst role at Meesho. Check career page for current openings.",
+    "postedDate": "2026-01-17T13:11:32.183664",
+    "engagement": {
+      "likes": 0,
+      "comments": 0,
+      "isUnseen": true
+    },
+    "matchScore": 70,
+    "deadline": null,
+    "status": null,
+    "fetchedAt": "2026-01-17T13:11:32.183665",
+    "isManual": false
+  }
+]
