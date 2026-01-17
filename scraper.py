@@ -48,38 +48,48 @@ class JobScraper:
     # WE WORK REMOTELY (PLAYWRIGHT)
     # =========================================================
     def scrape_weworkremotely(self, page):
-        print("\n🌍 Scraping WeWorkRemotely (Playwright)")
+    print("\n🌍 Scraping WeWorkRemotely (Playwright – fixed)")
 
-        page.goto("https://weworkremotely.com/categories/remote-product-jobs", timeout=60000)
-        page.wait_for_timeout(3000)
+    page.goto(
+        "https://weworkremotely.com/categories/remote-product-jobs",
+        timeout=60000,
+        wait_until="networkidle"
+    )
 
-        jobs = page.query_selector_all("section.jobs li a")
-        count = 0
+    page.wait_for_selector("section.jobs", timeout=20000)
 
-        for job in jobs:
-            title_el = job.query_selector("span.title")
-            company_el = job.query_selector("span.company")
+    job_links = page.query_selector_all("section.jobs li a")
+    print(f"🔎 WeWorkRemotely job links found: {len(job_links)}")
 
-            if not title_el or not company_el:
-                continue
+    count = 0
+    for job in job_links:
+        title_el = job.query_selector("span.title")
+        company_el = job.query_selector("span.company")
 
-            href = job.get_attribute("href")
-            job_url = "https://weworkremotely.com" + href
+        if not title_el or not company_el:
+            continue
 
-            self.jobs.append({
-                "id": f"wwr_{hash(job_url)}",
-                "title": title_el.inner_text().strip(),
-                "company": company_el.inner_text().strip(),
-                "location": "Remote",
-                "remote": True,
-                "source": "WeWorkRemotely",
-                "applyLink": job_url,
-                "postedDate": self._now(),
-                "fetchedAt": self._now()
-            })
-            count += 1
+        href = job.get_attribute("href")
+        if not href:
+            continue
 
-        print(f"✅ WeWorkRemotely jobs added: {count}")
+        job_url = "https://weworkremotely.com" + href
+
+        self.jobs.append({
+            "id": f"wwr_{hash(job_url)}",
+            "title": title_el.inner_text().strip(),
+            "company": company_el.inner_text().strip(),
+            "location": "Remote",
+            "remote": True,
+            "source": "WeWorkRemotely",
+            "applyLink": job_url,
+            "postedDate": self._now(),
+            "fetchedAt": self._now()
+        })
+        count += 1
+
+    print(f"✅ WeWorkRemotely jobs added: {count}")
+
 
     # =========================================================
     # WELLFOUND (PLAYWRIGHT – DEEP CRAWL)
