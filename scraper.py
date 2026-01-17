@@ -91,6 +91,7 @@ class JobScraper:
     print(f"✅ WeWorkRemotely jobs added: {count}")
 
 
+
     # =========================================================
     # WELLFOUND (PLAYWRIGHT – DEEP CRAWL)
     # =========================================================
@@ -100,7 +101,7 @@ class JobScraper:
     page.goto("https://wellfound.com/jobs", timeout=60000)
     page.wait_for_timeout(4000)
 
-    # Scroll to load jobs
+    # Scroll to force lazy-loaded jobs to render
     for _ in range(6):
         page.mouse.wheel(0, 3000)
         page.wait_for_timeout(2000)
@@ -136,7 +137,6 @@ class JobScraper:
             continue
 
     print(f"✅ Wellfound jobs added: {count}")
-
 
     # =========================================================
     # RUNNER (ONE BROWSER FOR ALL)
