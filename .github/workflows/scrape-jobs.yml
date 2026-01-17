@@ -11,6 +11,9 @@ on:
       - 'scraper.py'
       - '.github/workflows/scrape-jobs.yml'
 
+permissions:
+  contents: write
+
 jobs:
   scrape-and-save:
     runs-on: ubuntu-latest
