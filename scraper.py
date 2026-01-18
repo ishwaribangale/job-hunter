@@ -20,8 +20,6 @@ TOP_COMPANIES = [
     {"name": "Airtable", "ats": "lever", "slug": "airtable"},
     {"name": "PhonePe", "ats": "greenhouse", "slug": "phonepe"},
     {"name": "CRED", "ats": "greenhouse", "slug": "cred"},
-    {"name": "Atlassian", "ats": "greenhouse", "slug": "atlassian"},
-    {"name": "Freshworks", "ats": "greenhouse", "slug": "freshworks"},
 ]
 
 def filter_product(jobs):
@@ -54,16 +52,14 @@ class JobScraper:
             return False
         self.seen.add(job["applyLink"])
         self.jobs.append(job)
-        src = job["source"]
-        self.stats[src] = self.stats.get(src, 0) + 1
+        self.stats[job["source"]] = self.stats.get(job["source"], 0) + 1
         return True
 
-    # ---------------- SOURCES ----------------
-
+    # ---------------- REMOTIVE ----------------
     def scrape_remotive(self):
         print("\n[Remotive]")
-        r = requests.get("https://remotive.com/api/remote-jobs", headers=HEADERS)
         added = 0
+        r = requests.get("https://remotive.com/api/remote-jobs", headers=HEADERS)
         for j in r.json().get("jobs", []):
             if self.add({
                 "id": f"remotive_{j['id']}",
@@ -78,10 +74,11 @@ class JobScraper:
                 added += 1
         print("Added:", added)
 
+    # ---------------- REMOTEOK ----------------
     def scrape_remoteok(self):
         print("\n[RemoteOK]")
-        r = requests.get("https://remoteok.com/api", headers=HEADERS)
         added = 0
+        r = requests.get("https://remoteok.com/api", headers=HEADERS)
         for j in r.json()[1:]:
             if self.add({
                 "id": f"remoteok_{j['id']}",
@@ -96,6 +93,7 @@ class JobScraper:
                 added += 1
         print("Added:", added)
 
+    # ---------------- YC JOBS ----------------
     def scrape_yc(self):
         print("\n[Y Combinator]")
         soup = BeautifulSoup(
@@ -119,6 +117,52 @@ class JobScraper:
                 added += 1
         print("Added:", added)
 
+    # ---------------- INTERNSHALA (RESTORED) ----------------
+    def scrape_internshala(self):
+        print("\n[Internshala]")
+        base = "https://internshala.com"
+        urls = [
+            f"{base}/jobs/product-manager-jobs",
+            f"{base}/jobs/business-analyst-jobs",
+            f"{base}/jobs/analytics-jobs",
+        ]
+
+        added = 0
+        cards_seen = 0
+
+        for url in urls:
+            soup = BeautifulSoup(
+                requests.get(url, headers=HEADERS).text,
+                "html.parser"
+            )
+            cards = soup.select("div.individual_internship")
+            cards_seen += len(cards)
+
+            for c in cards:
+                title = c.select_one("h3.job-internship-name")
+                link = c.select_one("a.view_detail_button")
+                company = c.select_one("p.company-name")
+                location = c.select_one("span.location_link")
+
+                if not title or not link:
+                    continue
+
+                if self.add({
+                    "id": f"internshala_{hash(link['href'])}",
+                    "title": title.get_text(strip=True),
+                    "company": company.get_text(strip=True) if company else None,
+                    "location": location.get_text(strip=True) if location else None,
+                    "source": "Internshala",
+                    "applyLink": base + link["href"],
+                    "postedDate": self.now(),
+                    "fetchedAt": self.now(),
+                }):
+                    added += 1
+
+        print("Cards found:", cards_seen)
+        print("Added:", added)
+
+    # ---------------- COMPANY PAGES ----------------
     def scrape_companies(self):
         print("\n[Company Career Pages]")
         for c in TOP_COMPANIES:
@@ -126,13 +170,12 @@ class JobScraper:
             added = 0
 
             if c["ats"] == "lever":
-                url = f"https://jobs.lever.co/{c['slug']}"
-                r = requests.get(url, headers=HEADERS)
-                soup = BeautifulSoup(r.text, "html.parser")
-
+                soup = BeautifulSoup(
+                    requests.get(f"https://jobs.lever.co/{c['slug']}", headers=HEADERS).text,
+                    "html.parser"
+                )
                 posts = soup.select("a.posting-title")
                 print(" Lever found:", len(posts))
-
                 for a in posts:
                     if self.add({
                         "id": f"lever_{hash(a['href'])}",
@@ -147,13 +190,12 @@ class JobScraper:
                         added += 1
 
             if c["ats"] == "greenhouse":
-                url = f"https://boards.greenhouse.io/{c['slug']}"
-                r = requests.get(url, headers=HEADERS)
-                soup = BeautifulSoup(r.text, "html.parser")
-
+                soup = BeautifulSoup(
+                    requests.get(f"https://boards.greenhouse.io/{c['slug']}", headers=HEADERS).text,
+                    "html.parser"
+                )
                 posts = soup.select("a[href^='/jobs/']")
                 print(" Greenhouse found:", len(posts))
-
                 for a in posts:
                     if self.add({
                         "id": f"gh_{hash(a['href'])}",
@@ -170,11 +212,11 @@ class JobScraper:
             print(" Added:", added)
 
     # ---------------- RUN ----------------
-
     def run(self):
         self.scrape_remotive()
         self.scrape_remoteok()
         self.scrape_yc()
+        self.scrape_internshala()
         self.scrape_companies()
 
         print("\nSOURCE SUMMARY")
@@ -192,11 +234,12 @@ class JobScraper:
         with open("data/jobs_recent.json", "w") as f:
             json.dump(filter_recent(self.jobs), f, indent=2)
 
-        print("Saved JSON files")
+        print("Saved all files")
 
 
 if __name__ == "__main__":
     s = JobScraper()
     s.run()
     s.save()
+
 
