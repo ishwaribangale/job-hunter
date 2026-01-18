@@ -119,48 +119,53 @@ class JobScraper:
 
     # ---------------- INTERNSHALA (RESTORED) ----------------
     def scrape_internshala(self):
-        print("\n[Internshala]")
-        base = "https://internshala.com"
-        urls = [
-            f"{base}/jobs/product-manager-jobs",
-            f"{base}/jobs/business-analyst-jobs",
-            f"{base}/jobs/analytics-jobs",
-        ]
+    print("\n[Internshala]")
+    base = "https://internshala.com"
+    urls = [
+        f"{base}/jobs/product-manager-jobs",
+        f"{base}/jobs/business-analyst-jobs",
+        f"{base}/jobs/analytics-jobs",
+    ]
 
-        added = 0
-        cards_seen = 0
+    cards_seen = 0
+    added = 0
 
-        for url in urls:
-            soup = BeautifulSoup(
-                requests.get(url, headers=HEADERS).text,
-                "html.parser"
-            )
-            cards = soup.select("div.individual_internship")
-            cards_seen += len(cards)
+    for url in urls:
+        soup = BeautifulSoup(
+            requests.get(url, headers=HEADERS, timeout=30).text,
+            "html.parser"
+        )
 
-            for c in cards:
-                title = c.select_one("h3.job-internship-name")
-                link = c.select_one("a.view_detail_button")
-                company = c.select_one("p.company-name")
-                location = c.select_one("span.location_link")
+        cards = soup.select("div.individual_internship")
+        cards_seen += len(cards)
 
-                if not title or not link:
-                    continue
+        for card in cards:
+            title_el = card.select_one("h3.job-internship-name")
+            company_el = card.select_one("p.company-name")
+            location_el = card.select_one("span.location_link")
 
-                if self.add({
-                    "id": f"internshala_{hash(link['href'])}",
-                    "title": title.get_text(strip=True),
-                    "company": company.get_text(strip=True) if company else None,
-                    "location": location.get_text(strip=True) if location else None,
-                    "source": "Internshala",
-                    "applyLink": base + link["href"],
-                    "postedDate": self.now(),
-                    "fetchedAt": self.now(),
-                }):
-                    added += 1
+            job_id = card.get("id")
+            if not job_id or not title_el:
+                continue
 
-        print("Cards found:", cards_seen)
-        print("Added:", added)
+            # 🔑 THIS IS THE FIX
+            apply_link = f"https://internshala.com/job/detail/{job_id.replace('internship_', '')}"
+
+            if self.add({
+                "id": f"internshala_{job_id}",
+                "title": title_el.get_text(strip=True),
+                "company": company_el.get_text(strip=True) if company_el else None,
+                "location": location_el.get_text(strip=True) if location_el else None,
+                "source": "Internshala",
+                "applyLink": apply_link,
+                "postedDate": self.now(),
+                "fetchedAt": self.now(),
+            }):
+                added += 1
+
+    print("Cards found:", cards_seen)
+    print("Added:", added)
+
 
     # ---------------- COMPANY PAGES ----------------
     def scrape_companies(self):
