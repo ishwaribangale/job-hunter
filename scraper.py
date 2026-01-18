@@ -14,7 +14,6 @@ from bs4 import BeautifulSoup
 HEADERS = {
     "User-Agent": "Mozilla/5.0 (compatible; PJISBot/1.0)"
 }
-
 TOP_COMPANIES = [
     {"name": "Stripe", "ats": "lever", "slug": "stripe"},
     {"name": "Razorpay", "ats": "lever", "slug": "razorpay"},
@@ -22,7 +21,6 @@ TOP_COMPANIES = [
     {"name": "Notion", "ats": "lever", "slug": "notion"},
     {"name": "Figma", "ats": "lever", "slug": "figma"},
     {"name": "Airtable", "ats": "lever", "slug": "airtable"},
-
     {"name": "PhonePe", "ats": "greenhouse", "slug": "phonepe"},
     {"name": "CRED", "ats": "greenhouse", "slug": "cred"},
     {"name": "Atlassian", "ats": "greenhouse", "slug": "atlassian"},
@@ -47,7 +45,6 @@ def filter_by_role(jobs):
         j for j in jobs
         if any(k in (j.get("title") or "").lower() for k in keywords)
     ]
-
 
 def filter_recent(jobs, hours=48):
     cutoff = datetime.utcnow() - timedelta(hours=hours)
