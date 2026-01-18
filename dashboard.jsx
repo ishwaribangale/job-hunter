@@ -25,14 +25,14 @@ function App() {
       <div className="mt-6 space-y-4">
         {jobs.map(job => (
           <div key={job.id} className="border p-4 rounded-lg">
-            <h2 className="font-semibold">{job.title || "Untitled Role"}</h2>
+            <h2 className="font-semibold">{job.title}</h2>
 
             <p className="text-sm text-gray-600">
               {job.company || "Unknown Company"} • {job.location || "N/A"}
             </p>
 
             <span className="inline-block mt-1 text-xs px-2 py-0.5 bg-gray-100 rounded">
-              Source: {job.source || "Unknown"}
+              Source: {job.source}
             </span>
 
             <a
@@ -48,11 +48,6 @@ function App() {
       </div>
     </div>
   );
-}
-
-const root = ReactDOM.createRoot(document.getElementById("root"));
-root.render(<App />);
-
 }
 
 const root = ReactDOM.createRoot(document.getElementById("root"));
