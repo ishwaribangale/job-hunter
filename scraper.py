@@ -119,7 +119,7 @@ class JobScraper:
 
     # ---------------- INTERNSHALA (RESTORED) ----------------
     def scrape_internshala(self):
-    print("\n[Internshala]")
+        print("\n[Internshala]")
     base = "https://internshala.com"
     urls = [
         f"{base}/jobs/product-manager-jobs",
@@ -163,8 +163,8 @@ class JobScraper:
             }):
                 added += 1
 
-    print("Cards found:", cards_seen)
-    print("Added:", added)
+        print("Cards found:", cards_seen)
+        print("Added:", added)
 
 
     # ---------------- COMPANY PAGES ----------------
