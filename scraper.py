@@ -13,6 +13,12 @@ from config import HEADERS, TIMEOUT, TOP_COMPANIES
 from roles import infer_role
 from scoring import score_job
 
+# ----------------------------------
+# MODE SWITCH
+# ----------------------------------
+SCRAPE_MODE = "VOLUME"
+# options: "VOLUME" | "INTELLIGENCE"
+
 
 class JobScraper:
     def __init__(self):
@@ -54,6 +60,8 @@ class JobScraper:
             print("Remotive failed:", e)
             return
 
+        print("Cards:", len(data))
+
         for j in data:
             self.add({
                 "id": f"remotive_{j['id']}",
@@ -66,7 +74,7 @@ class JobScraper:
             })
 
     # ----------------------------------
-    # INTERNShala (Hidden-ish jobs)
+    # INTERNSHALA
     # ----------------------------------
     def scrape_internshala(self):
         print("\n[Internshala]")
@@ -76,14 +84,20 @@ class JobScraper:
             f"{base}/jobs/business-analyst-jobs",
         ]
 
+        total_cards = 0
+
         for url in urls:
             r = requests.get(url, headers=HEADERS, timeout=TIMEOUT)
             soup = BeautifulSoup(r.text, "html.parser")
 
-            for c in soup.select("div.individual_internship"):
+            cards = soup.select("div.individual_internship")
+            print(f"URL: {url} | Cards: {len(cards)}")
+            total_cards += len(cards)
+
+            for c in cards:
                 title = c.select_one("h3.job-internship-name")
                 company = c.select_one("p.company-name")
-                link = c.select_one("a.view_detail_button")
+                link = c.select_one("a.view_detail_button, a.job-title-href")
 
                 if not title or not company or not link:
                     continue
@@ -98,8 +112,11 @@ class JobScraper:
                     "postedDate": self.now()
                 })
 
+        if total_cards == 0:
+            print("⚠ Internshala returned 0 cards (likely blocked in this environment)")
+
     # ----------------------------------
-    # ATS SCRAPER (Hidden Jobs CORE)
+    # ATS SCRAPER (HIDDEN JOBS)
     # ----------------------------------
     def scrape_ats(self):
         print("\n[ATS Jobs]")
@@ -110,7 +127,9 @@ class JobScraper:
             if c["ats"] == "lever":
                 url = f"https://jobs.lever.co/{c['slug']}?mode=json"
                 r = requests.get(url, headers=HEADERS, timeout=TIMEOUT)
+
                 if "json" not in r.headers.get("Content-Type", ""):
+                    print("Lever blocked / non-JSON")
                     continue
 
                 for j in r.json():
@@ -127,7 +146,9 @@ class JobScraper:
             else:
                 url = f"https://boards.greenhouse.io/{c['slug']}/jobs.json"
                 r = requests.get(url, headers=HEADERS, timeout=TIMEOUT)
+
                 if r.status_code != 200:
+                    print("Greenhouse blocked")
                     continue
 
                 for j in r.json().get("jobs", []):
@@ -142,18 +163,23 @@ class JobScraper:
                     })
 
     # ----------------------------------
-    # RUN + SAVE
+    # RUN
     # ----------------------------------
     def run(self):
-        self.scrape_remotive()
-        self.scrape_internshala()
-        self.scrape_ats()
+        print(f"\n[MODE] {SCRAPE_MODE}")
 
-        print("\n[SOURCES]")
+        if SCRAPE_MODE == "VOLUME":
+            self.scrape_remotive()
+            self.scrape_internshala()
+            self.scrape_ats()
+        else:
+            self.scrape_ats()
+
+        print("\n[SOURCE SUMMARY]")
         for k, v in self.stats.items():
             print(f"{k}: {v}")
 
-        print("TOTAL JOBS:", len(self.jobs))
+        print("\nTOTAL JOBS:", len(self.jobs))
 
     def save(self):
         os.makedirs("data", exist_ok=True)
@@ -171,4 +197,3 @@ if __name__ == "__main__":
     scraper = JobScraper()
     scraper.run()
     scraper.save()
-
