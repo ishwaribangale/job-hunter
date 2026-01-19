@@ -24,12 +24,12 @@ TIMEOUT = 12
 # COMPANY CONFIG (FIXED SLUGS)
 # -------------------------------------------------
 TOP_COMPANIES = [
-    # Lever (public JSON only where supported)
+    # Lever
     {"name": "Notion", "ats": "lever", "slug": "notion"},
     {"name": "Figma", "ats": "lever", "slug": "figma"},
     {"name": "Airtable", "ats": "lever", "slug": "airtable"},
 
-    # Greenhouse (correct board slugs)
+    # Greenhouse
     {"name": "Stripe", "ats": "greenhouse", "slug": "stripeinc"},
     {"name": "Razorpay", "ats": "greenhouse", "slug": "razorpaysoftware"},
     {"name": "Atlassian", "ats": "greenhouse", "slug": "atlassian"},
@@ -62,7 +62,7 @@ class JobScraper:
         self.stats[job["source"]] = self.stats.get(job["source"], 0) + 1
 
     # -------------------------------------------------
-    # INTERNShala (FIXED SELECTORS)
+    # INTERNShala (SAFE)
     # -------------------------------------------------
     def scrape_internshala(self):
         print("\n[Internshala]")
@@ -78,27 +78,35 @@ class JobScraper:
             res = requests.get(url, headers=HEADERS, timeout=TIMEOUT)
             soup = BeautifulSoup(res.text, "html.parser")
 
-            cards = soup.select("div.individual_internship, div.container-fluid.individual_internship")
+            cards = soup.select(
+                "div.individual_internship, div.container-fluid.individual_internship"
+            )
             total += len(cards)
 
             for c in cards:
                 title = c.select_one("h3.job-internship-name")
                 link = c.select_one("a.view_detail_button, a.job-title-href")
+                company = c.select_one("p.company-name")
+                loc = c.select_one("span.location_link")
 
-                if not title or not link:
+                if not title or not link or not company:
                     continue
 
+                location = loc.get_text(strip=True) if loc else "Remote / Not specified"
+
                 before = len(self.jobs)
+
                 self.add({
                     "id": f"internshala_{hash(link['href'])}",
                     "title": title.get_text(strip=True),
-                    "company": c.select_one("p.company-name").get_text(strip=True),
-                    "location": c.select_one("span.location_link").get_text(strip=True),
+                    "company": company.get_text(strip=True),
+                    "location": location,
                     "source": "Internshala",
                     "applyLink": base + link["href"],
                     "postedDate": self.now(),
                     "fetchedAt": self.now(),
                 })
+
                 if len(self.jobs) > before:
                     added += 1
 
@@ -106,7 +114,7 @@ class JobScraper:
         print(f"Added: {added}")
 
     # -------------------------------------------------
-    # ATS APIs (FIXED)
+    # ATS APIs (LEVER + GREENHOUSE)
     # -------------------------------------------------
     def scrape_ats(self):
         print("\n[Company Career Pages – ATS APIs]")
