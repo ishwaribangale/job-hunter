@@ -3,14 +3,21 @@ PJIS – Job Intelligence Scraper (ATS API Edition)
 Reliable • Logged • Production Safe
 """
 
+import os
 import json
 import requests
 from datetime import datetime
 from bs4 import BeautifulSoup
 
+# -------------------------------------------------
+# GLOBAL CONFIG
+# -------------------------------------------------
 HEADERS = {
-    "User-Agent": "Mozilla/5.0 (PJISBot/1.0)"
+    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; PJISBot/1.0)"
 }
+
+TIMEOUT = 10
+
 
 # -------------------------------------------------
 # COMPANY CONFIG (ATS APIs)
@@ -34,6 +41,7 @@ TOP_COMPANIES = [
     {"name": "Myntra", "ats": "greenhouse", "slug": "myntra"},
 ]
 
+
 # -------------------------------------------------
 # SCRAPER
 # -------------------------------------------------
@@ -50,6 +58,7 @@ class JobScraper:
         url = job.get("applyLink")
         if not url or url in self.seen:
             return
+
         self.seen.add(url)
         self.jobs.append(job)
 
@@ -61,13 +70,23 @@ class JobScraper:
     # -------------------------------------------------
     def scrape_remotive(self):
         print("\n[Remotive]")
-        res = requests.get("https://remotive.com/api/remote-jobs", headers=HEADERS)
-        data = res.json().get("jobs", [])
+        try:
+            res = requests.get(
+                "https://remotive.com/api/remote-jobs",
+                headers=HEADERS,
+                timeout=TIMEOUT
+            )
+            res.raise_for_status()
+            data = res.json().get("jobs", [])
+        except Exception as e:
+            print("Remotive failed:", e)
+            return
+
         print(f"Cards found: {len(data)}")
 
         for j in data:
             self.add({
-                "id": f"remotive_{j['id']}",
+                "id": f"remotive_{j.get('id')}",
                 "title": j.get("title"),
                 "company": j.get("company_name"),
                 "location": j.get("candidate_required_location", "Remote"),
@@ -82,7 +101,18 @@ class JobScraper:
     # -------------------------------------------------
     def scrape_remoteok(self):
         print("\n[RemoteOK]")
-        data = requests.get("https://remoteok.com/api", headers=HEADERS).json()[1:]
+        try:
+            res = requests.get(
+                "https://remoteok.com/api",
+                headers=HEADERS,
+                timeout=TIMEOUT
+            )
+            res.raise_for_status()
+            data = res.json()[1:]
+        except Exception as e:
+            print("RemoteOK failed:", e)
+            return
+
         print(f"Cards found: {len(data)}")
 
         for j in data:
@@ -98,14 +128,21 @@ class JobScraper:
             })
 
     # -------------------------------------------------
-    # YC JOBS
+    # Y COMBINATOR JOBS
     # -------------------------------------------------
     def scrape_yc(self):
         print("\n[Y Combinator]")
-        soup = BeautifulSoup(
-            requests.get("https://www.ycombinator.com/jobs", headers=HEADERS).text,
-            "html.parser"
-        )
+        try:
+            res = requests.get(
+                "https://www.ycombinator.com/jobs",
+                headers=HEADERS,
+                timeout=TIMEOUT
+            )
+            soup = BeautifulSoup(res.text, "html.parser")
+        except Exception as e:
+            print("YC failed:", e)
+            return
+
         cards = soup.select("a[href^='/jobs/']")
         print(f"Cards found: {len(cards)}")
 
@@ -122,7 +159,7 @@ class JobScraper:
             })
 
     # -------------------------------------------------
-    # INTERNShala (HTML – WORKING)
+    # INTERNShala (HTML)
     # -------------------------------------------------
     def scrape_internshala(self):
         print("\n[Internshala]")
@@ -132,16 +169,17 @@ class JobScraper:
             f"{base}/jobs/business-analyst-jobs",
         ]
 
-        total_cards = 0
-        added = 0
+        total = added = 0
 
         for url in urls:
-            soup = BeautifulSoup(
-                requests.get(url, headers=HEADERS).text,
-                "html.parser"
-            )
+            try:
+                res = requests.get(url, headers=HEADERS, timeout=TIMEOUT)
+                soup = BeautifulSoup(res.text, "html.parser")
+            except Exception:
+                continue
+
             cards = soup.select("div.individual_internship")
-            total_cards += len(cards)
+            total += len(cards)
 
             for c in cards:
                 title = c.select_one("h3.job-internship-name")
@@ -151,6 +189,7 @@ class JobScraper:
                     continue
 
                 before = len(self.jobs)
+
                 self.add({
                     "id": f"internshala_{hash(link['href'])}",
                     "title": title.get_text(strip=True),
@@ -161,14 +200,15 @@ class JobScraper:
                     "postedDate": self.now(),
                     "fetchedAt": self.now(),
                 })
+
                 if len(self.jobs) > before:
                     added += 1
 
-        print(f"Cards found: {total_cards}")
+        print(f"Cards found: {total}")
         print(f"Added: {added}")
 
     # -------------------------------------------------
-    # ATS APIs (THE FIX)
+    # ATS APIs (LEVER + GREENHOUSE)
     # -------------------------------------------------
     def scrape_ats(self):
         print("\n[Company Career Pages – ATS APIs]")
@@ -176,39 +216,53 @@ class JobScraper:
         for c in TOP_COMPANIES:
             print(f"\nCompany: {c['name']}")
 
-            if c["ats"] == "lever":
-                url = f"https://jobs.lever.co/{c['slug']}?mode=json"
-                data = requests.get(url, headers=HEADERS).json()
-                print(f"Lever jobs: {len(data)}")
+            try:
+                if c["ats"] == "lever":
+                    url = f"https://jobs.lever.co/{c['slug']}?mode=json"
+                    res = requests.get(url, headers=HEADERS, timeout=TIMEOUT)
+                    if res.status_code != 200:
+                        print("Lever request failed")
+                        continue
 
-                for j in data:
-                    self.add({
-                        "id": f"lever_{j['id']}",
-                        "title": j["text"],
-                        "company": c["name"],
-                        "location": j.get("categories", {}).get("location"),
-                        "source": f"{c['name']} (Lever)",
-                        "applyLink": j["hostedUrl"],
-                        "postedDate": self.now(),
-                        "fetchedAt": self.now(),
-                    })
+                    data = res.json()
+                    print(f"Lever jobs: {len(data)}")
 
-            if c["ats"] == "greenhouse":
-                url = f"https://boards.greenhouse.io/{c['slug']}/jobs.json"
-                data = requests.get(url, headers=HEADERS).json().get("jobs", [])
-                print(f"Greenhouse jobs: {len(data)}")
+                    for j in data:
+                        self.add({
+                            "id": f"lever_{j.get('id')}",
+                            "title": j.get("text"),
+                            "company": c["name"],
+                            "location": j.get("categories", {}).get("location"),
+                            "source": f"{c['name']} (Lever)",
+                            "applyLink": j.get("hostedUrl"),
+                            "postedDate": self.now(),
+                            "fetchedAt": self.now(),
+                        })
 
-                for j in data:
-                    self.add({
-                        "id": f"gh_{j['id']}",
-                        "title": j["title"],
-                        "company": c["name"],
-                        "location": j.get("location", {}).get("name"),
-                        "source": f"{c['name']} (Greenhouse)",
-                        "applyLink": j["absolute_url"],
-                        "postedDate": self.now(),
-                        "fetchedAt": self.now(),
-                    })
+                elif c["ats"] == "greenhouse":
+                    url = f"https://boards.greenhouse.io/{c['slug']}/jobs.json"
+                    res = requests.get(url, headers=HEADERS, timeout=TIMEOUT)
+                    if res.status_code != 200:
+                        print("Greenhouse request failed")
+                        continue
+
+                    data = res.json().get("jobs", [])
+                    print(f"Greenhouse jobs: {len(data)}")
+
+                    for j in data:
+                        self.add({
+                            "id": f"gh_{j.get('id')}",
+                            "title": j.get("title"),
+                            "company": c["name"],
+                            "location": j.get("location", {}).get("name"),
+                            "source": f"{c['name']} (Greenhouse)",
+                            "applyLink": j.get("absolute_url"),
+                            "postedDate": self.now(),
+                            "fetchedAt": self.now(),
+                        })
+
+            except Exception as e:
+                print(f"ATS error for {c['name']}: {e}")
 
     # -------------------------------------------------
     # RUN + SAVE
@@ -227,15 +281,16 @@ class JobScraper:
         print("\nTOTAL JOBS:", len(self.jobs))
 
     def save(self):
-        with open("data/jobs.json", "w") as f:
-            json.dump(self.jobs, f, indent=2)
+        os.makedirs("data", exist_ok=True)
+        with open("data/jobs.json", "w", encoding="utf-8") as f:
+            json.dump(self.jobs, f, indent=2, ensure_ascii=False)
         print("Saved → data/jobs.json")
 
 
+# -------------------------------------------------
+# ENTRYPOINT
+# -------------------------------------------------
 if __name__ == "__main__":
-    s = JobScraper()
-    s.run()
-    s.save()
-
-
-
+    scraper = JobScraper()
+    scraper.run()
+    scraper.save()
