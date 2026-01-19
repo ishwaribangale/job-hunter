@@ -1,15 +1,5 @@
 [
   {
-    "id": "remotive_2086826",
-    "title": "Client Support Specialist",
-    "company": "Clipboard Health",
-    "location": "Europe, Canada, South Africa, Philippines, Jamaica",
-    "source": "Remotive",
-    "applyLink": "https://remotive.com/remote-jobs/customer-service/client-support-specialist-2086826",
-    "postedDate": "2026-01-16T14:01:26",
-    "fetchedAt": "2026-01-19T08:41:36.844968"
-  },
-  {
     "id": "remotive_1919265",
     "title": "Senior Independent Software Developer",
     "company": "A.Team",
@@ -17,7 +7,9 @@
     "source": "Remotive",
     "applyLink": "https://remotive.com/remote-jobs/software-development/senior-independent-software-developer-1919265",
     "postedDate": "2026-01-16T10:16:08",
-    "fetchedAt": "2026-01-19T08:41:36.844989"
+    "role": "software",
+    "score": 6,
+    "fetchedAt": "2026-01-19T08:58:22.189162"
   },
   {
     "id": "remotive_1919266",
@@ -27,7 +19,21 @@
     "source": "Remotive",
     "applyLink": "https://remotive.com/remote-jobs/software-development/senior-independent-ai-engineer-architect-1919266",
     "postedDate": "2026-01-16T10:16:03",
-    "fetchedAt": "2026-01-19T08:41:36.844994"
+    "role": "software",
+    "score": 6,
+    "fetchedAt": "2026-01-19T08:58:22.189184"
+  },
+  {
+    "id": "remotive_2086826",
+    "title": "Client Support Specialist",
+    "company": "Clipboard Health",
+    "location": "Europe, Canada, South Africa, Philippines, Jamaica",
+    "source": "Remotive",
+    "applyLink": "https://remotive.com/remote-jobs/customer-service/client-support-specialist-2086826",
+    "postedDate": "2026-01-16T14:01:26",
+    "role": "other",
+    "score": 4,
+    "fetchedAt": "2026-01-19T08:58:22.189149"
   },
   {
     "id": "remotive_2069746",
@@ -37,7 +43,9 @@
     "source": "Remotive",
     "applyLink": "https://remotive.com/remote-jobs/software-development/tech-lead-full-stack-rails-engineer-2069746",
     "postedDate": "2026-01-14T20:46:36",
-    "fetchedAt": "2026-01-19T08:41:36.844998"
+    "role": "software",
+    "score": 4,
+    "fetchedAt": "2026-01-19T08:58:22.189191"
   },
   {
     "id": "remotive_2069747",
@@ -47,7 +55,9 @@
     "source": "Remotive",
     "applyLink": "https://remotive.com/remote-jobs/software-development/tech-lead-databricks-data-engineer-2069747",
     "postedDate": "2026-01-14T20:46:28",
-    "fetchedAt": "2026-01-19T08:41:36.845001"
+    "role": "software",
+    "score": 4,
+    "fetchedAt": "2026-01-19T08:58:22.189198"
   },
   {
     "id": "remotive_2069728",
@@ -57,7 +67,9 @@
     "source": "Remotive",
     "applyLink": "https://remotive.com/remote-jobs/software-development/software-engineer-c-senior-2069728",
     "postedDate": "2026-01-14T13:45:40",
-    "fetchedAt": "2026-01-19T08:41:36.845006"
+    "role": "software",
+    "score": 4,
+    "fetchedAt": "2026-01-19T08:58:22.189205"
   },
   {
     "id": "remotive_2088537",
@@ -67,7 +79,9 @@
     "source": "Remotive",
     "applyLink": "https://remotive.com/remote-jobs/software-development/senior-front-end-developer-analytics-ux-focused-remote-2088537",
     "postedDate": "2026-01-13T18:29:39",
-    "fetchedAt": "2026-01-19T08:41:36.845010"
+    "role": "design",
+    "score": 4,
+    "fetchedAt": "2026-01-19T08:58:22.189211"
   },
   {
     "id": "remotive_2088536",
@@ -77,7 +91,9 @@
     "source": "Remotive",
     "applyLink": "https://remotive.com/remote-jobs/devops/senior-site-reliability-engineer-sre-cloud-2088536",
     "postedDate": "2026-01-13T17:34:31",
-    "fetchedAt": "2026-01-19T08:41:36.845014"
+    "role": "software",
+    "score": 4,
+    "fetchedAt": "2026-01-19T08:58:22.189221"
   },
   {
     "id": "remotive_2088534",
@@ -87,47 +103,9 @@
     "source": "Remotive",
     "applyLink": "https://remotive.com/remote-jobs/software-development/senior-software-engineer-global-contractor-2088534",
     "postedDate": "2026-01-13T09:27:49",
-    "fetchedAt": "2026-01-19T08:41:36.845018"
-  },
-  {
-    "id": "remotive_2087694",
-    "title": "AI Trainer",
-    "company": "Anuttacon",
-    "location": "Worldwide",
-    "source": "Remotive",
-    "applyLink": "https://remotive.com/remote-jobs/ai-ml/ai-trainer-2087694",
-    "postedDate": "2026-01-12T21:00:39",
-    "fetchedAt": "2026-01-19T08:41:36.845022"
-  },
-  {
-    "id": "remotive_2088533",
-    "title": "Quantitative Research Team Lead (Completed)",
-    "company": "Apexver",
-    "location": "Worldwide",
-    "source": "Remotive",
-    "applyLink": "https://remotive.com/remote-jobs/software-development/quantitative-research-team-lead-completed-2088533",
-    "postedDate": "2026-01-12T13:19:44",
-    "fetchedAt": "2026-01-19T08:41:36.845027"
-  },
-  {
-    "id": "remotive_1680495",
-    "title": "Office Assistant",
-    "company": "Coalition Technologies ",
-    "location": "Worldwide",
-    "source": "Remotive",
-    "applyLink": "https://remotive.com/remote-jobs/marketing/office-assistant-1680495",
-    "postedDate": "2026-01-11T20:30:35",
-    "fetchedAt": "2026-01-19T08:41:36.845031"
-  },
-  {
-    "id": "remotive_2087132",
-    "title": "Executive Assistant & Accountability Partner (Full‑Time, Remote, ET Hours)",
-    "company": "N/A",
-    "location": "Worldwide",
-    "source": "Remotive",
-    "applyLink": "https://remotive.com/remote-jobs/all-others/executive-assistant-accountability-partner-fulltime-remote-et-hours-2087132",
-    "postedDate": "2026-01-10T23:00:36",
-    "fetchedAt": "2026-01-19T08:41:36.845035"
+    "role": "software",
+    "score": 4,
+    "fetchedAt": "2026-01-19T08:58:22.189228"
   },
   {
     "id": "remotive_1956455",
@@ -137,17 +115,9 @@
     "source": "Remotive",
     "applyLink": "https://remotive.com/remote-jobs/software-development/ios-developer-1956455",
     "postedDate": "2026-01-09T21:15:43",
-    "fetchedAt": "2026-01-19T08:41:36.845039"
-  },
-  {
-    "id": "remotive_2086540",
-    "title": "Inside Sales Contractor",
-    "company": "Credit Wellness, LLC",
-    "location": "Worldwide",
-    "source": "Remotive",
-    "applyLink": "https://remotive.com/remote-jobs/sales-business/inside-sales-contractor-2086540",
-    "postedDate": "2026-01-08T22:01:35",
-    "fetchedAt": "2026-01-19T08:41:36.845043"
+    "role": "software",
+    "score": 3,
+    "fetchedAt": "2026-01-19T08:58:22.189265"
   },
   {
     "id": "remotive_2088531",
@@ -157,7 +127,9 @@
     "source": "Remotive",
     "applyLink": "https://remotive.com/remote-jobs/software-development/senior-frontend-engineer-2088531",
     "postedDate": "2026-01-08T21:29:04",
-    "fetchedAt": "2026-01-19T08:41:36.845047"
+    "role": "software",
+    "score": 3,
+    "fetchedAt": "2026-01-19T08:58:22.189282"
   },
   {
     "id": "remotive_2088527",
@@ -167,7 +139,69 @@
     "source": "Remotive",
     "applyLink": "https://remotive.com/remote-jobs/customer-service/eu-freelance-customer-advisor-inbound-mobile-prepaid-2088527",
     "postedDate": "2026-01-06T19:11:35",
-    "fetchedAt": "2026-01-19T08:41:36.845051"
+    "role": "software",
+    "score": 3,
+    "fetchedAt": "2026-01-19T08:58:22.189291"
+  },
+  {
+    "id": "remotive_2087694",
+    "title": "AI Trainer",
+    "company": "Anuttacon",
+    "location": "Worldwide",
+    "source": "Remotive",
+    "applyLink": "https://remotive.com/remote-jobs/ai-ml/ai-trainer-2087694",
+    "postedDate": "2026-01-12T21:00:39",
+    "role": "other",
+    "score": 2,
+    "fetchedAt": "2026-01-19T08:58:22.189235"
+  },
+  {
+    "id": "remotive_2088533",
+    "title": "Quantitative Research Team Lead (Completed)",
+    "company": "Apexver",
+    "location": "Worldwide",
+    "source": "Remotive",
+    "applyLink": "https://remotive.com/remote-jobs/software-development/quantitative-research-team-lead-completed-2088533",
+    "postedDate": "2026-01-12T13:19:44",
+    "role": "other",
+    "score": 2,
+    "fetchedAt": "2026-01-19T08:58:22.189242"
+  },
+  {
+    "id": "remotive_1680495",
+    "title": "Office Assistant",
+    "company": "Coalition Technologies ",
+    "location": "Worldwide",
+    "source": "Remotive",
+    "applyLink": "https://remotive.com/remote-jobs/marketing/office-assistant-1680495",
+    "postedDate": "2026-01-11T20:30:35",
+    "role": "other",
+    "score": 1,
+    "fetchedAt": "2026-01-19T08:58:22.189248"
+  },
+  {
+    "id": "remotive_2087132",
+    "title": "Executive Assistant & Accountability Partner (Full‑Time, Remote, ET Hours)",
+    "company": "N/A",
+    "location": "Worldwide",
+    "source": "Remotive",
+    "applyLink": "https://remotive.com/remote-jobs/all-others/executive-assistant-accountability-partner-fulltime-remote-et-hours-2087132",
+    "postedDate": "2026-01-10T23:00:36",
+    "role": "other",
+    "score": 1,
+    "fetchedAt": "2026-01-19T08:58:22.189259"
+  },
+  {
+    "id": "remotive_2086540",
+    "title": "Inside Sales Contractor",
+    "company": "Credit Wellness, LLC",
+    "location": "Worldwide",
+    "source": "Remotive",
+    "applyLink": "https://remotive.com/remote-jobs/sales-business/inside-sales-contractor-2086540",
+    "postedDate": "2026-01-08T22:01:35",
+    "role": "other",
+    "score": 1,
+    "fetchedAt": "2026-01-19T08:58:22.189272"
   },
   {
     "id": "remotive_1185979",
@@ -177,7 +211,9 @@
     "source": "Remotive",
     "applyLink": "https://remotive.com/remote-jobs/writing/freelance-writer-1185979",
     "postedDate": "2026-01-04T17:00:55",
-    "fetchedAt": "2026-01-19T08:41:36.845055"
+    "role": "other",
+    "score": 1,
+    "fetchedAt": "2026-01-19T08:58:22.189298"
   },
   {
     "id": "remotive_1749306",
@@ -187,7 +223,9 @@
     "source": "Remotive",
     "applyLink": "https://remotive.com/remote-jobs/writing/copywriter-1749306",
     "postedDate": "2026-01-02T20:00:34",
-    "fetchedAt": "2026-01-19T08:41:36.845059"
+    "role": "other",
+    "score": 1,
+    "fetchedAt": "2026-01-19T08:58:22.189305"
   },
   {
     "id": "remotive_2082736",
@@ -197,7 +235,9 @@
     "source": "Remotive",
     "applyLink": "https://remotive.com/remote-jobs/marketing/senior-amazon-brand-manager-2082736",
     "postedDate": "2025-12-26T07:46:14",
-    "fetchedAt": "2026-01-19T08:41:36.845064"
+    "role": "other",
+    "score": 1,
+    "fetchedAt": "2026-01-19T08:58:22.189312"
   },
   {
     "id": "remotive_2080462",
@@ -207,7 +247,9 @@
     "source": "Remotive",
     "applyLink": "https://remotive.com/remote-jobs/marketing/senior-performance-marketer-full-remote-worldwide-2080462",
     "postedDate": "2025-12-21T16:15:35",
-    "fetchedAt": "2026-01-19T08:41:36.845069"
+    "role": "other",
+    "score": 1,
+    "fetchedAt": "2026-01-19T08:58:22.189319"
   },
   {
     "id": "remotive_1987878",
@@ -217,7 +259,9 @@
     "source": "Remotive",
     "applyLink": "https://remotive.com/remote-jobs/education/language-teachers-1987878",
     "postedDate": "2025-12-21T05:30:48",
-    "fetchedAt": "2026-01-19T08:41:36.845073"
+    "role": "other",
+    "score": 1,
+    "fetchedAt": "2026-01-19T08:58:22.189325"
   },
   {
     "id": "remotive_2088514",
@@ -227,1906 +271,8 @@
     "source": "Remotive",
     "applyLink": "https://remotive.com/remote-jobs/sales-business/chief-operating-officer-2088514",
     "postedDate": "2025-12-19T16:32:23",
-    "fetchedAt": "2026-01-19T08:41:36.845080"
-  },
-  {
-    "id": "remoteok_1129622",
-    "title": "Seeking Professionals for a New Approach an Old Industry",
-    "company": "Global Elite Texas",
-    "location": "Remote",
-    "source": "RemoteOK",
-    "applyLink": "https://remoteOK.com/remote-jobs/remote-seeking-professionals-for-a-new-approach-an-old-industry-global-elite-texas-1129622",
-    "postedDate": "2026-01-19T08:41:36.956781",
-    "fetchedAt": "2026-01-19T08:41:36.956792"
-  },
-  {
-    "id": "remoteok_1129621",
-    "title": "Senior Software Engineer SELECT by DoiT",
-    "company": "DoiT",
-    "location": "Remote",
-    "source": "RemoteOK",
-    "applyLink": "https://remoteOK.com/remote-jobs/remote-senior-software-engineer-select-by-doit-doit-1129621",
-    "postedDate": "2026-01-19T08:41:36.956801",
-    "fetchedAt": "2026-01-19T08:41:36.956803"
-  },
-  {
-    "id": "remoteok_1129620",
-    "title": "Staff Embedded Systems Engineer",
-    "company": "Inspiren",
-    "location": "Remote",
-    "source": "RemoteOK",
-    "applyLink": "https://remoteOK.com/remote-jobs/remote-staff-embedded-systems-engineer-inspiren-1129620",
-    "postedDate": "2026-01-19T08:41:36.956808",
-    "fetchedAt": "2026-01-19T08:41:36.956810"
-  },
-  {
-    "id": "remoteok_1129619",
-    "title": "Senior eCommerce Manager",
-    "company": "JuneShine Brands",
-    "location": "Remote",
-    "source": "RemoteOK",
-    "applyLink": "https://remoteOK.com/remote-jobs/remote-senior-ecommerce-manager-juneshine-brands-1129619",
-    "postedDate": "2026-01-19T08:41:36.956814",
-    "fetchedAt": "2026-01-19T08:41:36.956815"
-  },
-  {
-    "id": "remoteok_1129618",
-    "title": "Software Engineer Full Stack",
-    "company": "AllBooked",
-    "location": "Remote",
-    "source": "RemoteOK",
-    "applyLink": "https://remoteOK.com/remote-jobs/remote-software-engineer-full-stack-allbooked-1129618",
-    "postedDate": "2026-01-19T08:41:36.956818",
-    "fetchedAt": "2026-01-19T08:41:36.956820"
-  },
-  {
-    "id": "remoteok_1129617",
-    "title": "AWS Solution Architect",
-    "company": "NeuraFlash, Part of Accenture",
-    "location": "Remote",
-    "source": "RemoteOK",
-    "applyLink": "https://remoteOK.com/remote-jobs/remote-aws-solution-architect-neuraflash-part-of-accenture-1129617",
-    "postedDate": "2026-01-19T08:41:36.956823",
-    "fetchedAt": "2026-01-19T08:41:36.956825"
-  },
-  {
-    "id": "remoteok_1129616",
-    "title": "AWS Technical Architect",
-    "company": "NeuraFlash, Part of Accenture",
-    "location": "Remote",
-    "source": "RemoteOK",
-    "applyLink": "https://remoteOK.com/remote-jobs/remote-aws-technical-architect-neuraflash-part-of-accenture-1129616",
-    "postedDate": "2026-01-19T08:41:36.956828",
-    "fetchedAt": "2026-01-19T08:41:36.956830"
-  },
-  {
-    "id": "remoteok_1129615",
-    "title": "Staff Software Engineer Cloud Infrastructure",
-    "company": "Tenstorrent",
-    "location": "Remote",
-    "source": "RemoteOK",
-    "applyLink": "https://remoteOK.com/remote-jobs/remote-staff-software-engineer-cloud-infrastructure-tenstorrent-1129615",
-    "postedDate": "2026-01-19T08:41:36.956835",
-    "fetchedAt": "2026-01-19T08:41:36.956837"
-  },
-  {
-    "id": "remoteok_1129614",
-    "title": "Security Infrastructure Engineer",
-    "company": "Tailscale",
-    "location": "Remote",
-    "source": "RemoteOK",
-    "applyLink": "https://remoteOK.com/remote-jobs/remote-security-infrastructure-engineer-tailscale-1129614",
-    "postedDate": "2026-01-19T08:41:36.956840",
-    "fetchedAt": "2026-01-19T08:41:36.956842"
-  },
-  {
-    "id": "remoteok_1129613",
-    "title": "Implementation Specialist Spanish Speaking",
-    "company": "Roofr",
-    "location": "Remote",
-    "source": "RemoteOK",
-    "applyLink": "https://remoteOK.com/remote-jobs/remote-implementation-specialist-spanish-speaking-roofr-1129613",
-    "postedDate": "2026-01-19T08:41:36.956844",
-    "fetchedAt": "2026-01-19T08:41:36.956845"
-  },
-  {
-    "id": "remoteok_1129611",
-    "title": "Software Engineering Intern",
-    "company": "Emma â The Sleep Company",
-    "location": "Remote",
-    "source": "RemoteOK",
-    "applyLink": "https://remoteOK.com/remote-jobs/remote-software-engineering-intern-emma-the-sleep-company-1129611",
-    "postedDate": "2026-01-19T08:41:36.956847",
-    "fetchedAt": "2026-01-19T08:41:36.956848"
-  },
-  {
-    "id": "remoteok_1129610",
-    "title": "Principal Product Manager",
-    "company": "PolicyMe",
-    "location": "Remote",
-    "source": "RemoteOK",
-    "applyLink": "https://remoteOK.com/remote-jobs/remote-principal-product-manager-policyme-1129610",
-    "postedDate": "2026-01-19T08:41:36.956850",
-    "fetchedAt": "2026-01-19T08:41:36.956851"
-  },
-  {
-    "id": "remoteok_1129609",
-    "title": "Product Manager Automotive Vertical",
-    "company": "Conversica",
-    "location": "Remote",
-    "source": "RemoteOK",
-    "applyLink": "https://remoteOK.com/remote-jobs/remote-product-manager-automotive-vertical-conversica-1129609",
-    "postedDate": "2026-01-19T08:41:36.956857",
-    "fetchedAt": "2026-01-19T08:41:36.956858"
-  },
-  {
-    "id": "remoteok_1129608",
-    "title": "Software Engineer I",
-    "company": "Pattern Data",
-    "location": "Remote",
-    "source": "RemoteOK",
-    "applyLink": "https://remoteOK.com/remote-jobs/remote-software-engineer-i-pattern-data-1129608",
-    "postedDate": "2026-01-19T08:41:36.956859",
-    "fetchedAt": "2026-01-19T08:41:36.956860"
-  },
-  {
-    "id": "remoteok_1129607",
-    "title": "Machine Learning Engineer",
-    "company": "Fullscript",
-    "location": "Remote",
-    "source": "RemoteOK",
-    "applyLink": "https://remoteOK.com/remote-jobs/remote-machine-learning-engineer-fullscript-1129607",
-    "postedDate": "2026-01-19T08:41:36.956862",
-    "fetchedAt": "2026-01-19T08:41:36.956863"
-  },
-  {
-    "id": "remoteok_1129606",
-    "title": "Clinical Operations Specialist",
-    "company": "Mood Health",
-    "location": "Remote",
-    "source": "RemoteOK",
-    "applyLink": "https://remoteOK.com/remote-jobs/remote-clinical-operations-specialist-mood-health-1129606",
-    "postedDate": "2026-01-19T08:41:36.956867",
-    "fetchedAt": "2026-01-19T08:41:36.956868"
-  },
-  {
-    "id": "remoteok_1129604",
-    "title": "Senior Machine Learning Engineer",
-    "company": "Fetch",
-    "location": "Remote",
-    "source": "RemoteOK",
-    "applyLink": "https://remoteOK.com/remote-jobs/remote-senior-machine-learning-engineer-fetch-1129604",
-    "postedDate": "2026-01-19T08:41:36.956870",
-    "fetchedAt": "2026-01-19T08:41:36.956870"
-  },
-  {
-    "id": "remoteok_1129603",
-    "title": "VP of Engineering Institutional Trading",
-    "company": "Alpaca",
-    "location": "Remote",
-    "source": "RemoteOK",
-    "applyLink": "https://remoteOK.com/remote-jobs/remote-vp-of-engineering-institutional-trading-alpaca-1129603",
-    "postedDate": "2026-01-19T08:41:36.956872",
-    "fetchedAt": "2026-01-19T08:41:36.956873"
-  },
-  {
-    "id": "remoteok_1129601",
-    "title": "Customer Solutions Engineer",
-    "company": "Sysdig",
-    "location": "Remote",
-    "source": "RemoteOK",
-    "applyLink": "https://remoteOK.com/remote-jobs/remote-customer-solutions-engineer-sysdig-1129601",
-    "postedDate": "2026-01-19T08:41:36.956875",
-    "fetchedAt": "2026-01-19T08:41:36.956876"
-  },
-  {
-    "id": "remoteok_1129600",
-    "title": "Account Executive SMB India",
-    "company": "JumpCloud",
-    "location": "Remote",
-    "source": "RemoteOK",
-    "applyLink": "https://remoteOK.com/remote-jobs/remote-account-executive-smb-india-jumpcloud-1129600",
-    "postedDate": "2026-01-19T08:41:36.956878",
-    "fetchedAt": "2026-01-19T08:41:36.956878"
-  },
-  {
-    "id": "remoteok_1129599",
-    "title": "Senior Manager Revenue Operations",
-    "company": "OpenRouter",
-    "location": "Remote",
-    "source": "RemoteOK",
-    "applyLink": "https://remoteOK.com/remote-jobs/remote-senior-manager-revenue-operations-openrouter-1129599",
-    "postedDate": "2026-01-19T08:41:36.956880",
-    "fetchedAt": "2026-01-19T08:41:36.956881"
-  },
-  {
-    "id": "remoteok_1129598",
-    "title": "Sales Development Representative",
-    "company": "Guusto",
-    "location": "Remote",
-    "source": "RemoteOK",
-    "applyLink": "https://remoteOK.com/remote-jobs/remote-sales-development-representative-guusto-1129598",
-    "postedDate": "2026-01-19T08:41:36.956883",
-    "fetchedAt": "2026-01-19T08:41:36.956884"
-  },
-  {
-    "id": "remoteok_1129597",
-    "title": "Staff Developer Advocate Platform Engineering",
-    "company": "Temporal Technologies",
-    "location": "Remote",
-    "source": "RemoteOK",
-    "applyLink": "https://remoteOK.com/remote-jobs/remote-staff-developer-advocate-platform-engineering-temporal-technologies-1129597",
-    "postedDate": "2026-01-19T08:41:36.956886",
-    "fetchedAt": "2026-01-19T08:41:36.956886"
-  },
-  {
-    "id": "remoteok_1129596",
-    "title": "Senior Software Engineer Analytics",
-    "company": "Ada",
-    "location": "Remote",
-    "source": "RemoteOK",
-    "applyLink": "https://remoteOK.com/remote-jobs/remote-senior-software-engineer-analytics-ada-1129596",
-    "postedDate": "2026-01-19T08:41:36.956888",
-    "fetchedAt": "2026-01-19T08:41:36.956889"
-  },
-  {
-    "id": "remoteok_1129595",
-    "title": "AI Finance Tutor Quantitative Finance",
-    "company": "xAI",
-    "location": "Remote",
-    "source": "RemoteOK",
-    "applyLink": "https://remoteOK.com/remote-jobs/remote-ai-finance-tutor-quantitative-finance-xai-1129595",
-    "postedDate": "2026-01-19T08:41:36.956893",
-    "fetchedAt": "2026-01-19T08:41:36.956894"
-  },
-  {
-    "id": "remoteok_1129594",
-    "title": "Senior Software Engineer Training",
-    "company": "Ada",
-    "location": "Remote",
-    "source": "RemoteOK",
-    "applyLink": "https://remoteOK.com/remote-jobs/remote-senior-software-engineer-training-ada-1129594",
-    "postedDate": "2026-01-19T08:41:36.956897",
-    "fetchedAt": "2026-01-19T08:41:36.956898"
-  },
-  {
-    "id": "remoteok_1129593",
-    "title": "Machine Learning Engineer 3D Vision&Localization",
-    "company": "Bot Auto",
-    "location": "Remote",
-    "source": "RemoteOK",
-    "applyLink": "https://remoteOK.com/remote-jobs/remote-machine-learning-engineer-3d-visionlocalization-bot-auto-1129593",
-    "postedDate": "2026-01-19T08:41:36.956900",
-    "fetchedAt": "2026-01-19T08:41:36.956901"
-  },
-  {
-    "id": "remoteok_1129592",
-    "title": "Senior Quality Engineer",
-    "company": "Khan Academy",
-    "location": "Remote",
-    "source": "RemoteOK",
-    "applyLink": "https://remoteOK.com/remote-jobs/remote-senior-quality-engineer-khan-academy-1129592",
-    "postedDate": "2026-01-19T08:41:36.956903",
-    "fetchedAt": "2026-01-19T08:41:36.956903"
-  },
-  {
-    "id": "remoteok_1129591",
-    "title": "Character Artist Clothing NBA 2K",
-    "company": "Visual Concepts",
-    "location": "Remote",
-    "source": "RemoteOK",
-    "applyLink": "https://remoteOK.com/remote-jobs/remote-character-artist-clothing-nba-2k-visual-concepts-1129591",
-    "postedDate": "2026-01-19T08:41:36.956905",
-    "fetchedAt": "2026-01-19T08:41:36.956906"
-  },
-  {
-    "id": "remoteok_1129590",
-    "title": "Character Artist Clothing NBA 2K",
-    "company": "Visual Concepts",
-    "location": "Remote",
-    "source": "RemoteOK",
-    "applyLink": "https://remoteOK.com/remote-jobs/remote-character-artist-clothing-nba-2k-visual-concepts-1129590",
-    "postedDate": "2026-01-19T08:41:36.956908",
-    "fetchedAt": "2026-01-19T08:41:36.956909"
-  },
-  {
-    "id": "remoteok_1129589",
-    "title": "Manager Sales Development",
-    "company": "Newsela",
-    "location": "Remote",
-    "source": "RemoteOK",
-    "applyLink": "https://remoteOK.com/remote-jobs/remote-manager-sales-development-newsela-1129589",
-    "postedDate": "2026-01-19T08:41:36.956911",
-    "fetchedAt": "2026-01-19T08:41:36.956912"
-  },
-  {
-    "id": "remoteok_1129588",
-    "title": "Salesforce Experience Architect AI and Agentforce",
-    "company": "NeuraFlash, Part of Accenture",
-    "location": "Remote",
-    "source": "RemoteOK",
-    "applyLink": "https://remoteOK.com/remote-jobs/remote-salesforce-experience-architect-ai-and-agentforce-neuraflash-part-of-accenture-1129588",
-    "postedDate": "2026-01-19T08:41:36.956913",
-    "fetchedAt": "2026-01-19T08:41:36.956914"
-  },
-  {
-    "id": "remoteok_1129587",
-    "title": "Associate Customer Success Manager Colombia",
-    "company": "DoiT",
-    "location": "Remote",
-    "source": "RemoteOK",
-    "applyLink": "https://remoteOK.com/remote-jobs/remote-associate-customer-success-manager-colombia-doit-1129587",
-    "postedDate": "2026-01-19T08:41:36.956916",
-    "fetchedAt": "2026-01-19T08:41:36.956917"
-  },
-  {
-    "id": "remoteok_1129586",
-    "title": "Marketing Operations Production Specialist",
-    "company": "Anaplan",
-    "location": "Remote",
-    "source": "RemoteOK",
-    "applyLink": "https://remoteOK.com/remote-jobs/remote-marketing-operations-production-specialist-anaplan-1129586",
-    "postedDate": "2026-01-19T08:41:36.956918",
-    "fetchedAt": "2026-01-19T08:41:36.956919"
-  },
-  {
-    "id": "remoteok_1129585",
-    "title": "Supply Chain Analyst Labor Planning",
-    "company": "ShipBob, Inc.",
-    "location": "Remote",
-    "source": "RemoteOK",
-    "applyLink": "https://remoteOK.com/remote-jobs/remote-supply-chain-analyst-labor-planning-shipbob-inc-1129585",
-    "postedDate": "2026-01-19T08:41:36.956921",
-    "fetchedAt": "2026-01-19T08:41:36.956922"
-  },
-  {
-    "id": "remoteok_1129584",
-    "title": "Enterprise Account Executive",
-    "company": "Anaplan",
-    "location": "Remote",
-    "source": "RemoteOK",
-    "applyLink": "https://remoteOK.com/remote-jobs/remote-enterprise-account-executive-anaplan-1129584",
-    "postedDate": "2026-01-19T08:41:36.956924",
-    "fetchedAt": "2026-01-19T08:41:36.956924"
-  },
-  {
-    "id": "remoteok_1129579",
-    "title": "Account Executive Advisor",
-    "company": "Pathward, N.A.",
-    "location": "Remote",
-    "source": "RemoteOK",
-    "applyLink": "https://remoteOK.com/remote-jobs/remote-account-executive-advisor-pathward-n-a-1129579",
-    "postedDate": "2026-01-19T08:41:36.956926",
-    "fetchedAt": "2026-01-19T08:41:36.956927"
-  },
-  {
-    "id": "remoteok_1129578",
-    "title": "Account Executive Level 2",
-    "company": "Bloomerang",
-    "location": "Remote",
-    "source": "RemoteOK",
-    "applyLink": "https://remoteOK.com/remote-jobs/remote-account-executive-level-2-bloomerang-1129578",
-    "postedDate": "2026-01-19T08:41:36.956929",
-    "fetchedAt": "2026-01-19T08:41:36.956929"
-  },
-  {
-    "id": "remoteok_1129569",
-    "title": "Senior Data Scientist",
-    "company": "Phaidra",
-    "location": "Remote",
-    "source": "RemoteOK",
-    "applyLink": "https://remoteOK.com/remote-jobs/remote-senior-data-scientist-phaidra-1129569",
-    "postedDate": "2026-01-19T08:41:36.956931",
-    "fetchedAt": "2026-01-19T08:41:36.956932"
-  },
-  {
-    "id": "remoteok_1129568",
-    "title": "Director of Engineering Canada",
-    "company": "Alpaca",
-    "location": "Remote",
-    "source": "RemoteOK",
-    "applyLink": "https://remoteOK.com/remote-jobs/remote-director-of-engineering-canada-alpaca-1129568",
-    "postedDate": "2026-01-19T08:41:36.956935",
-    "fetchedAt": "2026-01-19T08:41:36.956936"
-  },
-  {
-    "id": "remoteok_1129566",
-    "title": "Software Engineering Team Lead",
-    "company": "bloXroute Labs",
-    "location": "Remote",
-    "source": "RemoteOK",
-    "applyLink": "https://remoteOK.com/remote-jobs/remote-software-engineering-team-lead-bloxroute-labs-1129566",
-    "postedDate": "2026-01-19T08:41:36.956938",
-    "fetchedAt": "2026-01-19T08:41:36.956939"
-  },
-  {
-    "id": "remoteok_1129565",
-    "title": "Staff Data Software Engineer",
-    "company": "Lookout Inc",
-    "location": "Remote",
-    "source": "RemoteOK",
-    "applyLink": "https://remoteOK.com/remote-jobs/remote-staff-data-software-engineer-lookout-inc-1129565",
-    "postedDate": "2026-01-19T08:41:36.956942",
-    "fetchedAt": "2026-01-19T08:41:36.956943"
-  },
-  {
-    "id": "remoteok_1129564",
-    "title": "Senior Software Engineer",
-    "company": "Fluxon",
-    "location": "Remote",
-    "source": "RemoteOK",
-    "applyLink": "https://remoteOK.com/remote-jobs/remote-senior-software-engineer-fluxon-1129564",
-    "postedDate": "2026-01-19T08:41:36.956945",
-    "fetchedAt": "2026-01-19T08:41:36.956946"
-  },
-  {
-    "id": "remoteok_1129563",
-    "title": "Senior Software Engineer",
-    "company": "Fluxon",
-    "location": "Remote",
-    "source": "RemoteOK",
-    "applyLink": "https://remoteOK.com/remote-jobs/remote-senior-software-engineer-fluxon-1129563",
-    "postedDate": "2026-01-19T08:41:36.956948",
-    "fetchedAt": "2026-01-19T08:41:36.956949"
-  },
-  {
-    "id": "remoteok_1129560",
-    "title": "HR Virtual Assistant",
-    "company": "Assist World",
-    "location": "Remote",
-    "source": "RemoteOK",
-    "applyLink": "https://remoteOK.com/remote-jobs/remote-hr-virtual-assistant-assist-world-1129560",
-    "postedDate": "2026-01-19T08:41:36.956950",
-    "fetchedAt": "2026-01-19T08:41:36.956951"
-  },
-  {
-    "id": "remoteok_1129559",
-    "title": "Solutions Architect Contract Hire",
-    "company": "Lirio",
-    "location": "Remote",
-    "source": "RemoteOK",
-    "applyLink": "https://remoteOK.com/remote-jobs/remote-solutions-architect-contract-hire-lirio-1129559",
-    "postedDate": "2026-01-19T08:41:36.956953",
-    "fetchedAt": "2026-01-19T08:41:36.956954"
-  },
-  {
-    "id": "remoteok_1129558",
-    "title": "Senior Software Engineer",
-    "company": "Fluxon",
-    "location": "Remote",
-    "source": "RemoteOK",
-    "applyLink": "https://remoteOK.com/remote-jobs/remote-senior-software-engineer-fluxon-1129558",
-    "postedDate": "2026-01-19T08:41:36.956955",
-    "fetchedAt": "2026-01-19T08:41:36.956956"
-  },
-  {
-    "id": "remoteok_1129557",
-    "title": "Senior Staff Content Designer Pay Group",
-    "company": "Gusto",
-    "location": "Remote",
-    "source": "RemoteOK",
-    "applyLink": "https://remoteOK.com/remote-jobs/remote-senior-staff-content-designer-pay-group-gusto-1129557",
-    "postedDate": "2026-01-19T08:41:36.956958",
-    "fetchedAt": "2026-01-19T08:41:36.956959"
-  },
-  {
-    "id": "remoteok_1129556",
-    "title": "Senior Software Engineer",
-    "company": "Fluxon",
-    "location": "Remote",
-    "source": "RemoteOK",
-    "applyLink": "https://remoteOK.com/remote-jobs/remote-senior-software-engineer-fluxon-1129556",
-    "postedDate": "2026-01-19T08:41:36.956961",
-    "fetchedAt": "2026-01-19T08:41:36.956961"
-  },
-  {
-    "id": "remoteok_1129555",
-    "title": "Senior Software Engineer",
-    "company": "Fluxon",
-    "location": "Remote",
-    "source": "RemoteOK",
-    "applyLink": "https://remoteOK.com/remote-jobs/remote-senior-software-engineer-fluxon-1129555",
-    "postedDate": "2026-01-19T08:41:36.956964",
-    "fetchedAt": "2026-01-19T08:41:36.956965"
-  },
-  {
-    "id": "remoteok_1129553",
-    "title": "Principal Enterprise Architect",
-    "company": "Versaterm",
-    "location": "Remote",
-    "source": "RemoteOK",
-    "applyLink": "https://remoteOK.com/remote-jobs/remote-principal-enterprise-architect-versaterm-1129553",
-    "postedDate": "2026-01-19T08:41:36.956967",
-    "fetchedAt": "2026-01-19T08:41:36.956967"
-  },
-  {
-    "id": "remoteok_1129552",
-    "title": "Distinguished Engineer Apache Spark",
-    "company": "2100 NVIDIA USA",
-    "location": "Remote",
-    "source": "RemoteOK",
-    "applyLink": "https://remoteOK.com/remote-jobs/remote-distinguished-engineer-apache-spark-2100-nvidia-usa-1129552",
-    "postedDate": "2026-01-19T08:41:36.956969",
-    "fetchedAt": "2026-01-19T08:41:36.956970"
-  },
-  {
-    "id": "remoteok_1129551",
-    "title": "Sr Software Development Engineer",
-    "company": "BeyondTrust",
-    "location": "Remote",
-    "source": "RemoteOK",
-    "applyLink": "https://remoteOK.com/remote-jobs/remote-sr-software-development-engineer-beyondtrust-1129551",
-    "postedDate": "2026-01-19T08:41:36.956974",
-    "fetchedAt": "2026-01-19T08:41:36.956975"
-  },
-  {
-    "id": "remoteok_1129550",
-    "title": "Site Reliability Engineer South Korea",
-    "company": "MinIO",
-    "location": "Remote",
-    "source": "RemoteOK",
-    "applyLink": "https://remoteOK.com/remote-jobs/remote-site-reliability-engineer-south-korea-minio-1129550",
-    "postedDate": "2026-01-19T08:41:36.956977",
-    "fetchedAt": "2026-01-19T08:41:36.956977"
-  },
-  {
-    "id": "remoteok_1129549",
-    "title": "Chief Information Security Officer",
-    "company": "ButterflyMX",
-    "location": "Remote",
-    "source": "RemoteOK",
-    "applyLink": "https://remoteOK.com/remote-jobs/remote-chief-information-security-officer-butterflymx-1129549",
-    "postedDate": "2026-01-19T08:41:36.956981",
-    "fetchedAt": "2026-01-19T08:41:36.956982"
-  },
-  {
-    "id": "remoteok_1129548",
-    "title": "Experienced Software Engineer",
-    "company": "Automattic Careers",
-    "location": "Remote",
-    "source": "RemoteOK",
-    "applyLink": "https://remoteOK.com/remote-jobs/remote-experienced-software-engineer-automattic-careers-1129548",
-    "postedDate": "2026-01-19T08:41:36.956984",
-    "fetchedAt": "2026-01-19T08:41:36.956985"
-  },
-  {
-    "id": "remoteok_1129547",
-    "title": "Product Manager",
-    "company": "Basis Technologies",
-    "location": "Remote",
-    "source": "RemoteOK",
-    "applyLink": "https://remoteOK.com/remote-jobs/remote-product-manager-basis-technologies-1129547",
-    "postedDate": "2026-01-19T08:41:36.956986",
-    "fetchedAt": "2026-01-19T08:41:36.956987"
-  },
-  {
-    "id": "remoteok_1129546",
-    "title": "Team Lead Customer Support",
-    "company": "SpryPoint",
-    "location": "Remote",
-    "source": "RemoteOK",
-    "applyLink": "https://remoteOK.com/remote-jobs/remote-team-lead-customer-support-sprypoint-1129546",
-    "postedDate": "2026-01-19T08:41:36.956989",
-    "fetchedAt": "2026-01-19T08:41:36.956990"
-  },
-  {
-    "id": "remoteok_1129545",
-    "title": "Account Executive",
-    "company": "Quantcast",
-    "location": "Remote",
-    "source": "RemoteOK",
-    "applyLink": "https://remoteOK.com/remote-jobs/remote-account-executive-quantcast-1129545",
-    "postedDate": "2026-01-19T08:41:36.956993",
-    "fetchedAt": "2026-01-19T08:41:36.956994"
-  },
-  {
-    "id": "remoteok_1129544",
-    "title": "Product Designer",
-    "company": "Skio",
-    "location": "Remote",
-    "source": "RemoteOK",
-    "applyLink": "https://remoteOK.com/remote-jobs/remote-product-designer-skio-1129544",
-    "postedDate": "2026-01-19T08:41:36.956996",
-    "fetchedAt": "2026-01-19T08:41:36.956997"
-  },
-  {
-    "id": "remoteok_1129543",
-    "title": "Copywriter",
-    "company": "Unreal Snacks",
-    "location": "Remote",
-    "source": "RemoteOK",
-    "applyLink": "https://remoteOK.com/remote-jobs/remote-copywriter-unreal-snacks-1129543",
-    "postedDate": "2026-01-19T08:41:36.956998",
-    "fetchedAt": "2026-01-19T08:41:36.956999"
-  },
-  {
-    "id": "remoteok_1129542",
-    "title": "Video & Motion Designer",
-    "company": "Karya",
-    "location": "Remote",
-    "source": "RemoteOK",
-    "applyLink": "https://remoteOK.com/remote-jobs/remote-video-motion-designer-karya-1129542",
-    "postedDate": "2026-01-19T08:41:36.957001",
-    "fetchedAt": "2026-01-19T08:41:36.957002"
-  },
-  {
-    "id": "remoteok_1129541",
-    "title": "Product Consultant",
-    "company": "Apply Digital",
-    "location": "Remote",
-    "source": "RemoteOK",
-    "applyLink": "https://remoteOK.com/remote-jobs/remote-product-consultant-apply-digital-1129541",
-    "postedDate": "2026-01-19T08:41:36.957004",
-    "fetchedAt": "2026-01-19T08:41:36.957004"
-  },
-  {
-    "id": "remoteok_1129539",
-    "title": "DevOps Lead Engineer",
-    "company": "Envoy Global, Inc.",
-    "location": "Remote",
-    "source": "RemoteOK",
-    "applyLink": "https://remoteOK.com/remote-jobs/remote-devops-lead-engineer-envoy-global-inc-1129539",
-    "postedDate": "2026-01-19T08:41:36.957006",
-    "fetchedAt": "2026-01-19T08:41:36.957007"
-  },
-  {
-    "id": "remoteok_1129538",
-    "title": "Principal DevOps Engineer Datastores",
-    "company": "Udemy",
-    "location": "Remote",
-    "source": "RemoteOK",
-    "applyLink": "https://remoteOK.com/remote-jobs/remote-principal-devops-engineer-datastores-udemy-1129538",
-    "postedDate": "2026-01-19T08:41:36.957009",
-    "fetchedAt": "2026-01-19T08:41:36.957009"
-  },
-  {
-    "id": "remoteok_1129537",
-    "title": "Software Development Manager",
-    "company": "Mitratech",
-    "location": "Remote",
-    "source": "RemoteOK",
-    "applyLink": "https://remoteOK.com/remote-jobs/remote-software-development-manager-mitratech-1129537",
-    "postedDate": "2026-01-19T08:41:36.957013",
-    "fetchedAt": "2026-01-19T08:41:36.957014"
-  },
-  {
-    "id": "remoteok_1129536",
-    "title": "Solutions Architect Strategic Capture",
-    "company": "Defense Unicorns",
-    "location": "Remote",
-    "source": "RemoteOK",
-    "applyLink": "https://remoteOK.com/remote-jobs/remote-solutions-architect-strategic-capture-defense-unicorns-1129536",
-    "postedDate": "2026-01-19T08:41:36.957016",
-    "fetchedAt": "2026-01-19T08:41:36.957016"
-  },
-  {
-    "id": "remoteok_1129535",
-    "title": "Current openings",
-    "company": "Alpaca",
-    "location": "Remote",
-    "source": "RemoteOK",
-    "applyLink": "https://remoteOK.com/remote-jobs/remote-current-openings-alpaca-1129535",
-    "postedDate": "2026-01-19T08:41:36.957018",
-    "fetchedAt": "2026-01-19T08:41:36.957019"
-  },
-  {
-    "id": "remoteok_1129534",
-    "title": "Character Artist Heads NBA 2K",
-    "company": "Visual Concepts",
-    "location": "Remote",
-    "source": "RemoteOK",
-    "applyLink": "https://remoteOK.com/remote-jobs/remote-character-artist-heads-nba-2k-visual-concepts-1129534",
-    "postedDate": "2026-01-19T08:41:36.957021",
-    "fetchedAt": "2026-01-19T08:41:36.957022"
-  },
-  {
-    "id": "remoteok_1129533",
-    "title": "Sales & Business Development Director",
-    "company": "NEAR Foundation",
-    "location": "Remote",
-    "source": "RemoteOK",
-    "applyLink": "https://remoteOK.com/remote-jobs/remote-sales-business-development-director-near-foundation-1129533",
-    "postedDate": "2026-01-19T08:41:36.957024",
-    "fetchedAt": "2026-01-19T08:41:36.957024"
-  },
-  {
-    "id": "remoteok_1129532",
-    "title": "Senior Data Engineer",
-    "company": "Sanctuary Computer",
-    "location": "Remote",
-    "source": "RemoteOK",
-    "applyLink": "https://remoteOK.com/remote-jobs/remote-senior-data-engineer-sanctuary-computer-1129532",
-    "postedDate": "2026-01-19T08:41:36.957027",
-    "fetchedAt": "2026-01-19T08:41:36.957027"
-  },
-  {
-    "id": "remoteok_1129531",
-    "title": "Software Developer ll ShareGate Foundation",
-    "company": "Workleap",
-    "location": "Remote",
-    "source": "RemoteOK",
-    "applyLink": "https://remoteOK.com/remote-jobs/remote-software-developer-ll-sharegate-foundation-workleap-1129531",
-    "postedDate": "2026-01-19T08:41:36.957029",
-    "fetchedAt": "2026-01-19T08:41:36.957030"
-  },
-  {
-    "id": "remoteok_1129530",
-    "title": "Enterprise Customer Success Manager",
-    "company": "Lumos",
-    "location": "Remote",
-    "source": "RemoteOK",
-    "applyLink": "https://remoteOK.com/remote-jobs/remote-enterprise-customer-success-manager-lumos-1129530",
-    "postedDate": "2026-01-19T08:41:36.957032",
-    "fetchedAt": "2026-01-19T08:41:36.957033"
-  },
-  {
-    "id": "remoteok_1129529",
-    "title": "HR Specialist",
-    "company": "G-P",
-    "location": "Remote",
-    "source": "RemoteOK",
-    "applyLink": "https://remoteOK.com/remote-jobs/remote-hr-specialist-g-p-1129529",
-    "postedDate": "2026-01-19T08:41:36.957034",
-    "fetchedAt": "2026-01-19T08:41:36.957035"
-  },
-  {
-    "id": "remoteok_1129528",
-    "title": "Software Engineer II DevOps",
-    "company": "Sony Interactive Entertainment",
-    "location": "Remote",
-    "source": "RemoteOK",
-    "applyLink": "https://remoteOK.com/remote-jobs/remote-software-engineer-ii-devops-sony-interactive-entertainment-1129528",
-    "postedDate": "2026-01-19T08:41:36.957037",
-    "fetchedAt": "2026-01-19T08:41:36.957038"
-  },
-  {
-    "id": "remoteok_1129527",
-    "title": "Kubernetes Engineer",
-    "company": "LE018 Zelis Healthcare, LLC",
-    "location": "Remote",
-    "source": "RemoteOK",
-    "applyLink": "https://remoteOK.com/remote-jobs/remote-kubernetes-engineer-le018-zelis-healthcare-llc-1129527",
-    "postedDate": "2026-01-19T08:41:36.957041",
-    "fetchedAt": "2026-01-19T08:41:36.957042"
-  },
-  {
-    "id": "remoteok_1129524",
-    "title": "Writer Editor B2B Technology",
-    "company": "LaunchSquad",
-    "location": "Remote",
-    "source": "RemoteOK",
-    "applyLink": "https://remoteOK.com/remote-jobs/remote-writer-editor-b2b-technology-launchsquad-1129524",
-    "postedDate": "2026-01-19T08:41:36.957044",
-    "fetchedAt": "2026-01-19T08:41:36.957045"
-  },
-  {
-    "id": "remoteok_1129523",
-    "title": "Staff Product Manager",
-    "company": "ZenBusiness Inc.",
-    "location": "Remote",
-    "source": "RemoteOK",
-    "applyLink": "https://remoteOK.com/remote-jobs/remote-staff-product-manager-zenbusiness-inc-1129523",
-    "postedDate": "2026-01-19T08:41:36.957046",
-    "fetchedAt": "2026-01-19T08:41:36.957047"
-  },
-  {
-    "id": "remoteok_1129522",
-    "title": "Business Development Manager",
-    "company": "Gate",
-    "location": "Remote",
-    "source": "RemoteOK",
-    "applyLink": "https://remoteOK.com/remote-jobs/remote-business-development-manager-gate-1129522",
-    "postedDate": "2026-01-19T08:41:36.957051",
-    "fetchedAt": "2026-01-19T08:41:36.957052"
-  },
-  {
-    "id": "remoteok_1129520",
-    "title": "Senior Software Engineer Backend",
-    "company": "Cresta",
-    "location": "Remote",
-    "source": "RemoteOK",
-    "applyLink": "https://remoteOK.com/remote-jobs/remote-senior-software-engineer-backend-cresta-1129520",
-    "postedDate": "2026-01-19T08:41:36.957055",
-    "fetchedAt": "2026-01-19T08:41:36.957056"
-  },
-  {
-    "id": "remoteok_1129518",
-    "title": "Associate Director Manufacturing Science and Technology",
-    "company": "Apogee Therapeutics",
-    "location": "Remote",
-    "source": "RemoteOK",
-    "applyLink": "https://remoteOK.com/remote-jobs/remote-associate-director-manufacturing-science-and-technology-apogee-therapeutics-1129518",
-    "postedDate": "2026-01-19T08:41:36.957058",
-    "fetchedAt": "2026-01-19T08:41:36.957058"
-  },
-  {
-    "id": "remoteok_1129517",
-    "title": "Platform & Automation Engineer",
-    "company": "Braze",
-    "location": "Remote",
-    "source": "RemoteOK",
-    "applyLink": "https://remoteOK.com/remote-jobs/remote-platform-automation-engineer-braze-1129517",
-    "postedDate": "2026-01-19T08:41:36.957060",
-    "fetchedAt": "2026-01-19T08:41:36.957061"
-  },
-  {
-    "id": "remoteok_1129516",
-    "title": "Senior Software Engineer",
-    "company": "Clariti Cloud Inc.",
-    "location": "Remote",
-    "source": "RemoteOK",
-    "applyLink": "https://remoteOK.com/remote-jobs/remote-senior-software-engineer-clariti-cloud-inc-1129516",
-    "postedDate": "2026-01-19T08:41:36.957063",
-    "fetchedAt": "2026-01-19T08:41:36.957064"
-  },
-  {
-    "id": "remoteok_1129515",
-    "title": "Quality Analyst II",
-    "company": "Pathward, N.A.",
-    "location": "Remote",
-    "source": "RemoteOK",
-    "applyLink": "https://remoteOK.com/remote-jobs/remote-quality-analyst-ii-pathward-n-a-1129515",
-    "postedDate": "2026-01-19T08:41:36.957065",
-    "fetchedAt": "2026-01-19T08:41:36.957066"
-  },
-  {
-    "id": "yc_2512299707239819871",
-    "title": "◦ Engineering",
-    "company": "YC Startup",
-    "location": null,
-    "source": "YCombinator",
-    "applyLink": "https://www.ycombinator.com/jobs/role/software-engineer",
-    "postedDate": "2026-01-19T08:41:37.394644",
-    "fetchedAt": "2026-01-19T08:41:37.394652"
-  },
-  {
-    "id": "yc_919386702417959137",
-    "title": "◦ Operations",
-    "company": "YC Startup",
-    "location": null,
-    "source": "YCombinator",
-    "applyLink": "https://www.ycombinator.com/jobs/role/operations",
-    "postedDate": "2026-01-19T08:41:37.394674",
-    "fetchedAt": "2026-01-19T08:41:37.394676"
-  },
-  {
-    "id": "yc_4184391060322361068",
-    "title": "◦ Marketing",
-    "company": "YC Startup",
-    "location": null,
-    "source": "YCombinator",
-    "applyLink": "https://www.ycombinator.com/jobs/role/marketing",
-    "postedDate": "2026-01-19T08:41:37.394695",
-    "fetchedAt": "2026-01-19T08:41:37.394698"
-  },
-  {
-    "id": "yc_-1613797626560229055",
-    "title": "◦ Sales",
-    "company": "YC Startup",
-    "location": null,
-    "source": "YCombinator",
-    "applyLink": "https://www.ycombinator.com/jobs/role/sales",
-    "postedDate": "2026-01-19T08:41:37.394707",
-    "fetchedAt": "2026-01-19T08:41:37.394709"
-  },
-  {
-    "id": "yc_-2109673504666530148",
-    "title": "Design & UI/UX",
-    "company": "YC Startup",
-    "location": null,
-    "source": "YCombinator",
-    "applyLink": "https://www.ycombinator.com/jobs/role/designer",
-    "postedDate": "2026-01-19T08:41:37.394718",
-    "fetchedAt": "2026-01-19T08:41:37.394720"
-  },
-  {
-    "id": "yc_-1662679555911879508",
-    "title": "Product",
-    "company": "YC Startup",
-    "location": null,
-    "source": "YCombinator",
-    "applyLink": "https://www.ycombinator.com/jobs/role/product-manager",
-    "postedDate": "2026-01-19T08:41:37.394728",
-    "fetchedAt": "2026-01-19T08:41:37.394730"
-  },
-  {
-    "id": "yc_7868793447796318654",
-    "title": "Recruiting & HR",
-    "company": "YC Startup",
-    "location": null,
-    "source": "YCombinator",
-    "applyLink": "https://www.ycombinator.com/jobs/role/recruiting-hr",
-    "postedDate": "2026-01-19T08:41:37.394739",
-    "fetchedAt": "2026-01-19T08:41:37.394740"
-  },
-  {
-    "id": "yc_433624817817882548",
-    "title": "Sales",
-    "company": "YC Startup",
-    "location": null,
-    "source": "YCombinator",
-    "applyLink": "https://www.ycombinator.com/jobs/role/sales-manager",
-    "postedDate": "2026-01-19T08:41:37.394748",
-    "fetchedAt": "2026-01-19T08:41:37.394750"
-  },
-  {
-    "id": "yc_1565009867831870027",
-    "title": "Science",
-    "company": "YC Startup",
-    "location": null,
-    "source": "YCombinator",
-    "applyLink": "https://www.ycombinator.com/jobs/role/science",
-    "postedDate": "2026-01-19T08:41:37.394758",
-    "fetchedAt": "2026-01-19T08:41:37.394760"
-  },
-  {
-    "id": "yc_-1371427798229861201",
-    "title": "Support & SuccessJobs",
-    "company": "YC Startup",
-    "location": null,
-    "source": "YCombinator",
-    "applyLink": "https://www.ycombinator.com/jobs/role/support",
-    "postedDate": "2026-01-19T08:41:37.394838",
-    "fetchedAt": "2026-01-19T08:41:37.394840"
-  },
-  {
-    "id": "yc_-7091992508757703704",
-    "title": "Jobs inSan Francisco",
-    "company": "YC Startup",
-    "location": null,
-    "source": "YCombinator",
-    "applyLink": "https://www.ycombinator.com/jobs/location/san-francisco",
-    "postedDate": "2026-01-19T08:41:37.394872",
-    "fetchedAt": "2026-01-19T08:41:37.394874"
-  },
-  {
-    "id": "yc_-501294560707379176",
-    "title": "Jobs inNew York",
-    "company": "YC Startup",
-    "location": null,
-    "source": "YCombinator",
-    "applyLink": "https://www.ycombinator.com/jobs/location/new-york",
-    "postedDate": "2026-01-19T08:41:37.394886",
-    "fetchedAt": "2026-01-19T08:41:37.394888"
-  },
-  {
-    "id": "yc_-3285633222262479887",
-    "title": "Jobs inLos Angeles",
-    "company": "YC Startup",
-    "location": null,
-    "source": "YCombinator",
-    "applyLink": "https://www.ycombinator.com/jobs/location/los-angeles",
-    "postedDate": "2026-01-19T08:41:37.394900",
-    "fetchedAt": "2026-01-19T08:41:37.394901"
-  },
-  {
-    "id": "yc_1513159360919697043",
-    "title": "Jobs inSeattle",
-    "company": "YC Startup",
-    "location": null,
-    "source": "YCombinator",
-    "applyLink": "https://www.ycombinator.com/jobs/location/seattle",
-    "postedDate": "2026-01-19T08:41:37.394908",
-    "fetchedAt": "2026-01-19T08:41:37.394909"
-  },
-  {
-    "id": "yc_5310631780843530559",
-    "title": "Jobs inAustin",
-    "company": "YC Startup",
-    "location": null,
-    "source": "YCombinator",
-    "applyLink": "https://www.ycombinator.com/jobs/location/austin",
-    "postedDate": "2026-01-19T08:41:37.394917",
-    "fetchedAt": "2026-01-19T08:41:37.394918"
-  },
-  {
-    "id": "yc_1150273465789884095",
-    "title": "Jobs inChicago",
-    "company": "YC Startup",
-    "location": null,
-    "source": "YCombinator",
-    "applyLink": "https://www.ycombinator.com/jobs/location/chicago",
-    "postedDate": "2026-01-19T08:41:37.394926",
-    "fetchedAt": "2026-01-19T08:41:37.394927"
-  },
-  {
-    "id": "yc_-4978303096970671883",
-    "title": "Jobs inIndia",
-    "company": "YC Startup",
-    "location": null,
-    "source": "YCombinator",
-    "applyLink": "https://www.ycombinator.com/jobs/location/india",
-    "postedDate": "2026-01-19T08:41:37.394933",
-    "fetchedAt": "2026-01-19T08:41:37.394933"
-  },
-  {
-    "id": "yc_10745259516135698",
-    "title": "Software Engineer Jobs in San Francisco",
-    "company": "YC Startup",
-    "location": null,
-    "source": "YCombinator",
-    "applyLink": "https://www.ycombinator.com/jobs/role/software-engineer/san-francisco",
-    "postedDate": "2026-01-19T08:41:37.394939",
-    "fetchedAt": "2026-01-19T08:41:37.394940"
-  },
-  {
-    "id": "yc_788981177043687162",
-    "title": "Recruiting Jobs in San Francisco",
-    "company": "YC Startup",
-    "location": null,
-    "source": "YCombinator",
-    "applyLink": "https://www.ycombinator.com/jobs/role/recruiting-hr/san-francisco",
-    "postedDate": "2026-01-19T08:41:37.394946",
-    "fetchedAt": "2026-01-19T08:41:37.394946"
-  },
-  {
-    "id": "yc_-3980250868907023163",
-    "title": "Product Manager Jobs in San Francisco",
-    "company": "YC Startup",
-    "location": null,
-    "source": "YCombinator",
-    "applyLink": "https://www.ycombinator.com/jobs/role/product-manager/san-francisco",
-    "postedDate": "2026-01-19T08:41:37.394952",
-    "fetchedAt": "2026-01-19T08:41:37.394952"
-  },
-  {
-    "id": "yc_1374586095338961234",
-    "title": "Software Engineer Jobs in New York",
-    "company": "YC Startup",
-    "location": null,
-    "source": "YCombinator",
-    "applyLink": "https://www.ycombinator.com/jobs/role/software-engineer/new-york",
-    "postedDate": "2026-01-19T08:41:37.394960",
-    "fetchedAt": "2026-01-19T08:41:37.394961"
-  },
-  {
-    "id": "yc_-5893649978968831922",
-    "title": "Recruiting Jobs in New York",
-    "company": "YC Startup",
-    "location": null,
-    "source": "YCombinator",
-    "applyLink": "https://www.ycombinator.com/jobs/role/recruiting-hr/new-york",
-    "postedDate": "2026-01-19T08:41:37.394965",
-    "fetchedAt": "2026-01-19T08:41:37.394966"
-  },
-  {
-    "id": "yc_-7446242529934263429",
-    "title": "Product Manager Jobs in New York",
-    "company": "YC Startup",
-    "location": null,
-    "source": "YCombinator",
-    "applyLink": "https://www.ycombinator.com/jobs/role/product-manager/new-york",
-    "postedDate": "2026-01-19T08:41:37.394972",
-    "fetchedAt": "2026-01-19T08:41:37.394973"
-  },
-  {
-    "id": "yc_-6442730831437535984",
-    "title": "Software Engineer Jobs in Los Angeles",
-    "company": "YC Startup",
-    "location": null,
-    "source": "YCombinator",
-    "applyLink": "https://www.ycombinator.com/jobs/role/software-engineer/los-angeles",
-    "postedDate": "2026-01-19T08:41:37.394978",
-    "fetchedAt": "2026-01-19T08:41:37.394978"
-  },
-  {
-    "id": "yc_6593618696711510511",
-    "title": "Recruiting Jobs in Los Angeles",
-    "company": "YC Startup",
-    "location": null,
-    "source": "YCombinator",
-    "applyLink": "https://www.ycombinator.com/jobs/role/recruiting-hr/los-angeles",
-    "postedDate": "2026-01-19T08:41:37.394983",
-    "fetchedAt": "2026-01-19T08:41:37.394984"
-  },
-  {
-    "id": "yc_5207932709645906481",
-    "title": "Product Manager Jobs in Los Angeles",
-    "company": "YC Startup",
-    "location": null,
-    "source": "YCombinator",
-    "applyLink": "https://www.ycombinator.com/jobs/role/product-manager/los-angeles",
-    "postedDate": "2026-01-19T08:41:37.394989",
-    "fetchedAt": "2026-01-19T08:41:37.394990"
-  },
-  {
-    "id": "yc_4146329993158088876",
-    "title": "RemoteSoftware EngineerJobs",
-    "company": "YC Startup",
-    "location": null,
-    "source": "YCombinator",
-    "applyLink": "https://www.ycombinator.com/jobs/role/software-engineer/remote",
-    "postedDate": "2026-01-19T08:41:37.394999",
-    "fetchedAt": "2026-01-19T08:41:37.394999"
-  },
-  {
-    "id": "yc_4385038854363807922",
-    "title": "RemoteDesign & UI/UXJobs",
-    "company": "YC Startup",
-    "location": null,
-    "source": "YCombinator",
-    "applyLink": "https://www.ycombinator.com/jobs/role/designer/remote",
-    "postedDate": "2026-01-19T08:41:37.395006",
-    "fetchedAt": "2026-01-19T08:41:37.395007"
-  },
-  {
-    "id": "yc_8021953356659894293",
-    "title": "RemoteProduct ManagerJobs",
-    "company": "YC Startup",
-    "location": null,
-    "source": "YCombinator",
-    "applyLink": "https://www.ycombinator.com/jobs/role/product-manager/remote",
-    "postedDate": "2026-01-19T08:41:37.395015",
-    "fetchedAt": "2026-01-19T08:41:37.395016"
-  },
-  {
-    "id": "yc_-8493266013730109559",
-    "title": "RemoteRecruiting & HRJobs",
-    "company": "YC Startup",
-    "location": null,
-    "source": "YCombinator",
-    "applyLink": "https://www.ycombinator.com/jobs/role/recruiting-hr/remote",
-    "postedDate": "2026-01-19T08:41:37.395024",
-    "fetchedAt": "2026-01-19T08:41:37.395025"
-  },
-  {
-    "id": "yc_7825218605504905099",
-    "title": "RemoteSalesJobs",
-    "company": "YC Startup",
-    "location": null,
-    "source": "YCombinator",
-    "applyLink": "https://www.ycombinator.com/jobs/role/sales-manager/remote",
-    "postedDate": "2026-01-19T08:41:37.395031",
-    "fetchedAt": "2026-01-19T08:41:37.395032"
-  },
-  {
-    "id": "yc_-2868511477407149811",
-    "title": "RemoteMarketingJobs",
-    "company": "YC Startup",
-    "location": null,
-    "source": "YCombinator",
-    "applyLink": "https://www.ycombinator.com/jobs/role/marketing/remote",
-    "postedDate": "2026-01-19T08:41:37.395038",
-    "fetchedAt": "2026-01-19T08:41:37.395039"
-  },
-  {
-    "id": "yc_-3623586802617263707",
-    "title": "RemoteSupport & SuccessJobs",
-    "company": "YC Startup",
-    "location": null,
-    "source": "YCombinator",
-    "applyLink": "https://www.ycombinator.com/jobs/role/support/remote",
-    "postedDate": "2026-01-19T08:41:37.395045",
-    "fetchedAt": "2026-01-19T08:41:37.395046"
-  },
-  {
-    "id": "yc_-9223315906865326465",
-    "title": "RemoteOperationsJobs",
-    "company": "YC Startup",
-    "location": null,
-    "source": "YCombinator",
-    "applyLink": "https://www.ycombinator.com/jobs/role/operations/remote",
-    "postedDate": "2026-01-19T08:41:37.395052",
-    "fetchedAt": "2026-01-19T08:41:37.395053"
-  },
-  {
-    "id": "yc_6087180181064707038",
-    "title": "RemoteScienceJobs",
-    "company": "YC Startup",
-    "location": null,
-    "source": "YCombinator",
-    "applyLink": "https://www.ycombinator.com/jobs/role/science/remote",
-    "postedDate": "2026-01-19T08:41:37.395059",
-    "fetchedAt": "2026-01-19T08:41:37.395060"
-  },
-  {
-    "id": "internshala_-6669758914738815173",
-    "title": "Product Manager",
-    "company": "Slice",
-    "location": "Remote / Not specified",
-    "source": "Internshala",
-    "applyLink": "https://internshala.com/job/detail/product-manager-job-in-bangalore-at-slice1768552632",
-    "postedDate": "2026-01-19T08:41:38.285702",
-    "fetchedAt": "2026-01-19T08:41:38.285712"
-  },
-  {
-    "id": "internshala_-9028432750369891228",
-    "title": "Product Manager",
-    "company": "UpGrad",
-    "location": "Remote / Not specified",
-    "source": "Internshala",
-    "applyLink": "https://internshala.com/job/detail/fresher-product-manager-job-in-bangalore-at-upgrad1768552931",
-    "postedDate": "2026-01-19T08:41:38.286119",
-    "fetchedAt": "2026-01-19T08:41:38.286121"
-  },
-  {
-    "id": "internshala_3049699094778002758",
-    "title": "Product Manager",
-    "company": "Punt_Partners",
-    "location": "Remote / Not specified",
-    "source": "Internshala",
-    "applyLink": "https://internshala.com/job/detail/product-manager-job-in-bangalore-at-puntpartners1767698828",
-    "postedDate": "2026-01-19T08:41:38.286506",
-    "fetchedAt": "2026-01-19T08:41:38.286508"
-  },
-  {
-    "id": "internshala_1967196915027775291",
-    "title": "Product Manager",
-    "company": "Questhiring",
-    "location": "Remote / Not specified",
-    "source": "Internshala",
-    "applyLink": "https://internshala.com/job/detail/product-manager-job-in-bangalore-at-questhiring1768782696",
-    "postedDate": "2026-01-19T08:41:38.286862",
-    "fetchedAt": "2026-01-19T08:41:38.286864"
-  },
-  {
-    "id": "internshala_-2179033916604828982",
-    "title": "Customer Support Associate",
-    "company": "Unikon.ai",
-    "location": "Remote / Not specified",
-    "source": "Internshala",
-    "applyLink": "https://internshala.com/job/detail/fresher-remote-customer-support-associate-job-at-unikonai1768698294",
-    "postedDate": "2026-01-19T08:41:38.287255",
-    "fetchedAt": "2026-01-19T08:41:38.287257"
-  },
-  {
-    "id": "internshala_-3488410963479926324",
-    "title": "SDE 1 (Backend)",
-    "company": "Licious",
-    "location": "Remote / Not specified",
-    "source": "Internshala",
-    "applyLink": "https://internshala.com/job/detail/fresher-remote-sde-1-backend-job-at-licious1768697917",
-    "postedDate": "2026-01-19T08:41:38.287639",
-    "fetchedAt": "2026-01-19T08:41:38.287641"
-  },
-  {
-    "id": "internshala_-6103138165994908424",
-    "title": "Flutter Developer",
-    "company": "HiroJet",
-    "location": "Remote / Not specified",
-    "source": "Internshala",
-    "applyLink": "https://internshala.com/job/detail/remote-flutter-developer-job-at-hirojet1768698243",
-    "postedDate": "2026-01-19T08:41:38.288001",
-    "fetchedAt": "2026-01-19T08:41:38.288003"
-  },
-  {
-    "id": "internshala_6105048210810076365",
-    "title": "Wealth Manager",
-    "company": "Star Union Dai-ichi Life Insurance Company Limited",
-    "location": "Remote / Not specified",
-    "source": "Internshala",
-    "applyLink": "https://internshala.com/job/detail/wealth-manager-job-in-kerala-at-star-union-dai-ichi-life-insurance-company-limited1767778300",
-    "postedDate": "2026-01-19T08:41:38.288374",
-    "fetchedAt": "2026-01-19T08:41:38.288376"
-  },
-  {
-    "id": "internshala_6088540264812805553",
-    "title": "Client Relationship Manager",
-    "company": "B&B Associates LLP",
-    "location": "Remote / Not specified",
-    "source": "Internshala",
-    "applyLink": "https://internshala.com/job/detail/fresher-client-relationship-manager-job-in-haryana-at-b-b-associates-llp1768610014",
-    "postedDate": "2026-01-19T08:41:38.288746",
-    "fetchedAt": "2026-01-19T08:41:38.288747"
-  },
-  {
-    "id": "internshala_7813081176358376797",
-    "title": "Key Account Executive",
-    "company": "Lloyds Ventures",
-    "location": "Remote / Not specified",
-    "source": "Internshala",
-    "applyLink": "https://internshala.com/job/detail/key-account-executive-job-in-haryana-at-lloyds-ventures1767779410",
-    "postedDate": "2026-01-19T08:41:38.289092",
-    "fetchedAt": "2026-01-19T08:41:38.289094"
-  },
-  {
-    "id": "internshala_8594102609318600376",
-    "title": "Assistant Planner",
-    "company": "Aadyam Handwoven",
-    "location": "Remote / Not specified",
-    "source": "Internshala",
-    "applyLink": "https://internshala.com/job/detail/assistant-planner-job-in-bangalore-at-aadyam-handwoven1767779471",
-    "postedDate": "2026-01-19T08:41:38.290290",
-    "fetchedAt": "2026-01-19T08:41:38.290292"
-  },
-  {
-    "id": "internshala_7884064887573577927",
-    "title": "Project Engineer- 2-3 Years Experience",
-    "company": "Aldecor India",
-    "location": "Remote / Not specified",
-    "source": "Internshala",
-    "applyLink": "https://internshala.com/job/detail/remote-project-engineer-2-3-years-experience-job-at-aldecor-india1768643347",
-    "postedDate": "2026-01-19T08:41:38.290650",
-    "fetchedAt": "2026-01-19T08:41:38.290652"
-  },
-  {
-    "id": "internshala_8512387487527441622",
-    "title": "Customer Operations Associate",
-    "company": "Legend Of Toys",
-    "location": "Remote / Not specified",
-    "source": "Internshala",
-    "applyLink": "https://internshala.com/job/detail/fresher-remote-customer-operations-associate-job-at-legend-of-toys1768646167",
-    "postedDate": "2026-01-19T08:41:38.291027",
-    "fetchedAt": "2026-01-19T08:41:38.291029"
-  },
-  {
-    "id": "internshala_-6882527835302022234",
-    "title": "Customer Support Executive",
-    "company": "Nestasia",
-    "location": "Remote / Not specified",
-    "source": "Internshala",
-    "applyLink": "https://internshala.com/job/detail/fresher-remote-customer-support-executive-job-at-nestasia1768646287",
-    "postedDate": "2026-01-19T08:41:38.291426",
-    "fetchedAt": "2026-01-19T08:41:38.291428"
-  },
-  {
-    "id": "internshala_1013498183397905641",
-    "title": "Key Account Manager",
-    "company": "Stahl Kitchens",
-    "location": "Remote / Not specified",
-    "source": "Internshala",
-    "applyLink": "https://internshala.com/job/detail/key-account-manager-job-in-maharashtra-at-stahl-kitchens1768609872",
-    "postedDate": "2026-01-19T08:41:38.291777",
-    "fetchedAt": "2026-01-19T08:41:38.291778"
-  },
-  {
-    "id": "internshala_-2276963642654486556",
-    "title": "Azure AI Engineer",
-    "company": "ThoughtSol Infotech Ltd.",
-    "location": "Remote / Not specified",
-    "source": "Internshala",
-    "applyLink": "https://internshala.com/job/detail/remote-azure-ai-engineer-job-at-thoughtsol-infotech-ltd1768646709",
-    "postedDate": "2026-01-19T08:41:38.292128",
-    "fetchedAt": "2026-01-19T08:41:38.292129"
-  },
-  {
-    "id": "internshala_-2488718397685865751",
-    "title": "Community Support Specialist",
-    "company": "GETSETFIT",
-    "location": "Remote / Not specified",
-    "source": "Internshala",
-    "applyLink": "https://internshala.com/job/detail/remote-community-support-specialist-job-at-getsetfit1768646715",
-    "postedDate": "2026-01-19T08:41:38.292500",
-    "fetchedAt": "2026-01-19T08:41:38.292502"
-  },
-  {
-    "id": "internshala_-1399135139650072055",
-    "title": "Junior Accountant",
-    "company": "Talent Corner HR Services Pvt Ltd",
-    "location": "Remote / Not specified",
-    "source": "Internshala",
-    "applyLink": "https://internshala.com/job/detail/junior-accountant-job-in-delhi-at-talent-corner-hr-services-pvt-ltd1768609910",
-    "postedDate": "2026-01-19T08:41:38.292859",
-    "fetchedAt": "2026-01-19T08:41:38.292860"
-  },
-  {
-    "id": "internshala_-8923137534574030742",
-    "title": "Operations Associate",
-    "company": "XYLEM LEARNING",
-    "location": "Remote / Not specified",
-    "source": "Internshala",
-    "applyLink": "https://internshala.com/job/detail/remote-operations-associate-job-at-xylem-learning1768644790",
-    "postedDate": "2026-01-19T08:41:38.293231",
-    "fetchedAt": "2026-01-19T08:41:38.293232"
-  },
-  {
-    "id": "internshala_-1883741632633525381",
-    "title": "Database Cloud Architect",
-    "company": "Jio",
-    "location": "Remote / Not specified",
-    "source": "Internshala",
-    "applyLink": "https://internshala.com/job/detail/database-cloud-architect-job-in-multiple-locations-at-jio1767832218",
-    "postedDate": "2026-01-19T08:41:38.293590",
-    "fetchedAt": "2026-01-19T08:41:38.293591"
-  },
-  {
-    "id": "internshala_-3738404103774660751",
-    "title": "Technical Analyst",
-    "company": "M/s Pacific Spirits Pvt. Ltd.",
-    "location": "Remote / Not specified",
-    "source": "Internshala",
-    "applyLink": "https://internshala.com/job/detail/fresher-remote-technical-analyst-job-at-m-s-pacific-spirits-pvt-ltd1768645510",
-    "postedDate": "2026-01-19T08:41:38.293960",
-    "fetchedAt": "2026-01-19T08:41:38.293961"
-  },
-  {
-    "id": "internshala_-6884395716999565266",
-    "title": "Purchase Executive",
-    "company": "RacknSell Online Services Private Limited",
-    "location": "Remote / Not specified",
-    "source": "Internshala",
-    "applyLink": "https://internshala.com/job/detail/purchase-executive-job-in-noida-at-racknsell-online-services-private-limited1767784271",
-    "postedDate": "2026-01-19T08:41:38.294377",
-    "fetchedAt": "2026-01-19T08:41:38.294378"
-  },
-  {
-    "id": "internshala_2951480059590223570",
-    "title": "Java Full Stack Developer",
-    "company": "AccioJob",
-    "location": "Remote / Not specified",
-    "source": "Internshala",
-    "applyLink": "https://internshala.com/job/detail/fresher-java-full-stack-developer-job-in-bangalore-at-acciojob1767832225",
-    "postedDate": "2026-01-19T08:41:38.294801",
-    "fetchedAt": "2026-01-19T08:41:38.294803"
-  },
-  {
-    "id": "internshala_-3542908791897383327",
-    "title": "IT Support Executive - Onsite",
-    "company": "UpEducators",
-    "location": "Remote / Not specified",
-    "source": "Internshala",
-    "applyLink": "https://internshala.com/job/detail/fresher-remote-part-time-it-support-executive-onsite-job-at-upeducators1767783967",
-    "postedDate": "2026-01-19T08:41:38.295202",
-    "fetchedAt": "2026-01-19T08:41:38.295203"
-  },
-  {
-    "id": "internshala_-7928712542751434624",
-    "title": "Key Account Manager",
-    "company": "Agarwal Carriers & Equipment Services (ACES)",
-    "location": "Remote / Not specified",
-    "source": "Internshala",
-    "applyLink": "https://internshala.com/job/detail/key-account-manager-job-in-haryana-at-agarwal-carriers-equipment-services-aces1768609921",
-    "postedDate": "2026-01-19T08:41:38.295567",
-    "fetchedAt": "2026-01-19T08:41:38.295568"
-  },
-  {
-    "id": "internshala_-5301391520450122108",
-    "title": "Store Manager",
-    "company": "Signature Scents & Co.",
-    "location": "Remote / Not specified",
-    "source": "Internshala",
-    "applyLink": "https://internshala.com/job/detail/fresher-store-manager-job-in-bangalore-at-signature-scents-co1767798853",
-    "postedDate": "2026-01-19T08:41:38.295984",
-    "fetchedAt": "2026-01-19T08:41:38.295986"
-  },
-  {
-    "id": "internshala_2839482242089028893",
-    "title": "Travel Consultant",
-    "company": "SkyEagleTrip",
-    "location": "Remote / Not specified",
-    "source": "Internshala",
-    "applyLink": "https://internshala.com/job/detail/fresher-travel-consultant-job-in-ahmedabad-at-skyeagletrip1768642989",
-    "postedDate": "2026-01-19T08:41:38.296373",
-    "fetchedAt": "2026-01-19T08:41:38.296375"
-  },
-  {
-    "id": "internshala_-4803645901959358775",
-    "title": "Software Test Engineer",
-    "company": "Talent Toppers",
-    "location": "Remote / Not specified",
-    "source": "Internshala",
-    "applyLink": "https://internshala.com/job/detail/remote-software-test-engineer-job-at-talent-toppers1768644847",
-    "postedDate": "2026-01-19T08:41:38.296730",
-    "fetchedAt": "2026-01-19T08:41:38.296731"
-  },
-  {
-    "id": "internshala_2650504427411105172",
-    "title": "Customer Service Specialist",
-    "company": "TP",
-    "location": "Remote / Not specified",
-    "source": "Internshala",
-    "applyLink": "https://internshala.com/job/detail/fresher-remote-customer-service-specialist-job-at-tp1768645029",
-    "postedDate": "2026-01-19T08:41:38.297117",
-    "fetchedAt": "2026-01-19T08:41:38.297119"
-  },
-  {
-    "id": "internshala_-2361904658723600400",
-    "title": "Customer Support Engineer",
-    "company": "Rokad",
-    "location": "Remote / Not specified",
-    "source": "Internshala",
-    "applyLink": "https://internshala.com/job/detail/fresher-remote-customer-support-engineer-job-at-rokad1768645090",
-    "postedDate": "2026-01-19T08:41:38.297530",
-    "fetchedAt": "2026-01-19T08:41:38.297537"
-  },
-  {
-    "id": "internshala_-5629217991594281910",
-    "title": "Subject Matter Expert - Jira",
-    "company": "Turing",
-    "location": "Remote / Not specified",
-    "source": "Internshala",
-    "applyLink": "https://internshala.com/job/detail/remote-part-time-subject-matter-expert-jira-job-at-turing1768646827",
-    "postedDate": "2026-01-19T08:41:38.297921",
-    "fetchedAt": "2026-01-19T08:41:38.297923"
-  },
-  {
-    "id": "internshala_501934152757075683",
-    "title": "Associate Success Consultant",
-    "company": "Wooqer",
-    "location": "Remote / Not specified",
-    "source": "Internshala",
-    "applyLink": "https://internshala.com/job/detail/fresher-remote-associate-success-consultant-job-at-wooqer1768646952",
-    "postedDate": "2026-01-19T08:41:38.298315",
-    "fetchedAt": "2026-01-19T08:41:38.298317"
-  },
-  {
-    "id": "internshala_2153600171032479537",
-    "title": "Administration & Data Entry (Legal Clerk)",
-    "company": "TEKH-IN",
-    "location": "Remote / Not specified",
-    "source": "Internshala",
-    "applyLink": "https://internshala.com/job/detail/fresher-remote-administration-data-entry-legal-clerk-job-at-tekh-in1768647014",
-    "postedDate": "2026-01-19T08:41:38.298696",
-    "fetchedAt": "2026-01-19T08:41:38.298697"
-  },
-  {
-    "id": "internshala_1011601813205142273",
-    "title": "Subject Matter Expert - Jira",
-    "company": "Turing",
-    "location": "Remote / Not specified",
-    "source": "Internshala",
-    "applyLink": "https://internshala.com/job/detail/remote-part-time-subject-matter-expert-jira-job-at-turing1768647080",
-    "postedDate": "2026-01-19T08:41:38.299064",
-    "fetchedAt": "2026-01-19T08:41:38.299065"
-  },
-  {
-    "id": "internshala_1301469963921660956",
-    "title": "Telecaller",
-    "company": "CreditMantri",
-    "location": "Remote / Not specified",
-    "source": "Internshala",
-    "applyLink": "https://internshala.com/job/detail/fresher-telecaller-job-in-chennai-at-monica-n1767782930",
-    "postedDate": "2026-01-19T08:41:38.299477",
-    "fetchedAt": "2026-01-19T08:41:38.299479"
-  },
-  {
-    "id": "internshala_6187182587475456123",
-    "title": "Mobile Backend Engineer",
-    "company": "BON",
-    "location": "Remote / Not specified",
-    "source": "Internshala",
-    "applyLink": "https://internshala.com/job/detail/fresher-remote-mobile-backend-engineer-job-at-bon1768647312",
-    "postedDate": "2026-01-19T08:41:38.299850",
-    "fetchedAt": "2026-01-19T08:41:38.299852"
-  },
-  {
-    "id": "internshala_2239235171030354715",
-    "title": "Tamil Counsellor",
-    "company": "PW (PhysicsWallah)",
-    "location": "Remote / Not specified",
-    "source": "Internshala",
-    "applyLink": "https://internshala.com/job/detail/remote-tamil-counsellor-job-at-pw-physicswallah1768647369",
-    "postedDate": "2026-01-19T08:41:38.300225",
-    "fetchedAt": "2026-01-19T08:41:38.300227"
-  },
-  {
-    "id": "internshala_6469450904801429534",
-    "title": "Telecaller",
-    "company": "ConfirmU",
-    "location": "Remote / Not specified",
-    "source": "Internshala",
-    "applyLink": "https://internshala.com/job/detail/fresher-remote-telecaller-job-at-confirmu1768647378",
-    "postedDate": "2026-01-19T08:41:38.300613",
-    "fetchedAt": "2026-01-19T08:41:38.300614"
-  },
-  {
-    "id": "internshala_-5136470658087584751",
-    "title": "Data Governance",
-    "company": "ALIQAN Technologies",
-    "location": "Remote / Not specified",
-    "source": "Internshala",
-    "applyLink": "https://internshala.com/job/detail/data-governance-job-in-chennai-at-aliqan-technologies1767832211",
-    "postedDate": "2026-01-19T08:41:38.300968",
-    "fetchedAt": "2026-01-19T08:41:38.300970"
-  },
-  {
-    "id": "internshala_-483390807814505817",
-    "title": "Data Engineer",
-    "company": "PharmEasy",
-    "location": "Remote / Not specified",
-    "source": "Internshala",
-    "applyLink": "https://internshala.com/job/detail/remote-data-engineer-job-at-pharmeasy1768647551",
-    "postedDate": "2026-01-19T08:41:38.301367",
-    "fetchedAt": "2026-01-19T08:41:38.301370"
-  },
-  {
-    "id": "internshala_4651564721940312657",
-    "title": "Back End Developer",
-    "company": "Maco Corporation India Private Limited",
-    "location": "Remote / Not specified",
-    "source": "Internshala",
-    "applyLink": "https://internshala.com/job/detail/back-end-developer-job-in-kolkata-at-maco-corporation-india-private-limited1768609878",
-    "postedDate": "2026-01-19T08:41:38.301737",
-    "fetchedAt": "2026-01-19T08:41:38.301738"
-  },
-  {
-    "id": "internshala_-7708674219369616508",
-    "title": "Account Manager",
-    "company": "Office Hub",
-    "location": "Remote / Not specified",
-    "source": "Internshala",
-    "applyLink": "https://internshala.com/job/detail/fresher-account-manager-job-in-bangalore-at-office-hub1768642273",
-    "postedDate": "2026-01-19T08:41:38.302119",
-    "fetchedAt": "2026-01-19T08:41:38.302121"
-  },
-  {
-    "id": "internshala_6724716730856960217",
-    "title": "NRI Wealth Manager",
-    "company": "SBNRI",
-    "location": "Remote / Not specified",
-    "source": "Internshala",
-    "applyLink": "https://internshala.com/job/detail/remote-nri-wealth-manager-job-at-sbnri1768642275",
-    "postedDate": "2026-01-19T08:41:38.302508",
-    "fetchedAt": "2026-01-19T08:41:38.302510"
-  },
-  {
-    "id": "internshala_-3560408523429254364",
-    "title": "Senior Associate - Insurance Operation [T500-21879]",
-    "company": "Arch Global Services India",
-    "location": "Remote / Not specified",
-    "source": "Internshala",
-    "applyLink": "https://internshala.com/job/detail/remote-senior-associate-insurance-operation-t500-21879-job-at-arch-global-services-india1768642509",
-    "postedDate": "2026-01-19T08:41:38.302867",
-    "fetchedAt": "2026-01-19T08:41:38.302868"
-  },
-  {
-    "id": "internshala_1598123918791429764",
-    "title": "Business Analyst",
-    "company": "Ola",
-    "location": "Remote / Not specified",
-    "source": "Internshala",
-    "applyLink": "https://internshala.com/job/detail/fresher-business-analyst-job-in-bangalore-at-ola1768609991",
-    "postedDate": "2026-01-19T08:41:39.058492",
-    "fetchedAt": "2026-01-19T08:41:39.058501"
-  },
-  {
-    "id": "internshala_-8450899066175957006",
-    "title": "Business Analyst",
-    "company": "VMock",
-    "location": "Remote / Not specified",
-    "source": "Internshala",
-    "applyLink": "https://internshala.com/job/detail/business-analyst-job-in-haryana-at-vmock1768734910",
-    "postedDate": "2026-01-19T08:41:39.058878",
-    "fetchedAt": "2026-01-19T08:41:39.058880"
-  },
-  {
-    "id": "internshala_774957017158125168",
-    "title": "Business Analyst",
-    "company": "IGT Solutions",
-    "location": "Remote / Not specified",
-    "source": "Internshala",
-    "applyLink": "https://internshala.com/job/detail/fresher-business-analyst-job-in-haryana-at-igt-solutions1768733657",
-    "postedDate": "2026-01-19T08:41:39.059289",
-    "fetchedAt": "2026-01-19T08:41:39.059292"
-  },
-  {
-    "id": "internshala_5498904003067490164",
-    "title": "Business Analyst",
-    "company": "Asahi India Glass Limited (AIS)",
-    "location": "Remote / Not specified",
-    "source": "Internshala",
-    "applyLink": "https://internshala.com/job/detail/business-analyst-job-in-haryana-at-asahi-india-glass-limited-ais1767954971",
-    "postedDate": "2026-01-19T08:41:39.059663",
-    "fetchedAt": "2026-01-19T08:41:39.059665"
-  },
-  {
-    "id": "internshala_-3671430846485329508",
-    "title": "Business Analyst",
-    "company": "Kauvery Hospital",
-    "location": "Remote / Not specified",
-    "source": "Internshala",
-    "applyLink": "https://internshala.com/job/detail/fresher-business-analyst-job-in-chennai-at-kauvery-hospital1767351188",
-    "postedDate": "2026-01-19T08:41:39.060039",
-    "fetchedAt": "2026-01-19T08:41:39.060040"
-  },
-  {
-    "id": "internshala_-7058058288528421372",
-    "title": "Business Analyst",
-    "company": "Innefu Labs",
-    "location": "Remote / Not specified",
-    "source": "Internshala",
-    "applyLink": "https://internshala.com/job/detail/fresher-business-analyst-job-in-ahmedabad-at-innefu-labs1767955628",
-    "postedDate": "2026-01-19T08:41:39.060438",
-    "fetchedAt": "2026-01-19T08:41:39.060440"
-  },
-  {
-    "id": "internshala_8999585574867507565",
-    "title": "Business Analyst",
-    "company": "OptiSol Business Solutions",
-    "location": "Remote / Not specified",
-    "source": "Internshala",
-    "applyLink": "https://internshala.com/job/detail/business-analyst-job-in-chennai-at-optisol-business-solutions1768782663",
-    "postedDate": "2026-01-19T08:41:39.060807",
-    "fetchedAt": "2026-01-19T08:41:39.060809"
-  },
-  {
-    "id": "internshala_8008970180444039581",
-    "title": "Business Analyst",
-    "company": "Pilgrim",
-    "location": "Remote / Not specified",
-    "source": "Internshala",
-    "applyLink": "https://internshala.com/job/detail/business-analyst-job-in-maharashtra-at-pilgrim1768782707",
-    "postedDate": "2026-01-19T08:41:39.061168",
-    "fetchedAt": "2026-01-19T08:41:39.061169"
-  },
-  {
-    "id": "internshala_-4940240692239433580",
-    "title": "Business Analyst",
-    "company": "Bachatt",
-    "location": "Remote / Not specified",
-    "source": "Internshala",
-    "applyLink": "https://internshala.com/job/detail/fresher-business-analyst-job-in-haryana-at-bachatt1768782658",
-    "postedDate": "2026-01-19T08:41:39.061563",
-    "fetchedAt": "2026-01-19T08:41:39.061565"
-  },
-  {
-    "id": "internshala_3436645032810576444",
-    "title": "Business Analyst",
-    "company": "Startup Accelerator Chamber Of Commerce",
-    "location": "Remote / Not specified",
-    "source": "Internshala",
-    "applyLink": "https://internshala.com/job/detail/business-analyst-job-in-gandhinagar-at-startup-accelerator-chamber-of-commerce1768458167",
-    "postedDate": "2026-01-19T08:41:39.061939",
-    "fetchedAt": "2026-01-19T08:41:39.061940"
-  },
-  {
-    "id": "internshala_8960813739252726982",
-    "title": "Business Analyst",
-    "company": "Newtuple Technologies Private Limited",
-    "location": "Remote / Not specified",
-    "source": "Internshala",
-    "applyLink": "https://internshala.com/job/detail/business-analyst-job-in-pune-at-newtuple-technologies-private-limited1767584449",
-    "postedDate": "2026-01-19T08:41:39.063097",
-    "fetchedAt": "2026-01-19T08:41:39.063098"
-  },
-  {
-    "id": "internshala_-3352555107373223184",
-    "title": "Business Analyst",
-    "company": "Trade Blog Platform",
-    "location": "Remote / Not specified",
-    "source": "Internshala",
-    "applyLink": "https://internshala.com/job/detail/remote-business-analyst-job-at-trade-blog-platform1768579713",
-    "postedDate": "2026-01-19T08:41:39.063536",
-    "fetchedAt": "2026-01-19T08:41:39.063538"
-  },
-  {
-    "id": "internshala_-3413855362754936295",
-    "title": "Business Analyst",
-    "company": "Sunny_6400 Limited",
-    "location": "Remote / Not specified",
-    "source": "Internshala",
-    "applyLink": "https://internshala.com/job/detail/fresher-remote-part-time-business-analyst-job-at-sunny6400-limited1768765350",
-    "postedDate": "2026-01-19T08:41:39.063922",
-    "fetchedAt": "2026-01-19T08:41:39.063924"
-  },
-  {
-    "id": "internshala_7839667845331124273",
-    "title": "Business Analyst",
-    "company": "Across The Globe (ATG)",
-    "location": "Remote / Not specified",
-    "source": "Internshala",
-    "applyLink": "https://internshala.com/job/detail/business-analyst-job-in-bangalore-at-across-the-globe-atg1768313998",
-    "postedDate": "2026-01-19T08:41:39.064359",
-    "fetchedAt": "2026-01-19T08:41:39.064361"
-  },
-  {
-    "id": "internshala_-1824069230503073021",
-    "title": "Business Analyst",
-    "company": "ToppersNotes",
-    "location": "Remote / Not specified",
-    "source": "Internshala",
-    "applyLink": "https://internshala.com/job/detail/business-analyst-job-in-jaipur-at-toppersnotes1768553592",
-    "postedDate": "2026-01-19T08:41:39.064783",
-    "fetchedAt": "2026-01-19T08:41:39.064784"
-  },
-  {
-    "id": "internshala_-7177664100505711084",
-    "title": "Business Analyst",
-    "company": "Flivo.ai",
-    "location": "Remote / Not specified",
-    "source": "Internshala",
-    "applyLink": "https://internshala.com/job/detail/remote-business-analyst-job-at-flivoai1766572794",
-    "postedDate": "2026-01-19T08:41:39.065213",
-    "fetchedAt": "2026-01-19T08:41:39.065214"
-  },
-  {
-    "id": "internshala_-1290898136895280573",
-    "title": "Business Analyst",
-    "company": "ZustPe Payments Private Limited",
-    "location": "Remote / Not specified",
-    "source": "Internshala",
-    "applyLink": "https://internshala.com/job/detail/fresher-business-analyst-job-in-chennai-at-zustpe-payments-private-limited1767094789",
-    "postedDate": "2026-01-19T08:41:39.065670",
-    "fetchedAt": "2026-01-19T08:41:39.065672"
-  },
-  {
-    "id": "internshala_-5868934185008136808",
-    "title": "Business Analyst",
-    "company": "Nilank Technologies Pvt. Ltd",
-    "location": "Remote / Not specified",
-    "source": "Internshala",
-    "applyLink": "https://internshala.com/job/detail/business-analyst-job-in-noida-at-nilank-technologies-pvt-ltd1767780610",
-    "postedDate": "2026-01-19T08:41:39.066075",
-    "fetchedAt": "2026-01-19T08:41:39.066076"
-  },
-  {
-    "id": "internshala_-69081017058360187",
-    "title": "Business Analyst",
-    "company": "IESoft Technologies Private Limited",
-    "location": "Remote / Not specified",
-    "source": "Internshala",
-    "applyLink": "https://internshala.com/job/detail/remote-business-analyst-job-at-iesoft-technologies-private-limited1766223787",
-    "postedDate": "2026-01-19T08:41:39.066520",
-    "fetchedAt": "2026-01-19T08:41:39.066522"
-  },
-  {
-    "id": "internshala_-6197388608619849979",
-    "title": "Business Analyst",
-    "company": "Rajlaxmi Solutions Private Limited",
-    "location": "Remote / Not specified",
-    "source": "Internshala",
-    "applyLink": "https://internshala.com/job/detail/business-analyst-job-in-multiple-locations-at-rajlaxmi-solutions-private-limited1768020726",
-    "postedDate": "2026-01-19T08:41:39.066953",
-    "fetchedAt": "2026-01-19T08:41:39.066955"
-  },
-  {
-    "id": "internshala_-4647170282458609962",
-    "title": "Business Analyst",
-    "company": "Buildhomemart Techno Solutions",
-    "location": "Remote / Not specified",
-    "source": "Internshala",
-    "applyLink": "https://internshala.com/job/detail/business-analyst-job-in-madurai-at-buildhomemart-techno-solutions1766563482",
-    "postedDate": "2026-01-19T08:41:39.067348",
-    "fetchedAt": "2026-01-19T08:41:39.067350"
-  },
-  {
-    "id": "internshala_-7954376623770665561",
-    "title": "Business Analyst",
-    "company": "Furlenco",
-    "location": "Remote / Not specified",
-    "source": "Internshala",
-    "applyLink": "https://internshala.com/job/detail/business-analyst-job-in-bangalore-at-furlenco1767268028",
-    "postedDate": "2026-01-19T08:41:39.067706",
-    "fetchedAt": "2026-01-19T08:41:39.067708"
-  },
-  {
-    "id": "internshala_-3492672923772429821",
-    "title": "Business Analyst",
-    "company": "MCaffeine",
-    "location": "Remote / Not specified",
-    "source": "Internshala",
-    "applyLink": "https://internshala.com/job/detail/business-analyst-job-in-maharashtra-at-mcaffeine1766925430",
-    "postedDate": "2026-01-19T08:41:39.068065",
-    "fetchedAt": "2026-01-19T08:41:39.068067"
-  },
-  {
-    "id": "internshala_-1467709238234797819",
-    "title": "Business Analyst",
-    "company": "Twixor",
-    "location": "Remote / Not specified",
-    "source": "Internshala",
-    "applyLink": "https://internshala.com/job/detail/business-analyst-job-in-chennai-at-twixor1768609810",
-    "postedDate": "2026-01-19T08:41:39.068433",
-    "fetchedAt": "2026-01-19T08:41:39.068435"
-  },
-  {
-    "id": "internshala_5499101042612944604",
-    "title": "Business Analyst",
-    "company": "Twixor",
-    "location": "Remote / Not specified",
-    "source": "Internshala",
-    "applyLink": "https://internshala.com/job/detail/business-analyst-job-in-chennai-at-twixor1767918614",
-    "postedDate": "2026-01-19T08:41:39.068789",
-    "fetchedAt": "2026-01-19T08:41:39.068791"
-  },
-  {
-    "id": "internshala_988229203865260774",
-    "title": "Business Analyst",
-    "company": "Twixor",
-    "location": "Remote / Not specified",
-    "source": "Internshala",
-    "applyLink": "https://internshala.com/job/detail/business-analyst-job-in-chennai-at-twixor1767659415",
-    "postedDate": "2026-01-19T08:41:39.069145",
-    "fetchedAt": "2026-01-19T08:41:39.069147"
-  },
-  {
-    "id": "internshala_-998767479333391925",
-    "title": "Business Analyst",
-    "company": "Ikastar",
-    "location": "Remote / Not specified",
-    "source": "Internshala",
-    "applyLink": "https://internshala.com/job/detail/fresher-business-analyst-job-in-coimbatore-at-ikastar1764580544",
-    "postedDate": "2026-01-19T08:41:39.069540",
-    "fetchedAt": "2026-01-19T08:41:39.069542"
+    "role": "other",
+    "score": 1,
+    "fetchedAt": "2026-01-19T08:58:22.189331"
   }
 ]
