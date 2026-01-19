@@ -1,5 +1,5 @@
 """
-PJIS – Job Intelligence Scraper (ATS API Edition)
+PJIS - Job Intelligence Scraper (ATS API Edition)
 Reliable • Logged • Production Safe
 """
 
@@ -13,26 +13,30 @@ from bs4 import BeautifulSoup
 # GLOBAL CONFIG
 # -------------------------------------------------
 HEADERS = {
-    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; PJISBot/1.0)"
+    "User-Agent": (
+        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
+        "AppleWebKit/537.36 (KHTML, like Gecko) "
+        "Chrome/120.0.0.0 Safari/537.36"
+    )
 }
 
-TIMEOUT = 10
-
+TIMEOUT = 12
 
 # -------------------------------------------------
-# COMPANY CONFIG (ATS APIs)
+# COMPANY CONFIG (ATS APIs – FIXED SLUGS)
 # -------------------------------------------------
 TOP_COMPANIES = [
-    {"name": "Stripe", "ats": "lever", "slug": "stripe"},
-    {"name": "Razorpay", "ats": "lever", "slug": "razorpay"},
-    {"name": "Paytm", "ats": "lever", "slug": "paytm"},
+    # Lever (only companies that still expose JSON)
     {"name": "Notion", "ats": "lever", "slug": "notion"},
     {"name": "Figma", "ats": "lever", "slug": "figma"},
     {"name": "Airtable", "ats": "lever", "slug": "airtable"},
 
-    {"name": "PhonePe", "ats": "greenhouse", "slug": "phonepe"},
-    {"name": "CRED", "ats": "greenhouse", "slug": "cred"},
+    # Greenhouse (correct board slugs)
+    {"name": "Stripe", "ats": "greenhouse", "slug": "stripeinc"},
+    {"name": "Razorpay", "ats": "greenhouse", "slug": "razorpaysoftware"},
     {"name": "Atlassian", "ats": "greenhouse", "slug": "atlassian"},
+    {"name": "PhonePe", "ats": "greenhouse", "slug": "phonepejobs"},
+    {"name": "CRED", "ats": "greenhouse", "slug": "cred"},
     {"name": "Freshworks", "ats": "greenhouse", "slug": "freshworks"},
     {"name": "Swiggy", "ats": "greenhouse", "slug": "swiggy"},
     {"name": "Zomato", "ats": "greenhouse", "slug": "zomato"},
@@ -40,7 +44,6 @@ TOP_COMPANIES = [
     {"name": "Flipkart", "ats": "greenhouse", "slug": "flipkart"},
     {"name": "Myntra", "ats": "greenhouse", "slug": "myntra"},
 ]
-
 
 # -------------------------------------------------
 # SCRAPER
@@ -159,7 +162,7 @@ class JobScraper:
             })
 
     # -------------------------------------------------
-    # INTERNShala (HTML)
+    # INTERNShala (FIXED SELECTORS + SAFE)
     # -------------------------------------------------
     def scrape_internshala(self):
         print("\n[Internshala]")
@@ -172,29 +175,29 @@ class JobScraper:
         total = added = 0
 
         for url in urls:
-            try:
-                res = requests.get(url, headers=HEADERS, timeout=TIMEOUT)
-                soup = BeautifulSoup(res.text, "html.parser")
-            except Exception:
-                continue
+            res = requests.get(url, headers=HEADERS, timeout=TIMEOUT)
+            soup = BeautifulSoup(res.text, "html.parser")
 
             cards = soup.select("div.individual_internship")
             total += len(cards)
 
             for c in cards:
                 title = c.select_one("h3.job-internship-name")
-                link = c.select_one("a.view_detail_button")
+                link = c.select_one("a.view_detail_button, a.job-title-href")
+                company = c.select_one("p.company-name")
+                loc = c.select_one("span.location_link")
 
-                if not title or not link:
+                if not title or not link or not company:
                     continue
 
+                location = loc.get_text(strip=True) if loc else "Remote / Not specified"
                 before = len(self.jobs)
 
                 self.add({
                     "id": f"internshala_{hash(link['href'])}",
                     "title": title.get_text(strip=True),
-                    "company": c.select_one("p.company-name").get_text(strip=True),
-                    "location": c.select_one("span.location_link").get_text(strip=True),
+                    "company": company.get_text(strip=True),
+                    "location": location,
                     "source": "Internshala",
                     "applyLink": base + link["href"],
                     "postedDate": self.now(),
@@ -208,7 +211,7 @@ class JobScraper:
         print(f"Added: {added}")
 
     # -------------------------------------------------
-    # ATS APIs (LEVER + GREENHOUSE)
+    # ATS APIs (LEVER + GREENHOUSE – FIXED)
     # -------------------------------------------------
     def scrape_ats(self):
         print("\n[Company Career Pages – ATS APIs]")
@@ -216,53 +219,51 @@ class JobScraper:
         for c in TOP_COMPANIES:
             print(f"\nCompany: {c['name']}")
 
-            try:
-                if c["ats"] == "lever":
-                    url = f"https://jobs.lever.co/{c['slug']}?mode=json"
-                    res = requests.get(url, headers=HEADERS, timeout=TIMEOUT)
-                    if res.status_code != 200:
-                        print("Lever request failed")
-                        continue
+            if c["ats"] == "lever":
+                url = f"https://jobs.lever.co/{c['slug']}?mode=json"
+                res = requests.get(url, headers=HEADERS, timeout=TIMEOUT)
 
-                    data = res.json()
-                    print(f"Lever jobs: {len(data)}")
+                if "application/json" not in res.headers.get("Content-Type", ""):
+                    print("Lever request failed (non-JSON)")
+                    continue
 
-                    for j in data:
-                        self.add({
-                            "id": f"lever_{j.get('id')}",
-                            "title": j.get("text"),
-                            "company": c["name"],
-                            "location": j.get("categories", {}).get("location"),
-                            "source": f"{c['name']} (Lever)",
-                            "applyLink": j.get("hostedUrl"),
-                            "postedDate": self.now(),
-                            "fetchedAt": self.now(),
-                        })
+                data = res.json()
+                print(f"Lever jobs: {len(data)}")
 
-                elif c["ats"] == "greenhouse":
-                    url = f"https://boards.greenhouse.io/{c['slug']}/jobs.json"
-                    res = requests.get(url, headers=HEADERS, timeout=TIMEOUT)
-                    if res.status_code != 200:
-                        print("Greenhouse request failed")
-                        continue
+                for j in data:
+                    self.add({
+                        "id": f"lever_{j.get('id')}",
+                        "title": j.get("text"),
+                        "company": c["name"],
+                        "location": j.get("categories", {}).get("location"),
+                        "source": f"{c['name']} (Lever)",
+                        "applyLink": j.get("hostedUrl"),
+                        "postedDate": self.now(),
+                        "fetchedAt": self.now(),
+                    })
 
-                    data = res.json().get("jobs", [])
-                    print(f"Greenhouse jobs: {len(data)}")
+            else:
+                url = f"https://boards.greenhouse.io/{c['slug']}/jobs.json"
+                res = requests.get(url, headers=HEADERS, timeout=TIMEOUT)
 
-                    for j in data:
-                        self.add({
-                            "id": f"gh_{j.get('id')}",
-                            "title": j.get("title"),
-                            "company": c["name"],
-                            "location": j.get("location", {}).get("name"),
-                            "source": f"{c['name']} (Greenhouse)",
-                            "applyLink": j.get("absolute_url"),
-                            "postedDate": self.now(),
-                            "fetchedAt": self.now(),
-                        })
+                if res.status_code != 200:
+                    print("Greenhouse request failed")
+                    continue
 
-            except Exception as e:
-                print(f"ATS error for {c['name']}: {e}")
+                data = res.json().get("jobs", [])
+                print(f"Greenhouse jobs: {len(data)}")
+
+                for j in data:
+                    self.add({
+                        "id": f"gh_{j.get('id')}",
+                        "title": j.get("title"),
+                        "company": c["name"],
+                        "location": j.get("location", {}).get("name"),
+                        "source": f"{c['name']} (Greenhouse)",
+                        "applyLink": j.get("absolute_url"),
+                        "postedDate": self.now(),
+                        "fetchedAt": self.now(),
+                    })
 
     # -------------------------------------------------
     # RUN + SAVE
@@ -284,8 +285,7 @@ class JobScraper:
         os.makedirs("data", exist_ok=True)
         with open("data/jobs.json", "w", encoding="utf-8") as f:
             json.dump(self.jobs, f, indent=2, ensure_ascii=False)
-        print("Saved → data/jobs.json")
-
+        print("Saved -> data/jobs.json")
 
 # -------------------------------------------------
 # ENTRYPOINT
