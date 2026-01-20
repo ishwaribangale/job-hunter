@@ -1,7 +1,7 @@
 # scraper.py
 # ----------------------------------
 # PJIS – Job Intelligence Scraper
-# Phase 1: Completeness
+# Phase 1: Completeness (STABLE)
 # ----------------------------------
 
 import os
@@ -9,6 +9,7 @@ import json
 import requests
 from datetime import datetime
 from bs4 import BeautifulSoup
+
 from config import HEADERS, TIMEOUT, TOP_COMPANIES
 from roles import infer_role
 from scoring import score_job
@@ -55,12 +56,7 @@ class JobScraper:
         data = r.json().get("jobs", [])
         print(f"API jobs returned: {len(data)}")
 
-        added = 0
-        dates = []
-
         for j in data:
-            before = len(self.jobs)
-
             self.add({
                 "id": f"remotive_{j['id']}",
                 "title": j["title"],
@@ -70,15 +66,6 @@ class JobScraper:
                 "applyLink": j["url"],
                 "postedDate": j["publication_date"]
             })
-
-            if len(self.jobs) > before:
-                added += 1
-                if j.get("publication_date"):
-                    dates.append(j["publication_date"])
-
-        print(f"Jobs added: {added}")
-        if dates:
-            print(f"Newest: {max(dates)} | Oldest: {min(dates)}")
 
     # ----------------------------------
     # REMOTEOK (TAG EXPANSION)
@@ -96,10 +83,8 @@ class JobScraper:
             "marketing",
             "sales",
             "data",
-            "customer-support"
+            "customer-support",
         ]
-
-        total_added = 0
 
         for tag in tags:
             url = base if tag is None else f"{base}?tag={tag}"
@@ -110,10 +95,7 @@ class JobScraper:
 
             print(f"  Tag '{label}': {len(data)} cards")
 
-            added = 0
             for j in data:
-                before = len(self.jobs)
-
                 self.add({
                     "id": f"remoteok_{j.get('id')}",
                     "title": j.get("position"),
@@ -121,19 +103,11 @@ class JobScraper:
                     "location": "Remote",
                     "source": "RemoteOK",
                     "applyLink": j.get("url"),
-                    "postedDate": self.now()
+                    "postedDate": self.now(),
                 })
 
-                if len(self.jobs) > before:
-                    added += 1
-
-            print(f"    Added: {added}")
-            total_added += added
-
-        print(f"Total RemoteOK jobs added: {total_added}")
-
     # ----------------------------------
-    # WEWORKREMOTELY (PAGINATED)
+    # WEWORKREMOTELY (RSS-SAFE)
     # ----------------------------------
     def scrape_weworkremotely(self):
         print("\n[WeWorkRemotely]")
@@ -147,7 +121,7 @@ class JobScraper:
             "remote-customer-support-jobs",
         ]
 
-        total = 0
+        headers = {**HEADERS, "Accept": "text/html"}
 
         for cat in categories:
             print(f"\nCategory: {cat}")
@@ -158,9 +132,15 @@ class JobScraper:
                 if page > 1:
                     url += f"?page={page}"
 
-                r = requests.get(url, headers=HEADERS, timeout=TIMEOUT)
+                r = requests.get(url, headers=headers, timeout=TIMEOUT)
+
+                # RSS protection
+                if "<rss" in r.text.lower():
+                    print("  ⚠ RSS feed detected, stopping category")
+                    break
+
                 soup = BeautifulSoup(r.text, "html.parser")
-                cards = soup.select("section.jobs article")
+                cards = soup.select("li.feature")
 
                 if not cards:
                     break
@@ -182,14 +162,10 @@ class JobScraper:
                         "location": "Remote",
                         "source": "WeWorkRemotely",
                         "applyLink": "https://weworkremotely.com" + link["href"],
-                        "postedDate": self.now()
+                        "postedDate": self.now(),
                     })
 
-                    total += 1
-
                 page += 1
-
-        print(f"Total WeWorkRemotely jobs fetched: {total}")
 
     # ----------------------------------
     # Y COMBINATOR
@@ -204,13 +180,10 @@ class JobScraper:
         links = soup.select("a[href^='/jobs/']")
         print(f"Job links found: {len(links)}")
 
-        added = 0
         for a in links:
             href = a.get("href")
             if not href:
                 continue
-
-            before = len(self.jobs)
 
             self.add({
                 "id": f"yc_{hash(href)}",
@@ -219,16 +192,11 @@ class JobScraper:
                 "location": "Various",
                 "source": "YCombinator",
                 "applyLink": base + href,
-                "postedDate": self.now()
+                "postedDate": self.now(),
             })
 
-            if len(self.jobs) > before:
-                added += 1
-
-        print(f"YC jobs added: {added}")
-
     # ----------------------------------
-    # INTERNSHALA (PAGINATED)
+    # INTERNSHALA
     # ----------------------------------
     def scrape_internshala(self):
         print("\n[Internshala]")
@@ -245,47 +213,34 @@ class JobScraper:
             "jobs/product-intern-jobs",
         ]
 
-        total = 0
-
         for path in paths:
-            page = 1
-            while page <= 20:
-                url = f"{base}/{path}" if page == 1 else f"{base}/{path}/page-{page}"
-                r = requests.get(url, headers=HEADERS, timeout=TIMEOUT)
-                soup = BeautifulSoup(r.text, "html.parser")
-                cards = soup.select("div.individual_internship")
+            url = f"{base}/{path}"
+            r = requests.get(url, headers=HEADERS, timeout=TIMEOUT)
+            soup = BeautifulSoup(r.text, "html.parser")
 
-                if not cards:
-                    break
+            cards = soup.select("div.individual_internship")
+            print(f"{path}: {len(cards)} cards")
 
-                print(f"{path} page {page}: {len(cards)}")
+            for c in cards:
+                title = c.select_one("h3.job-internship-name")
+                company = c.select_one("p.company-name")
+                link = c.select_one("a.view_detail_button, a.job-title-href")
 
-                for c in cards:
-                    title = c.select_one("h3.job-internship-name")
-                    company = c.select_one("p.company-name")
-                    link = c.select_one("a.view_detail_button, a.job-title-href")
+                if not title or not company or not link:
+                    continue
 
-                    if not title or not company or not link:
-                        continue
-
-                    self.add({
-                        "id": f"internshala_{hash(link['href'])}",
-                        "title": title.get_text(strip=True),
-                        "company": company.get_text(strip=True),
-                        "location": "India",
-                        "source": "Internshala",
-                        "applyLink": base + link["href"],
-                        "postedDate": self.now()
-                    })
-
-                    total += 1
-
-                page += 1
-
-        print(f"Total Internshala jobs fetched: {total}")
+                self.add({
+                    "id": f"internshala_{hash(link['href'])}",
+                    "title": title.get_text(strip=True),
+                    "company": company.get_text(strip=True),
+                    "location": "India",
+                    "source": "Internshala",
+                    "applyLink": base + link["href"],
+                    "postedDate": self.now(),
+                })
 
     # ----------------------------------
-    # ATS
+    # ATS (FAIL-SAFE)
     # ----------------------------------
     def scrape_ats(self):
         print("\n[ATS Jobs]")
@@ -295,8 +250,9 @@ class JobScraper:
                 r = requests.get(
                     f"https://jobs.lever.co/{c['slug']}?mode=json",
                     headers=HEADERS,
-                    timeout=TIMEOUT
+                    timeout=TIMEOUT,
                 )
+
                 if "json" not in r.headers.get("Content-Type", ""):
                     continue
 
@@ -308,15 +264,22 @@ class JobScraper:
                         "location": j["categories"].get("location"),
                         "source": f"{c['name']} (Lever)",
                         "applyLink": j["hostedUrl"],
-                        "postedDate": self.now()
+                        "postedDate": self.now(),
                     })
 
             else:
                 r = requests.get(
                     f"https://boards.greenhouse.io/{c['slug']}/jobs.json",
                     headers=HEADERS,
-                    timeout=TIMEOUT
+                    timeout=TIMEOUT,
                 )
+
+                if r.status_code != 200:
+                    continue
+
+                if "json" not in r.headers.get("Content-Type", ""):
+                    print(f"❌ Greenhouse non-JSON: {c['name']}")
+                    continue
 
                 for j in r.json().get("jobs", []):
                     self.add({
@@ -326,7 +289,7 @@ class JobScraper:
                         "location": j["location"]["name"],
                         "source": f"{c['name']} (Greenhouse)",
                         "applyLink": j["absolute_url"],
-                        "postedDate": self.now()
+                        "postedDate": self.now(),
                     })
 
     # ----------------------------------
@@ -342,9 +305,6 @@ class JobScraper:
             self.scrape_yc()
             self.scrape_internshala()
             self.scrape_ats()
-        else:
-            self.scrape_ats()
-            self.scrape_yc()
 
         print("\n[SOURCE SUMMARY]")
         for k, v in self.stats.items():
@@ -359,7 +319,7 @@ class JobScraper:
                 sorted(self.jobs, key=lambda x: x["score"], reverse=True),
                 f,
                 indent=2,
-                ensure_ascii=False
+                ensure_ascii=False,
             )
 
         print("Saved → data/jobs.json")
