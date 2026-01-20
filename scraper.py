@@ -458,8 +458,8 @@ class JobScraper:
     # ATS (FAIL-SAFE)
     # ----------------------------------
     def scrape_ats(self):
-    print("\n[ATS Jobs]")
-    print("Companies configured:", len(TOP_COMPANIES))
+        print("\n[ATS Jobs]")
+        print("Companies configured:", len(TOP_COMPANIES))
 
     headers = {
         **HEADERS,
@@ -520,7 +520,7 @@ class JobScraper:
             print("  ❌ ATS error:", c["name"], e)
             
     def scrape_career_pages(self):
-    print("\n[Career Pages]")
+        print("\n[Career Pages]")
 
     headers = {
         **HEADERS,
