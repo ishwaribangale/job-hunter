@@ -47,75 +47,130 @@ class JobScraper:
     # ----------------------------------
     # REMOTIVE
     # ----------------------------------
-    def scrape_remotive(self):
-        print("\n[Remotive]")
-        r = requests.get(
-            "https://remotive.com/api/remote-jobs",
-            headers=HEADERS,
-            timeout=TIMEOUT
-        )
-        data = r.json().get("jobs", [])
-        print("Cards:", len(data))
+   # ----------------------------------
+# REMOTIVE
+# ----------------------------------
+def scrape_remotive(self):
+    print("\n[Remotive]")
 
-        for j in data:
-            self.add({
-                "id": f"remotive_{j['id']}",
-                "title": j["title"],
-                "company": j["company_name"],
-                "location": j.get("candidate_required_location", "Remote"),
-                "source": "Remotive",
-                "applyLink": j["url"],
-                "postedDate": j["publication_date"]
-            })
+    r = requests.get(
+        "https://remotive.com/api/remote-jobs",
+        headers=HEADERS,
+        timeout=TIMEOUT
+    )
+
+    data = r.json().get("jobs", [])
+    print(f"API jobs returned: {len(data)}")
+
+    added = 0
+    dates = []
+
+    for j in data:
+        before = len(self.jobs)
+
+        self.add({
+            "id": f"remotive_{j['id']}",
+            "title": j["title"],
+            "company": j["company_name"],
+            "location": j.get("candidate_required_location", "Remote"),
+            "source": "Remotive",
+            "applyLink": j["url"],
+            "postedDate": j["publication_date"]
+        })
+
+        if len(self.jobs) > before:
+            added += 1
+            if j.get("publication_date"):
+                dates.append(j["publication_date"])
+
+    print(f"Jobs added: {added}")
+
+    if dates:
+        print(f"Newest job: {max(dates)}")
+        print(f"Oldest job: {min(dates)}")
+
 
     # ----------------------------------
     # REMOTEOK
     # ----------------------------------
-    def scrape_remoteok(self):
-        print("\n[RemoteOK]")
-        r = requests.get(
-            "https://remoteok.com/api",
-            headers=HEADERS,
-            timeout=TIMEOUT
-        )
-        data = r.json()[1:]
-        print("Cards:", len(data))
+    # ----------------------------------
+# REMOTEOK (TAG-EXPANDED)
+# ----------------------------------
+def scrape_remoteok(self):
+    print("\n[RemoteOK]")
+
+    base = "https://remoteok.com/api"
+    tags = [
+        None,  # main feed
+        "dev",
+        "software-dev",
+        "product",
+        "design",
+        "marketing",
+        "sales",
+        "data",
+        "customer-support"
+    ]
+
+    grand_total = 0
+
+    for tag in tags:
+        url = base if tag is None else f"{base}?tag={tag}"
+        label = "main" if tag is None else tag
+
+        r = requests.get(url, headers=HEADERS, timeout=TIMEOUT)
+        data = r.json()[1:]  # first item is metadata
+
+        print(f"  Tag '{label}': {len(data)} cards")
+
+        added = 0
 
         for j in data:
-            self.add({
-                "id": f"remoteok_{j.get('id')}",
-                "title": j.get("position"),
-                "company": j.get("company"),
-                "location": "Remote",
-                "source": "RemoteOK",
-                "applyLink": j.get("url"),
-                "postedDate": self.now()
-            })
+            before = len(self.jobs)
+
+            self.ad
+
 
     # ----------------------------------
     # WEWORKREMOTELY (BROAD)
     # ----------------------------------
-    def scrape_weworkremotely(self):
-        print("\n[WeWorkRemotely]")
-        base = "https://weworkremotely.com/categories"
-        categories = [
-            "remote-programming-jobs",
-            "remote-design-jobs",
-            "remote-product-jobs",
-            "remote-sales-and-marketing-jobs",
-            "remote-customer-support-jobs",
-        ]
+    # ----------------------------------
+# WEWORKREMOTELY (PAGINATED)
+# ----------------------------------
+def scrape_weworkremotely(self):
+    print("\n[WeWorkRemotely]")
 
-        total_cards = 0
+    base = "https://weworkremotely.com/categories"
+    categories = [
+        "remote-programming-jobs",
+        "remote-design-jobs",
+        "remote-product-jobs",
+        "remote-sales-and-marketing-jobs",
+        "remote-customer-support-jobs",
+    ]
 
-        for cat in categories:
+    grand_total = 0
+
+    for cat in categories:
+        print(f"\nCategory: {cat}")
+        page = 1
+        cat_total = 0
+
+        while page <= 20:  # safety cap
             url = f"{base}/{cat}"
+            if page > 1:
+                url += f"?page={page}"
+
             r = requests.get(url, headers=HEADERS, timeout=TIMEOUT)
             soup = BeautifulSoup(r.text, "html.parser")
 
             cards = soup.select("section.jobs article")
-            print(f"{cat}: {len(cards)} cards")
-            total_cards += len(cards)
+
+            if not cards:
+                print(f"  Page {page}: 0 cards → stopping")
+                break
+
+            print(f"  Page {page}: {len(cards)} cards")
 
             for c in cards:
                 title = c.select_one("span.title")
@@ -135,33 +190,55 @@ class JobScraper:
                     "postedDate": self.now()
                 })
 
-        print("Total WWR cards:", total_cards)
+                cat_total += 1
+
+            page += 1
+
+        print(f"  Total for {cat}: {cat_total}")
+        grand_total += cat_total
+
+        print(f"\nTotal WeWorkRemotely jobs fetched: {grand_total}")
+
 
     # ----------------------------------
     # Y COMBINATOR
     # ----------------------------------
-    def scrape_yc(self):
-        print("\n[Y Combinator]")
-        r = requests.get(
-            "https://www.ycombinator.com/jobs",
-            headers=HEADERS,
-            timeout=TIMEOUT
-        )
-        soup = BeautifulSoup(r.text, "html.parser")
+    # ----------------------------------
+# Y COMBINATOR (DEPTH SCRAPE)
+# ----------------------------------
+def scrape_yc(self):
+    print("\n[Y Combinator]")
 
-        cards = soup.select("a[href^='/jobs/']")
-        print("Cards:", len(cards))
+    base = "https://www.ycombinator.com"
+    r = requests.get(f"{base}/jobs", headers=HEADERS, timeout=TIMEOUT)
+    soup = BeautifulSoup(r.text, "html.parser")
 
-        for a in cards:
-            self.add({
-                "id": f"yc_{hash(a['href'])}",
-                "title": a.get_text(strip=True),
-                "company": "YC Startup",
-                "location": "Various",
-                "source": "YCombinator",
-                "applyLink": "https://www.ycombinator.com" + a["href"],
-                "postedDate": self.now()
-            })
+    links = soup.select("a[href^='/jobs/']")
+    print(f"Job links found: {len(links)}")
+
+    added = 0
+
+    for a in links:
+        href = a.get("href")
+        if not href:
+            continue
+
+        before = len(self.jobs)
+
+        self.add({
+            "id": f"yc_{hash(href)}",
+            "title": a.get_text(strip=True),
+            "company": "YC Startup",
+            "location": "Various",
+            "source": "YCombinator",
+            "applyLink": base + href,
+            "postedDate": self.now()
+        })
+
+        if len(self.jobs) > before:
+            added += 1
+
+    print(f"YC jobs added: {added}")
 
     # ----------------------------------
     # INTERNSHALA (EXPANDED)
