@@ -115,47 +115,65 @@ class JobScraper:
     # ----------------------------------
     # WORKING NOMADS (PAGINATED)
     # ----------------------------------
+        # ----------------------------------
+    # WORKING NOMADS (ROBUST, CI-SAFE)
+    # ----------------------------------
     def scrape_workingnomads(self):
         print("\n[Working Nomads]")
-    
+
         base = "https://www.workingnomads.com/jobs"
         page = 1
         total = 0
-    
-        while page <= 20:  # safety cap
+
+        headers = {
+            **HEADERS,
+            "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 Chrome/120.0.0.0 Safari/537.36",
+            "Accept-Language": "en-US,en;q=0.9",
+        }
+
+        while page <= 20:
             url = base if page == 1 else f"{base}?page={page}"
-            r = requests.get(url, headers=HEADERS, timeout=TIMEOUT)
+            r = requests.get(url, headers=headers, timeout=TIMEOUT)
+
             soup = BeautifulSoup(r.text, "html.parser")
-    
-            cards = soup.select("div.job-listing")
-    
+
+            # New + old markup support
+            cards = soup.select("li.job") or soup.select("div.job-listing")
+
             if not cards:
+                print(f"  Page {page}: 0 cards (blocked or markup changed)")
                 break
-    
+
             print(f"  Page {page}: {len(cards)} cards")
-    
+
             for c in cards:
-                title = c.select_one("h3 a")
-                company = c.select_one("span.company")
-                link = c.select_one("h3 a")
-    
-                if not title or not company or not link:
+                title = c.select_one("a")
+                company = c.select_one(".company, span.company")
+
+                if not title or not company:
                     continue
-    
+
+                href = title.get("href")
+                if not href:
+                    continue
+
                 self.add({
-                    "id": f"wn_{hash(link['href'])}",
+                    "id": f"wn_{hash(href)}",
                     "title": title.get_text(strip=True),
                     "company": company.get_text(strip=True),
                     "location": "Remote",
                     "source": "Working Nomads",
-                    "applyLink": "https://www.workingnomads.com" + link["href"],
+                    "applyLink": (
+                        href if href.startswith("http")
+                        else "https://www.workingnomads.com" + href
+                    ),
                     "postedDate": self.now(),
                 })
-    
+
                 total += 1
-    
+
             page += 1
-    
+
         print(f"Total Working Nomads jobs fetched: {total}")
 
     # ----------------------------------
@@ -334,50 +352,64 @@ class JobScraper:
         # ----------------------------------
     # NODESK (PAGINATED)
     # ----------------------------------
+        # ----------------------------------
+    # NODESK (ROBUST, CI-SAFE)
+    # ----------------------------------
     def scrape_nodesk(self):
         print("\n[NoDesk]")
-    
+
         base = "https://nodesk.co/remote-jobs"
         page = 1
         total = 0
-    
+
+        headers = {
+            **HEADERS,
+            "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 Chrome/120.0.0.0 Safari/537.36",
+            "Accept-Language": "en-US,en;q=0.9",
+        }
+
         while page <= 20:
             url = base if page == 1 else f"{base}/page/{page}/"
-            r = requests.get(url, headers=HEADERS, timeout=TIMEOUT)
+            r = requests.get(url, headers=headers, timeout=TIMEOUT)
+
             soup = BeautifulSoup(r.text, "html.parser")
-    
-            cards = soup.select("article.job")
-    
+
+            # CI-safe selector fallback
+            cards = soup.select("article.job") or soup.select("div.job-list article")
+
             if not cards:
+                print(f"  Page {page}: 0 cards (blocked or markup changed)")
                 break
-    
+
             print(f"  Page {page}: {len(cards)} cards")
-    
+
             for c in cards:
-                title = c.select_one("h2 a")
-                company = c.select_one("span.company")
-                link = c.select_one("h2 a")
-    
-                if not title or not company or not link:
+                title = c.select_one("h2 a, h3 a")
+                company = c.select_one(".company, span.company")
+
+                if not title or not company:
                     continue
-    
+
+                href = title.get("href")
+                if not href:
+                    continue
+
                 self.add({
-                    "id": f"nodesk_{hash(link['href'])}",
+                    "id": f"nodesk_{hash(href)}",
                     "title": title.get_text(strip=True),
                     "company": company.get_text(strip=True),
                     "location": "Remote",
                     "source": "NoDesk",
-                    "applyLink": link["href"],
+                    "applyLink": href,
                     "postedDate": self.now(),
                 })
-    
+
                 total += 1
-    
+
             page += 1
-    
+
         print(f"Total NoDesk jobs fetched: {total}")
-    
-        
+
         # ----------------------------------
         # INTERNSHALA
         # ----------------------------------
