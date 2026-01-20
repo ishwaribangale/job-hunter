@@ -458,17 +458,28 @@ class JobScraper:
     # ATS (FAIL-SAFE)
     # ----------------------------------
     def scrape_ats(self):
-        print("\n[ATS Jobs]")
+    print("\n[ATS Jobs]")
+    print("Companies configured:", len(TOP_COMPANIES))
 
-        for c in TOP_COMPANIES:
+    headers = {
+        **HEADERS,
+        "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7)",
+        "Accept": "application/json,text/html",
+    }
+
+    for c in TOP_COMPANIES:
+        print("Company:", c["name"], "| ATS:", c["ats"])
+
+        try:
             if c["ats"] == "lever":
                 r = requests.get(
                     f"https://jobs.lever.co/{c['slug']}?mode=json",
-                    headers=HEADERS,
+                    headers=headers,
                     timeout=TIMEOUT,
                 )
 
-                if "json" not in r.headers.get("Content-Type", ""):
+                if not r.text.strip().startswith("["):
+                    print("  ⚠ Lever blocked:", c["name"])
                     continue
 
                 for j in r.json():
@@ -482,30 +493,68 @@ class JobScraper:
                         "postedDate": self.now(),
                     })
 
-            else:
+            elif c["ats"] == "greenhouse":
                 r = requests.get(
-                    f"https://boards.greenhouse.io/{c['slug']}/jobs.json",
-                    headers=HEADERS,
+                    f"https://boards.greenhouse.io/{c['slug']}",
+                    headers=headers,
                     timeout=TIMEOUT,
                 )
 
-                if r.status_code != 200:
-                    continue
+                soup = BeautifulSoup(r.text, "html.parser")
+                jobs = soup.select("a[href*='/jobs/']")
 
-                if "json" not in r.headers.get("Content-Type", ""):
-                    print(f"❌ Greenhouse non-JSON: {c['name']}")
-                    continue
+                print("  Greenhouse jobs found:", len(jobs))
 
-                for j in r.json().get("jobs", []):
+                for a in jobs:
                     self.add({
-                        "id": f"gh_{j['id']}",
-                        "title": j["title"],
+                        "id": f"gh_{hash(a['href'])}",
+                        "title": a.get_text(strip=True),
                         "company": c["name"],
-                        "location": j["location"]["name"],
+                        "location": "Various",
                         "source": f"{c['name']} (Greenhouse)",
-                        "applyLink": j["absolute_url"],
+                        "applyLink": "https://boards.greenhouse.io" + a["href"],
                         "postedDate": self.now(),
                     })
+
+        except Exception as e:
+            print("  ❌ ATS error:", c["name"], e)
+            
+    def scrape_career_pages(self):
+    print("\n[Career Pages]")
+
+    headers = {
+        **HEADERS,
+        "User-Agent": "Mozilla/5.0",
+    }
+
+    for c in CAREER_PAGES:
+        try:
+            r = requests.get(c["url"], headers=headers, timeout=TIMEOUT)
+            soup = BeautifulSoup(r.text, "html.parser")
+
+            links = soup.select("a[href*='job'], a[href*='career'], a[href*='position']")
+            print(c["name"], "links found:", len(links))
+
+            for a in links:
+                text = a.get_text(strip=True)
+                href = a.get("href")
+
+                if not text or not href or len(text) < 5:
+                    continue
+
+                self.add({
+                    "id": f"career_{c['name']}_{hash(href)}",
+                    "title": text,
+                    "company": c["name"],
+                    "location": "Various",
+                    "source": "Career Page",
+                    "applyLink": href if href.startswith("http") else c["url"] + href,
+                    "postedDate": self.now(),
+                })
+
+        except Exception as e:
+            print("❌ Career page failed:", c["name"], e)
+
 
     # ----------------------------------
     # RUN
@@ -522,6 +571,7 @@ class JobScraper:
             self.scrape_yc()
             self.scrape_internshala()
             self.scrape_ats()
+            self.scrape_scrape_career_pages()
 
         print("\n[SOURCE SUMMARY]")
         for k, v in self.stats.items():
