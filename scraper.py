@@ -9,7 +9,6 @@ import json
 import requests
 from datetime import datetime
 from bs4 import BeautifulSoup
-
 from config import HEADERS, TIMEOUT, TOP_COMPANIES
 from roles import infer_role
 from scoring import score_job
@@ -194,7 +193,99 @@ class JobScraper:
                 "applyLink": base + href,
                 "postedDate": self.now(),
             })
+    # ----------------------------------
+# WORKING NOMADS (PAGINATED)
+# ----------------------------------
+def scrape_workingnomads(self):
+    print("\n[Working Nomads]")
 
+    base = "https://www.workingnomads.com/jobs"
+    page = 1
+    total = 0
+
+    while page <= 20:  # safety cap
+        url = base if page == 1 else f"{base}?page={page}"
+        r = requests.get(url, headers=HEADERS, timeout=TIMEOUT)
+        soup = BeautifulSoup(r.text, "html.parser")
+
+        cards = soup.select("div.job-listing")
+
+        if not cards:
+            break
+
+        print(f"  Page {page}: {len(cards)} cards")
+
+        for c in cards:
+            title = c.select_one("h3 a")
+            company = c.select_one("span.company")
+            link = c.select_one("h3 a")
+
+            if not title or not company or not link:
+                continue
+
+            self.add({
+                "id": f"wn_{hash(link['href'])}",
+                "title": title.get_text(strip=True),
+                "company": company.get_text(strip=True),
+                "location": "Remote",
+                "source": "Working Nomads",
+                "applyLink": "https://www.workingnomads.com" + link["href"],
+                "postedDate": self.now(),
+            })
+
+            total += 1
+
+        page += 1
+
+    print(f"Total Working Nomads jobs fetched: {total}")
+
+    # ----------------------------------
+# NODESK (PAGINATED)
+# ----------------------------------
+def scrape_nodesk(self):
+    print("\n[NoDesk]")
+
+    base = "https://nodesk.co/remote-jobs"
+    page = 1
+    total = 0
+
+    while page <= 20:
+        url = base if page == 1 else f"{base}/page/{page}/"
+        r = requests.get(url, headers=HEADERS, timeout=TIMEOUT)
+        soup = BeautifulSoup(r.text, "html.parser")
+
+        cards = soup.select("article.job")
+
+        if not cards:
+            break
+
+        print(f"  Page {page}: {len(cards)} cards")
+
+        for c in cards:
+            title = c.select_one("h2 a")
+            company = c.select_one("span.company")
+            link = c.select_one("h2 a")
+
+            if not title or not company or not link:
+                continue
+
+            self.add({
+                "id": f"nodesk_{hash(link['href'])}",
+                "title": title.get_text(strip=True),
+                "company": company.get_text(strip=True),
+                "location": "Remote",
+                "source": "NoDesk",
+                "applyLink": link["href"],
+                "postedDate": self.now(),
+            })
+
+            total += 1
+
+        page += 1
+
+    print(f"Total NoDesk jobs fetched: {total}")
+
+    
     # ----------------------------------
     # INTERNSHALA
     # ----------------------------------
