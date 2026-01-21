@@ -46,26 +46,47 @@ class JobScraper:
     # ----------------------------------
     def scrape_remotive(self):
         print("\n[Remotive]")
+    
+        categories = [
+            None,
+            "software-dev",
+            "product",
+            "design",
+            "marketing",
+            "sales",
+            "data",
+            "customer-support",
+            "devops",
+            "qa",
+            "finance",
+        ]
+    
+        for cat in categories:
+            url = "https://remotive.com/api/remote-jobs"
+            if cat:
+                url += f"?category={cat}"
+    
+            try:
+                r = requests.get(url, headers=HEADERS, timeout=10)
+                data = r.json().get("jobs", [])
+    
+                label = "all" if not cat else cat
+                print(f"  Category '{label}': {len(data)} jobs")
+    
+                for j in data:
+                    self.add({
+                        "id": f"remotive_{j['id']}",
+                        "title": j["title"],
+                        "company": j["company_name"],
+                        "location": j.get("candidate_required_location", "Remote"),
+                        "source": "Remotive",
+                        "applyLink": j["url"],
+                        "postedDate": j["publication_date"],
+                    })
+    
+            except Exception as e:
+                print(f"  ❌ Remotive '{cat}' failed:", e)
 
-        r = requests.get(
-            "https://remotive.com/api/remote-jobs",
-            headers=HEADERS,
-            timeout=TIMEOUT
-        )
-
-        data = r.json().get("jobs", [])
-        print(f"API jobs returned: {len(data)}")
-
-        for j in data:
-            self.add({
-                "id": f"remotive_{j['id']}",
-                "title": j["title"],
-                "company": j["company_name"],
-                "location": j.get("candidate_required_location", "Remote"),
-                "source": "Remotive",
-                "applyLink": j["url"],
-                "postedDate": j["publication_date"]
-            })
 
     # ----------------------------------
 # NODESK (PAGINATED)
