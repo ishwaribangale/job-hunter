@@ -87,7 +87,7 @@ class JobScraper:
                 print(f"  ⏱ Timeout (attempt {attempt + 1}/2)")
     
             except Exception as e:
-                print("  ❌ Remote.co failed:", e)
+                print(f"  ❌ Remote.co failed: {e}")
                 return
     
         print("  ⚠ Remote.co skipped after retries")
@@ -133,7 +133,7 @@ class JobScraper:
                     })
     
             except Exception as e:
-                print(f"  ❌ Remotive '{cat}' failed:", e)
+                print(f"  ❌ Remotive '{cat}' failed: {e}")
 
     def scrape_wellfound(self):
         print("\n[Wellfound]")
@@ -174,7 +174,7 @@ class JobScraper:
                 })
     
         except Exception as e:
-            print("  ❌ Wellfound failed:", e)
+            print(f"  ❌ Wellfound failed: {e}")
 
     def scrape_remoteok(self):
         print("\n[RemoteOK]")
@@ -241,7 +241,7 @@ class JobScraper:
                     })
     
             except Exception as e:
-                print(f"  ❌ {label} failed:", e)
+                print(f"  ❌ {label} failed: {e}")
 
     def scrape_weworkremotely(self):
         print("\n[WeWorkRemotely]")
@@ -382,7 +382,7 @@ class JobScraper:
                 browser.close()
     
         except Exception as e:
-            print("  ❌ YC Playwright failed:", e)
+            print(f"  ❌ YC Playwright failed: {e}")
 
     def scrape_internshala(self):
         print("\n[Internshala]")
@@ -441,7 +441,9 @@ class JobScraper:
         }
     
         for c in TOP_COMPANIES:
-            print(f"\n[{c['name']}] ATS: {c['ats']}")
+            ats_name = c.get('ats', 'unknown')
+            company_name = c.get('name', 'unknown')
+            print(f"\n[{company_name}] ATS: {ats_name}")
     
             try:
                 if c["ats"] == "lever":
@@ -452,11 +454,12 @@ class JobScraper:
                 time.sleep(0.3)
                 
             except Exception as e:
-                print(f"  ❌ {c['name']} error: {e}")
+                print(f"  ❌ {company_name} error: {e}")
 
     def _scrape_lever_enhanced(self, company, headers):
         """Enhanced Lever scraper with validation"""
-        api_url = f"https://jobs.lever.co/{company['slug']}?mode=json"
+        company_slug = company.get('slug', '')
+        api_url = f"https://jobs.lever.co/{company_slug}?mode=json"
         
         try:
             r = requests.get(api_url, headers=headers, timeout=10)
@@ -466,19 +469,26 @@ class JobScraper:
                 print(f"  ✓ Lever API: {len(jobs)} jobs")
                 
                 for j in jobs:
+                    job_id = j.get('id', '')
+                    job_text = j.get('text', '')
+                    job_url = j.get('hostedUrl', '')
+                    job_categories = j.get('categories', {})
+                    job_location = job_categories.get('location', 'Various')
+                    company_name = company.get('name', 'Unknown')
+                    
                     self.add({
-                        "id": f"lever_{j['id']}",
-                        "title": j["text"],
-                        "company": company["name"],
-                        "location": j["categories"].get("location", "Various"),
-                        "source": f"{company['name']} (Lever)",
-                        "applyLink": j["hostedUrl"],
+                        "id": f"lever_{job_id}",
+                        "title": job_text,
+                        "company": company_name,
+                        "location": job_location,
+                        "source": f"{company_name} (Lever)",
+                        "applyLink": job_url,
                         "postedDate": self.now(),
                     })
                 return
             
             print("  ⚠ Lever API blocked, trying HTML...")
-            html_url = f"https://jobs.lever.co/{company['slug']}"
+            html_url = f"https://jobs.lever.co/{company_slug}"
             r = requests.get(html_url, headers=headers, timeout=10)
             
             soup = BeautifulSoup(r.text, "html.parser")
@@ -486,6 +496,7 @@ class JobScraper:
             
             print(f"  ✓ Lever HTML: {len(jobs)} jobs")
             
+            company_name = company.get('name', 'Unknown')
             for a in jobs:
                 href = a.get("href", "")
                 title = a.get_text(strip=True)
@@ -496,9 +507,9 @@ class JobScraper:
                 self.add({
                     "id": f"lever_{hash(href)}",
                     "title": title,
-                    "company": company["name"],
+                    "company": company_name,
                     "location": "Various",
-                    "source": f"{company['name']} (Lever)",
+                    "source": f"{company_name} (Lever)",
                     "applyLink": href,
                     "postedDate": self.now(),
                 })
@@ -508,7 +519,8 @@ class JobScraper:
 
     def _scrape_greenhouse_enhanced(self, company, headers):
         """Enhanced Greenhouse scraper with validation"""
-        url = f"https://boards.greenhouse.io/{company['slug']}"
+        company_slug = company.get('slug', '')
+        url = f"https://boards.greenhouse.io/{company_slug}"
         
         try:
             r = requests.get(url, headers=headers, timeout=10)
@@ -525,6 +537,7 @@ class JobScraper:
                 soup.select("div.job a")
             )
             
+            job_id_pattern = r'/jobs/(\d+)'
             valid_jobs = []
             for a in jobs:
                 href = a.get("href", "")
@@ -533,7 +546,7 @@ class JobScraper:
                 if not href or not title or len(title) < 5:
                     continue
                 
-                if not re.search(r'/jobs/\d+', href):
+                if not re.search(job_id_pattern, href):
                     continue
                     
                 skip_keywords = [
@@ -547,6 +560,7 @@ class JobScraper:
             
             print(f"  ✓ Greenhouse: {len(valid_jobs)} valid jobs")
             
+            company_name = company.get('name', 'Unknown')
             for href, title, elem in valid_jobs:
                 location = "Various"
                 parent = elem.find_parent("div", class_="opening")
@@ -557,12 +571,16 @@ class JobScraper:
                 
                 full_url = href if href.startswith("http") else "https://boards.greenhouse.io" + href
                 
+                # Extract job ID outside f-string
+                job_id_match = re.search(job_id_pattern, href)
+                job_id = job_id_match.group(1) if job_id_match else str(hash(href))
+                
                 self.add({
-                    "id": f"gh_{re.search(r'/jobs/(\d+)', href).group(1)}",
+                    "id": f"gh_{job_id}",
                     "title": title,
-                    "company": company["name"],
+                    "company": company_name,
                     "location": location,
-                    "source": f"{company['name']} (Greenhouse)",
+                    "source": f"{company_name} (Greenhouse)",
                     "applyLink": full_url,
                     "postedDate": self.now(),
                 })
@@ -582,7 +600,8 @@ class JobScraper:
         }
     
         for company in CAREER_PAGES:
-            print(f"\n[{company['name']}]")
+            company_name = company.get('name', 'Unknown')
+            print(f"\n[{company_name}]")
             
             try:
                 ats_type = self._detect_ats_from_url(company["url"])
@@ -630,62 +649,70 @@ class JobScraper:
             elif "lever" in r.text.lower()[:5000]:
                 return "lever"
                 
-        except:
+        except Exception:
             pass
         
         return "generic"
 
     def _scrape_career_greenhouse(self, company, headers):
         """Scrape Greenhouse-based career page"""
-        slug_match = re.search(r'greenhouse\.io/([^/]+)', company["url"])
+        slug_pattern = r'greenhouse\.io/([^/]+)'
+        company_url = company.get("url", "")
+        slug_match = re.search(slug_pattern, company_url)
         if slug_match:
             slug = slug_match.group(1)
         else:
             try:
-                r = requests.get(company["url"], headers=headers, timeout=5, allow_redirects=True)
-                slug_match = re.search(r'greenhouse\.io/([^/]+)', r.url)
+                r = requests.get(company_url, headers=headers, timeout=5, allow_redirects=True)
+                slug_match = re.search(slug_pattern, r.url)
                 if slug_match:
                     slug = slug_match.group(1)
                 else:
                     print("  ⚠ Could not find Greenhouse slug")
                     return
-            except:
+            except Exception:
                 print("  ⚠ Failed to detect Greenhouse slug")
                 return
         
+        company_name = company.get("name", "Unknown")
         self._scrape_greenhouse_enhanced(
-            {"name": company["name"], "slug": slug},
+            {"name": company_name, "slug": slug},
             headers
         )
 
     def _scrape_career_lever(self, company, headers):
         """Scrape Lever-based career page"""
-        slug_match = re.search(r'lever\.co/([^/]+)', company["url"])
+        slug_pattern = r'lever\.co/([^/]+)'
+        company_url = company.get("url", "")
+        slug_match = re.search(slug_pattern, company_url)
         if slug_match:
             slug = slug_match.group(1)
         else:
             print("  ⚠ Could not find Lever slug")
             return
         
+        company_name = company.get("name", "Unknown")
         self._scrape_lever_enhanced(
-            {"name": company["name"], "slug": slug},
+            {"name": company_name, "slug": slug},
             headers
         )
 
     def _scrape_career_ashby(self, company, headers):
         """Scrape Ashby-based career page"""
         try:
-            r = requests.get(company["url"], headers=headers, timeout=10)
+            company_url = company.get("url", "")
+            r = requests.get(company_url, headers=headers, timeout=10)
             soup = BeautifulSoup(r.text, "html.parser")
             
             jobs = soup.select("a[href*='/jobs/']")
             
+            uuid_pattern = r'/[a-f0-9-]{36}'
             valid_jobs = []
             for a in jobs:
                 href = a.get("href", "")
                 title = a.get_text(strip=True)
                 
-                if not re.search(r'/[a-f0-9-]{36}', href):
+                if not re.search(uuid_pattern, href):
                     continue
                 
                 if not title or len(title) < 5:
@@ -695,15 +722,16 @@ class JobScraper:
             
             print(f"  ✓ Ashby: {len(valid_jobs)} jobs")
             
+            company_name = company.get("name", "Unknown")
             for href, title in valid_jobs:
-                full_url = href if href.startswith("http") else company["url"].rstrip("/") + href
+                full_url = href if href.startswith("http") else company_url.rstrip("/") + href
                 
                 self.add({
                     "id": f"ashby_{hash(href)}",
                     "title": title,
-                    "company": company["name"],
+                    "company": company_name,
                     "location": "Various",
-                    "source": f"{company['name']} (Ashby)",
+                    "source": f"{company_name} (Ashby)",
                     "applyLink": full_url,
                     "postedDate": self.now(),
                 })
@@ -714,7 +742,8 @@ class JobScraper:
     def _scrape_career_generic(self, company, headers):
         """Generic career page scraper with smart filtering"""
         try:
-            r = requests.get(company["url"], headers=headers, timeout=10)
+            company_url = company.get("url", "")
+            r = requests.get(company_url, headers=headers, timeout=10)
             soup = BeautifulSoup(r.text, "html.parser")
             
             selectors = [
@@ -733,6 +762,22 @@ class JobScraper:
                 if len(jobs) > 5:
                     break
             
+            skip_patterns = [
+                r'^/careers/?$',
+                r'^/jobs/?$',
+                r'/departments',
+                r'/locations',
+                r'/teams',
+            ]
+            
+            skip_keywords = [
+                "all jobs", "view all", "departments", 
+                "locations", "open positions", "browse",
+                "filter by", "search jobs"
+            ]
+            
+            job_path_pattern = r'/(job|position|role|opening)[s]?/[\w-]+'
+            
             valid_jobs = []
             for a in jobs:
                 href = a.get("href", "")
@@ -741,48 +786,35 @@ class JobScraper:
                 if not href or not title or len(title) < 5:
                     continue
                 
-                skip_patterns = [
-                    r'^/careers/?$',
-                    r'^/jobs/?$',
-                    r'/departments',
-                    r'/locations',
-                    r'/teams',
-                ]
-                
                 if any(re.search(pattern, href) for pattern in skip_patterns):
                     continue
-                
-                skip_keywords = [
-                    "all jobs", "view all", "departments", 
-                    "locations", "open positions", "browse",
-                    "filter by", "search jobs"
-                ]
                 
                 if any(word in title.lower() for word in skip_keywords):
                     continue
                 
-                if not re.search(r'/(job|position|role|opening)[s]?/[\w-]+', href, re.I):
+                if not re.search(job_path_pattern, href, re.I):
                     continue
                 
                 valid_jobs.append((href, title))
             
             print(f"  ✓ Generic: {len(valid_jobs)} jobs")
             
+            company_name = company.get("name", "Unknown")
             for href, title in valid_jobs:
                 if href.startswith("http"):
                     full_url = href
                 elif href.startswith("/"):
-                    base = company["url"].split("/careers")[0].split("/jobs")[0]
+                    base = company_url.split("/careers")[0].split("/jobs")[0]
                     full_url = base + href
                 else:
-                    full_url = company["url"].rstrip("/") + "/" + href
+                    full_url = company_url.rstrip("/") + "/" + href
                 
                 self.add({
-                    "id": f"career_{company['name']}_{hash(href)}",
+                    "id": f"career_{company_name}_{hash(href)}",
                     "title": title,
-                    "company": company["name"],
+                    "company": company_name,
                     "location": "Various",
-                    "source": f"{company['name']} (Career)",
+                    "source": f"{company_name} (Career)",
                     "applyLink": full_url,
                     "postedDate": self.now(),
                 })
@@ -830,8 +862,6 @@ class JobScraper:
             )
 
         print("Saved → data/jobs.json")
-
-
 if __name__ == "__main__":
     scraper = JobScraper()
     scraper.run()
