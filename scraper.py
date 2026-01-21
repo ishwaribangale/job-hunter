@@ -573,6 +573,7 @@ class JobScraper:
 
             # ATS feeds
             self.scrape_ats()
+            self.scrape_career_pages()
 
         print("\n[SOURCE SUMMARY]")
         for k, v in self.stats.items():
