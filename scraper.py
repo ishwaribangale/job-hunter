@@ -43,39 +43,53 @@ class JobScraper:
 
     def scrape_remoteco(self):
         print("\n[Remote.co]")
-
+    
         url = "https://remote.co/remote-jobs"
         headers = {
             **HEADERS,
             "User-Agent": "Mozilla/5.0",
+            "Accept": "text/html",
         }
-
-        try:
-            r = requests.get(url, headers=headers, timeout=10)
-            soup = BeautifulSoup(r.text, "html.parser")
-
-            cards = soup.select("div.card")
-            print(f"  Jobs found: {len(cards)}")
-
-            for c in cards:
-                title = c.select_one("h3 a")
-                company = c.select_one("p.company")
-
-                if not title or not company:
-                    continue
-
-                self.add({
-                    "id": f"remoteco_{hash(title['href'])}",
-                    "title": title.get_text(strip=True),
-                    "company": company.get_text(strip=True),
-                    "location": "Remote",
-                    "source": "Remote.co",
-                    "applyLink": title["href"],
-                    "postedDate": self.now(),
-                })
-
-        except Exception as e:
-            print("  ❌ Remote.co failed:", e)
+    
+        for attempt in range(2):  # retry once
+            try:
+                r = requests.get(url, headers=headers, timeout=(5, 10))
+                if r.status_code != 200:
+                    print(f"  ⚠ HTTP {r.status_code}")
+                    return
+    
+                soup = BeautifulSoup(r.text, "html.parser")
+                cards = soup.select("div.card")
+    
+                print(f"  Jobs found: {len(cards)}")
+    
+                for c in cards:
+                    title = c.select_one("h3 a")
+                    company = c.select_one("p.company")
+    
+                    if not title or not company:
+                        continue
+    
+                    self.add({
+                        "id": f"remoteco_{hash(title['href'])}",
+                        "title": title.get_text(strip=True),
+                        "company": company.get_text(strip=True),
+                        "location": "Remote",
+                        "source": "Remote.co",
+                        "applyLink": title["href"],
+                        "postedDate": self.now(),
+                    })
+    
+                return  # success, exit
+    
+            except requests.exceptions.ReadTimeout:
+                print(f"  ⏱ Timeout (attempt {attempt + 1}/2)")
+    
+            except Exception as e:
+                print("  ❌ Remote.co failed:", e)
+                return
+    
+        print("  ⚠ Remote.co skipped after retries")
 
     # ----------------------------------
     # RUN
@@ -144,9 +158,14 @@ class JobScraper:
     
         try:
             r = requests.get(url, headers=headers, timeout=10)
+            if r.status_code != 200:
+                print(f"  ⚠ HTTP {r.status_code}")
+                return
+    
             soup = BeautifulSoup(r.text, "html.parser")
     
-            cards = soup.select("a[data-testid='job-title-link']")
+            # NEW selector (works 2025)
+            cards = soup.select("a[href^='/company/'][href*='/jobs/']")
     
             print(f"  Jobs found: {len(cards)}")
     
@@ -169,6 +188,7 @@ class JobScraper:
     
         except Exception as e:
             print("  ❌ Wellfound failed:", e)
+
 
 
     # ----------------------------------
@@ -350,7 +370,6 @@ class JobScraper:
                 browser = p.chromium.launch(
                     headless=True,
                     args=[
-                        "--disable-blink-features=AutomationControlled",
                         "--no-sandbox",
                         "--disable-dev-shm-usage",
                     ],
@@ -365,10 +384,8 @@ class JobScraper:
                 )
     
                 page = context.new_page()
-                page.goto(url, timeout=30_000, wait_until="networkidle")
-    
-                # YC hydrates links after JS runs
-                page.wait_for_selector("a[href^='/jobs/']", timeout=10_000)
+                page.goto(url, timeout=30_000)
+                page.wait_for_timeout(3000)
     
                 links = page.query_selector_all("a[href^='/jobs/']")
                 print(f"  Job links found: {len(links)}")
