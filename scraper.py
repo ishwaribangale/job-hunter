@@ -547,6 +547,12 @@ class JobScraper:
     # ----------------------------------
     # RUN
     # ----------------------------------
+       # ----------------------------------
+    # RUN
+    # ----------------------------------
+        # ----------------------------------
+    # RUN
+    # ----------------------------------
     def run(self):
         print(f"\n[MODE] {SCRAPE_MODE}")
 
@@ -554,14 +560,19 @@ class JobScraper:
             self.scrape_remotive()
             self.scrape_remoteok()
             self.scrape_weworkremotely()
-            self.scrape_workingnomads()   # ✅ NEW
-            self.scrape_nodesk()          # ✅ NEW
-            self.scrape_yc()
-            self.scrape_internshala()
-            self.scrape_ats()
-            self.scrape_career_pages()
+
+            # Core reliable boards
             self.scrape_remoteco()
             self.scrape_wellfound()
+
+            # Premium JS-based
+            self.scrape_yc()
+
+            # India-focused
+            self.scrape_internshala()
+
+            # ATS feeds
+            self.scrape_ats()
 
         print("\n[SOURCE SUMMARY]")
         for k, v in self.stats.items():
@@ -569,8 +580,12 @@ class JobScraper:
 
         print("\nTOTAL JOBS:", len(self.jobs))
 
+    # ----------------------------------
+    # SAVE
+    # ----------------------------------
     def save(self):
         os.makedirs("data", exist_ok=True)
+
         with open("data/jobs.json", "w", encoding="utf-8") as f:
             json.dump(
                 sorted(self.jobs, key=lambda x: x["score"], reverse=True),
@@ -580,7 +595,6 @@ class JobScraper:
             )
 
         print("Saved → data/jobs.json")
-
 
 if __name__ == "__main__":
     scraper = JobScraper()
