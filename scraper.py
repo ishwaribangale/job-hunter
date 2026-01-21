@@ -241,7 +241,7 @@ class JobScraper:
                     })
     
             except Exception as e:
-                print(f"  ❌ {label} failed:", e")
+                print(f"  ❌ {label} failed:", e)
 
     def scrape_weworkremotely(self):
         print("\n[WeWorkRemotely]")
@@ -594,7 +594,7 @@ class JobScraper:
                 elif ats_type == "ashbyhq":
                     self._scrape_career_ashby(company, headers)
                 elif ats_type == "workday":
-                    print(f"  ⚠ Workday detected - requires JS rendering")
+                    print("  ⚠ Workday detected - requires JS rendering")
                 else:
                     self._scrape_career_generic(company, headers)
                     
