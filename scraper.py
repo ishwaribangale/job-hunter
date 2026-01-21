@@ -521,7 +521,7 @@ class JobScraper:
             print("  ❌ ATS error:", c["name"], e)
             
     def scrape_career_pages(self):
-    print("\n[Career Pages]")
+        print("\n[Career Pages]")
 
         headers = {
             **HEADERS,
