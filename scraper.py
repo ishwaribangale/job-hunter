@@ -182,7 +182,6 @@ class JobScraper:
         print("\n[RemoteOK]")
     
         base = "https://remoteok.com/api"
-        tags = [
             tags = [
                     None,
                     "engineer",
