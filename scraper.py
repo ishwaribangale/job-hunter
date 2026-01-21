@@ -139,41 +139,74 @@ class JobScraper:
         # ----------------------------------
     # WORKING NOMADS (ROBUST, CI-SAFE)
     # ----------------------------------
-    def scrape_remoteco(self):
-        print("\n[Remote.co]")
+    def scrape_remoteok(self):
+    print("\n[RemoteOK]")
 
-        url = "https://remote.co/remote-jobs"
-        headers = {
-            **HEADERS,
-            "User-Agent": "Mozilla/5.0",
-        }
+    base = "https://remoteok.com/api"
+    tags = [
+        None,
+        "engineer",
+        "software-dev",
+        "frontend",
+        "backend",
+        "fullstack",
+        "product",
+        "design",
+        "data",
+        "marketing",
+        "sales",
+        "customer-support",
+    ]
+
+    headers = {
+        **HEADERS,
+        "User-Agent": "Mozilla/5.0 (compatible; PJIS/1.0)",
+        "Accept": "application/json",
+    }
+
+    for tag in tags:
+        if tag is None:
+            url = base
+            label = "main"
+        else:
+            url = f"{base}?tag={tag}"
+            label = tag
 
         try:
-            r = requests.get(url, headers=headers, timeout=10)
-            soup = BeautifulSoup(r.text, "html.parser")
+            r = requests.get(url, headers=headers, timeout=6)
 
-            cards = soup.select("div.card")
-            print(f"  Jobs found: {len(cards)}")
+            if r.status_code != 200:
+                print(f"  ⚠ {label}: HTTP {r.status_code}")
+                continue
 
-            for c in cards:
-                title = c.select_one("h3 a")
-                company = c.select_one("p.company")
+            data = r.json()
 
-                if not title or not company:
+            # RemoteOK quirk: first item is metadata
+            if not isinstance(data, list) or len(data) < 2:
+                print(f"  ⚠ {label}: invalid payload")
+                continue
+
+            jobs = data[1:]
+            print(f"  {label}: {len(jobs)} jobs")
+
+            for j in jobs:
+                link = j.get("url")
+                if not link:
                     continue
 
                 self.add({
-                    "id": f"remoteco_{hash(title['href'])}",
-                    "title": title.get_text(strip=True),
-                    "company": company.get_text(strip=True),
+                    "id": f"remoteok_{j.get('id')}",
+                    "title": j.get("position"),
+                    "company": j.get("company"),
                     "location": "Remote",
-                    "source": "Remote.co",
-                    "applyLink": title["href"],
+                    "source": "RemoteOK",
+                    "applyLink": link,
                     "postedDate": self.now(),
                 })
 
         except Exception as e:
-            print("  ❌ Remote.co failed:", e)
+            print(f"  ❌ {label} failed:", e)
+
 
     # ----------------------------------
     # REMOTEOK (TAG EXPANSION)
