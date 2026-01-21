@@ -182,20 +182,20 @@ class JobScraper:
         print("\n[RemoteOK]")
     
         base = "https://remoteok.com/api"
-            tags = [
-                    None,
-                    "engineer",
-                    "software-dev",
-                    "frontend",
-                    "backend",
-                    "fullstack",
-                    "product",
-                    "design",
-                    "data",
-                    "marketing",
-                    "sales",
-                    "customer-support",
-                    ]
+        tags = [
+            None,
+            "engineer",
+            "software-dev",
+            "frontend",
+            "backend",
+            "fullstack",
+            "product",
+            "design",
+            "data",
+            "marketing",
+            "sales",
+            "customer-support",
+        ]
     
         headers = {
             **HEADERS,
@@ -204,48 +204,7 @@ class JobScraper:
         }
     
         for tag in tags:
-            url = base if tag is None else f"{base}?tag={tag}"
-            label = "main" if tag is None else tag
-    
-            try:
-                r = requests.get(url, headers=headers, timeout=6)
-    
-                if r.status_code != 200:
-                    print(f"  ⚠ Tag '{label}': HTTP {r.status_code}")
-                    continue
-    
-                data = r.json()
-    
-                # RemoteOK API quirk: first item is metadata
-                if not isinstance(data, list) or len(data) < 2:
-                    print(f"  ⚠ Tag '{label}': invalid payload")
-                    continue
-    
-                jobs = data[1:]
-                print(f"  Tag '{label}': {len(jobs)} cards")
-    
-                for j in jobs:
-                    link = j.get("url")
-                    if not link:
-                        continue
-    
-                    self.add({
-                        "id": f"remoteok_{j.get('id')}",
-                        "title": j.get("position"),
-                        "company": j.get("company"),
-                        "location": "Remote",
-                        "source": "RemoteOK",
-                        "applyLink": link,
-                        "postedDate": self.now(),
-                    })
-    
-            except requests.exceptions.ReadTimeout:
-                print(f"  ⏱ Tag '{label}': timeout, skipped")
-                continue
-    
-            except Exception as e:
-                print(f"  ❌ Tag '{label}': failed → {e}")
-                continue
+            url = base if
 
     # ----------------------------------
     # WEWORKREMOTELY (RSS-SAFE)
