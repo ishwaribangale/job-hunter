@@ -372,31 +372,71 @@ class JobScraper:
     # ----------------------------------
     # Y COMBINATOR
     # ----------------------------------
-    def scrape_yc(self):
-        print("\n[Y Combinator]")
-
-        base = "https://www.ycombinator.com"
-        r = requests.get(f"{base}/jobs", headers=HEADERS, timeout=TIMEOUT)
-        soup = BeautifulSoup(r.text, "html.parser")
-
-        links = soup.select("a[href^='/jobs/']")
-        print(f"Job links found: {len(links)}")
-
-        for a in links:
-            href = a.get("href")
-            if not href:
-                continue
-
-            self.add({
-                "id": f"yc_{hash(href)}",
-                "title": a.get_text(strip=True),
-                "company": "YC Startup",
-                "location": "Various",
-                "source": "YCombinator",
-                "applyLink": base + href,
-                "postedDate": self.now(),
-            })
     # ----------------------------------
+# Y COMBINATOR (PLAYWRIGHT – JS SAFE)
+# ----------------------------------
+    def scrape_yc(self):
+        print("\n[Y Combinator – Playwright]")
+    
+        try:
+            from playwright.sync_api import sync_playwright
+        except ImportError:
+            print("  ⚠ Playwright not installed, skipping YC")
+            return
+    
+        url = "https://www.ycombinator.com/jobs"
+    
+        try:
+            with sync_playwright() as p:
+                browser = p.chromium.launch(
+                    headless=True,
+                    args=[
+                        "--disable-blink-features=AutomationControlled",
+                        "--no-sandbox",
+                        "--disable-dev-shm-usage",
+                    ],
+                )
+    
+                context = browser.new_context(
+                    user_agent=(
+                        "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) "
+                        "AppleWebKit/537.36 (KHTML, like Gecko) "
+                        "Chrome/120.0.0.0 Safari/537.36"
+                    )
+                )
+    
+                page = context.new_page()
+                page.goto(url, timeout=30_000, wait_until="networkidle")
+    
+                # YC hydrates links after JS runs
+                page.wait_for_selector("a[href^='/jobs/']", timeout=10_000)
+    
+                links = page.query_selector_all("a[href^='/jobs/']")
+                print(f"  Job links found: {len(links)}")
+    
+                for a in links:
+                    href = a.get_attribute("href")
+                    title = a.inner_text().strip()
+    
+                    if not href or not title:
+                        continue
+    
+                    self.add({
+                        "id": f"yc_{hash(href)}",
+                        "title": title,
+                        "company": "YC Startup",
+                        "location": "Various",
+                        "source": "YCombinator",
+                        "applyLink": "https://www.ycombinator.com" + href,
+                        "postedDate": self.now(),
+                    })
+    
+                context.close()
+                browser.close()
+    
+        except Exception as e:
+            print("  ❌ YC Playwright failed:", e)
+--
 # WORKING NOMADS (PAGINATED)
 # ----------------------------------
     def scrape_workingnomads(self):
