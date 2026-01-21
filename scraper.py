@@ -70,48 +70,47 @@ class JobScraper:
     # ----------------------------------
 # NODESK (PAGINATED)
 # ----------------------------------
-    def scrape_nodesk(self):
-        print("\n[NoDesk]")
+    # ----------------------------------
+# WELLFOUND (PAGE 1 ONLY)
+# ----------------------------------
+    def scrape_wellfound(self):
+        print("\n[Wellfound]")
     
-        base = "https://nodesk.co/remote-jobs"
-        page = 1
-        total = 0
+        url = "https://wellfound.com/jobs"
+        headers = {
+            **HEADERS,
+            "User-Agent": "Mozilla/5.0",
+            "Accept": "text/html",
+        }
     
-        while page <= 20:
-            url = base if page == 1 else f"{base}/page/{page}/"
-            r = requests.get(url, headers=HEADERS, timeout=TIMEOUT)
+        try:
+            r = requests.get(url, headers=headers, timeout=10)
             soup = BeautifulSoup(r.text, "html.parser")
     
-            cards = soup.select("article.job")
+            cards = soup.select("a[data-testid='job-title-link']")
     
-            if not cards:
-                break
+            print(f"  Jobs found: {len(cards)}")
     
-            print(f"  Page {page}: {len(cards)} cards")
+            for a in cards:
+                href = a.get("href")
+                title = a.get_text(strip=True)
     
-            for c in cards:
-                title = c.select_one("h2 a")
-                company = c.select_one("span.company")
-                link = c.select_one("h2 a")
-    
-                if not title or not company or not link:
+                if not href or not title:
                     continue
     
                 self.add({
-                    "id": f"nodesk_{hash(link['href'])}",
-                    "title": title.get_text(strip=True),
-                    "company": company.get_text(strip=True),
-                    "location": "Remote",
-                    "source": "NoDesk",
-                    "applyLink": link["href"],
+                    "id": f"wellfound_{hash(href)}",
+                    "title": title,
+                    "company": "Startup (Wellfound)",
+                    "location": "Remote / Hybrid",
+                    "source": "Wellfound",
+                    "applyLink": "https://wellfound.com" + href,
                     "postedDate": self.now(),
                 })
     
-                total += 1
-    
-            page += 1
-    
-        print(f"Total NoDesk jobs fetched: {total}")
+        except Exception as e:
+            print("  ❌ Wellfound failed:", e)
+
 
     # ----------------------------------
     # WORKING NOMADS (PAGINATED)
@@ -119,99 +118,41 @@ class JobScraper:
         # ----------------------------------
     # WORKING NOMADS (ROBUST, CI-SAFE)
     # ----------------------------------
-    def scrape_workingnomads(self):
-        print("\n[Working Nomads]")
-    
-        base = "https://www.workingnomads.com/jobs"
+    def scrape_remoteco(self):
+        print("\n[Remote.co]")
+
+        url = "https://remote.co/remote-jobs"
         headers = {
             **HEADERS,
-            "User-Agent": "Mozilla/5.0 (compatible; PJIS/1.0)",
-            "Accept": "text/html",
-            "Accept-Language": "en-US,en;q=0.9",
+            "User-Agent": "Mozilla/5.0",
         }
-    
-        MAX_PAGES = 5
-        MAX_FAILURES = 2
-    
-        page = 1
-        failures = 0
-        total = 0
-    
-        while page <= MAX_PAGES:
-            url = base if page == 1 else f"{base}?page={page}"
-    
-            try:
-                r = requests.get(url, headers=headers, timeout=6)
-    
-                if r.status_code != 200:
-                    print(f"  ⚠ Page {page}: HTTP {r.status_code}")
-                    break
-    
-                soup = BeautifulSoup(r.text, "html.parser")
-    
-                # Try multiple known patterns
-                cards = (
-                    soup.select("li.job") or
-                    soup.select("div.job-listing") or
-                    soup.select("article.job")
-                )
-    
-                if not cards:
-                    failures += 1
-                    print(f"  ⚠ Page {page}: no jobs found ({failures}/{MAX_FAILURES})")
-    
-                    # Likely bot-block or JS-required
-                    if failures >= MAX_FAILURES:
-                        print("  ⚠ Likely blocked or JS-only, stopping Working Nomads")
-                        break
-    
-                    page += 1
+
+        try:
+            r = requests.get(url, headers=headers, timeout=10)
+            soup = BeautifulSoup(r.text, "html.parser")
+
+            cards = soup.select("div.card")
+            print(f"  Jobs found: {len(cards)}")
+
+            for c in cards:
+                title = c.select_one("h3 a")
+                company = c.select_one("p.company")
+
+                if not title or not company:
                     continue
-    
-                print(f"  Page {page}: {len(cards)} cards")
-                failures = 0
-    
-                for c in cards:
-                    title = c.select_one("a")
-                    company = c.select_one(".company, span.company")
-    
-                    if not title or not company:
-                        continue
-    
-                    href = title.get("href")
-                    if not href:
-                        continue
-    
-                    self.add({
-                        "id": f"wn_{hash(href)}",
-                        "title": title.get_text(strip=True),
-                        "company": company.get_text(strip=True),
-                        "location": "Remote",
-                        "source": "Working Nomads",
-                        "applyLink": (
-                            href if href.startswith("http")
-                            else "https://www.workingnomads.com" + href
-                        ),
-                        "postedDate": self.now(),
-                    })
-    
-                    total += 1
-    
-                page += 1
-    
-            except requests.exceptions.ReadTimeout:
-                failures += 1
-                print(f"  ⏱ Page {page}: timeout ({failures}/{MAX_FAILURES})")
-    
-                if failures >= MAX_FAILURES:
-                    print("  ⚠ Too many timeouts, stopping Working Nomads")
-                    break
-    
-            except Exception as e:
-                print(f"  ❌ Page {page}: failed → {e}")
-                break
-    
-        print(f"Total Working Nomads jobs fetched: {total}")
+
+                self.add({
+                    "id": f"remoteco_{hash(title['href'])}",
+                    "title": title.get_text(strip=True),
+                    "company": company.get_text(strip=True),
+                    "location": "Remote",
+                    "source": "Remote.co",
+                    "applyLink": title["href"],
+                    "postedDate": self.now(),
+                })
+
+        except Exception as e:
+            print("  ❌ Remote.co failed:", e)
 
     # ----------------------------------
     # REMOTEOK (TAG EXPANSION)
@@ -221,13 +162,20 @@ class JobScraper:
     
         base = "https://remoteok.com/api"
         tags = [
-            None,
-            "dev",
-            "product",
-            "design",
-            "marketing",
-            "data",
-        ]
+            tags = [
+                    None,
+                    "engineer",
+                    "software-dev",
+                    "frontend",
+                    "backend",
+                    "fullstack",
+                    "product",
+                    "design",
+                    "data",
+                    "marketing",
+                    "sales",
+                    "customer-support",
+                    ]
     
         headers = {
             **HEADERS,
