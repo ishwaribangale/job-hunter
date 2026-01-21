@@ -436,7 +436,7 @@ class JobScraper:
     
         except Exception as e:
             print("  ❌ YC Playwright failed:", e)
---
+
 # WORKING NOMADS (PAGINATED)
 # ----------------------------------
     def scrape_workingnomads(self):
