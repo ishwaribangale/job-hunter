@@ -70,7 +70,7 @@ jobs:
             echo "" >> $GITHUB_STEP_SUMMARY
             echo "✅ Jobs data saved to \`data/jobs.json\`" >> $GITHUB_STEP_SUMMARY
           fi
-          - name: Install Playwright
-            run: |
+      - name: Install Playwright
+        run: |
               pip install playwright
               playwright install chromium
