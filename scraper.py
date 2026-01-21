@@ -41,6 +41,44 @@ class JobScraper:
         src = job["source"]
         self.stats[src] = self.stats.get(src, 0) + 1
 
+    def scrape_remoteco(self):
+        print("\n[Remote.co]")
+
+        url = "https://remote.co/remote-jobs"
+        headers = {
+            **HEADERS,
+            "User-Agent": "Mozilla/5.0",
+        }
+
+        try:
+            r = requests.get(url, headers=headers, timeout=10)
+            soup = BeautifulSoup(r.text, "html.parser")
+
+            cards = soup.select("div.card")
+            print(f"  Jobs found: {len(cards)}")
+
+            for c in cards:
+                title = c.select_one("h3 a")
+                company = c.select_one("p.company")
+
+                if not title or not company:
+                    continue
+
+                self.add({
+                    "id": f"remoteco_{hash(title['href'])}",
+                    "title": title.get_text(strip=True),
+                    "company": company.get_text(strip=True),
+                    "location": "Remote",
+                    "source": "Remote.co",
+                    "applyLink": title["href"],
+                    "postedDate": self.now(),
+                })
+
+        except Exception as e:
+            print("  ❌ Remote.co failed:", e)
+
+    # ----------------------------------
+    # RUN
     # ----------------------------------
     # REMOTIVE
     # ----------------------------------
@@ -506,41 +544,6 @@ class JobScraper:
             except Exception as e:
                 print("❌ Career page failed:", c["name"], e)
 
-     def scrape_remoteco(self):
-        print("\n[Remote.co]")
-
-        url = "https://remote.co/remote-jobs"
-        headers = {
-            **HEADERS,
-            "User-Agent": "Mozilla/5.0",
-        }
-
-        try:
-            r = requests.get(url, headers=headers, timeout=10)
-            soup = BeautifulSoup(r.text, "html.parser")
-
-            cards = soup.select("div.card")
-            print(f"  Jobs found: {len(cards)}")
-
-            for c in cards:
-                title = c.select_one("h3 a")
-                company = c.select_one("p.company")
-
-                if not title or not company:
-                    continue
-
-                self.add({
-                    "id": f"remoteco_{hash(title['href'])}",
-                    "title": title.get_text(strip=True),
-                    "company": company.get_text(strip=True),
-                    "location": "Remote",
-                    "source": "Remote.co",
-                    "applyLink": title["href"],
-                    "postedDate": self.now(),
-                })
-
-        except Exception as e:
-            print("  ❌ Remote.co failed:", e)
     # ----------------------------------
     # RUN
     # ----------------------------------
