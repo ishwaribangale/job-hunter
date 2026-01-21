@@ -140,78 +140,6 @@ class JobScraper:
     # WORKING NOMADS (ROBUST, CI-SAFE)
     # ----------------------------------
     def scrape_remoteok(self):
-    print("\n[RemoteOK]")
-
-    base = "https://remoteok.com/api"
-    tags = [
-        None,
-        "engineer",
-        "software-dev",
-        "frontend",
-        "backend",
-        "fullstack",
-        "product",
-        "design",
-        "data",
-        "marketing",
-        "sales",
-        "customer-support",
-    ]
-
-    headers = {
-        **HEADERS,
-        "User-Agent": "Mozilla/5.0 (compatible; PJIS/1.0)",
-        "Accept": "application/json",
-    }
-
-    for tag in tags:
-        if tag is None:
-            url = base
-            label = "main"
-        else:
-            url = f"{base}?tag={tag}"
-            label = tag
-
-        try:
-            r = requests.get(url, headers=headers, timeout=6)
-
-            if r.status_code != 200:
-                print(f"  ⚠ {label}: HTTP {r.status_code}")
-                continue
-
-            data = r.json()
-
-            # RemoteOK quirk: first item is metadata
-            if not isinstance(data, list) or len(data) < 2:
-                print(f"  ⚠ {label}: invalid payload")
-                continue
-
-            jobs = data[1:]
-            print(f"  {label}: {len(jobs)} jobs")
-
-            for j in jobs:
-                link = j.get("url")
-                if not link:
-                    continue
-
-                self.add({
-                    "id": f"remoteok_{j.get('id')}",
-                    "title": j.get("position"),
-                    "company": j.get("company"),
-                    "location": "Remote",
-                    "source": "RemoteOK",
-                    "applyLink": link,
-                    "postedDate": self.now(),
-                })
-
-        except Exception as e:
-            print(f"  ❌ {label} failed:", e)
-
-
-    # ----------------------------------
-    # REMOTEOK (TAG EXPANSION)
-    # ----------------------------------
-    def scrape_remoteok(self):
         print("\n[RemoteOK]")
     
         base = "https://remoteok.com/api"
@@ -237,7 +165,48 @@ class JobScraper:
         }
     
         for tag in tags:
-            url = base if
+            if tag is None:
+                url = base
+                label = "main"
+            else:
+                url = f"{base}?tag={tag}"
+                label = tag
+    
+            try:
+                r = requests.get(url, headers=headers, timeout=6)
+    
+                if r.status_code != 200:
+                    print(f"  ⚠ {label}: HTTP {r.status_code}")
+                    continue
+    
+                data = r.json()
+    
+                # RemoteOK quirk: first item is metadata
+                if not isinstance(data, list) or len(data) < 2:
+                    print(f"  ⚠ {label}: invalid payload")
+                    continue
+    
+                jobs = data[1:]
+                print(f"  {label}: {len(jobs)} jobs")
+    
+                for j in jobs:
+                    link = j.get("url")
+                    if not link:
+                        continue
+    
+                    self.add({
+                        "id": f"remoteok_{j.get('id')}",
+                        "title": j.get("position"),
+                        "company": j.get("company"),
+                        "location": "Remote",
+                        "source": "RemoteOK",
+                        "applyLink": link,
+                        "postedDate": self.now(),
+                    })
+    
+            except Exception as e:
+                print(f"  ❌ {label} failed:", e)
+        
 
     # ----------------------------------
     # WEWORKREMOTELY (RSS-SAFE)
