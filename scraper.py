@@ -12,6 +12,7 @@ from bs4 import BeautifulSoup
 from config import HEADERS, TIMEOUT, TOP_COMPANIES
 from roles import infer_role
 from scoring import score_job
+from config import HEADERS, TIMEOUT, TOP_COMPANIES, CAREER_PAGES
 
 SCRAPE_MODE = "VOLUME"  # VOLUME | INTELLIGENCE
 
@@ -520,40 +521,43 @@ class JobScraper:
             print("  ❌ ATS error:", c["name"], e)
             
     def scrape_career_pages(self):
-        print("\n[Career Pages]")
+    print("\n[Career Pages]")
 
-    headers = {
-        **HEADERS,
-        "User-Agent": "Mozilla/5.0",
-    }
+        headers = {
+            **HEADERS,
+            "User-Agent": "Mozilla/5.0",
+        }
 
-    for c in CAREER_PAGES:
-        try:
-            r = requests.get(c["url"], headers=headers, timeout=TIMEOUT)
-            soup = BeautifulSoup(r.text, "html.parser")
-
-            links = soup.select("a[href*='job'], a[href*='career'], a[href*='position']")
-            print(c["name"], "links found:", len(links))
-
-            for a in links:
-                text = a.get_text(strip=True)
-                href = a.get("href")
-
-                if not text or not href or len(text) < 5:
-                    continue
-
-                self.add({
-                    "id": f"career_{c['name']}_{hash(href)}",
-                    "title": text,
-                    "company": c["name"],
-                    "location": "Various",
-                    "source": "Career Page",
-                    "applyLink": href if href.startswith("http") else c["url"] + href,
-                    "postedDate": self.now(),
-                })
-
-        except Exception as e:
-            print("❌ Career page failed:", c["name"], e)
+        for c in CAREER_PAGES:
+            try:
+                r = requests.get(c["url"], headers=headers, timeout=TIMEOUT)
+                soup = BeautifulSoup(r.text, "html.parser")
+    
+                links = soup.select(
+                    "a[href*='job'], a[href*='career'], a[href*='position']"
+                )
+    
+                print(c["name"], "links found:", len(links))
+    
+                for a in links:
+                    text = a.get_text(strip=True)
+                    href = a.get("href")
+    
+                    if not text or not href or len(text) < 5:
+                        continue
+    
+                    self.add({
+                        "id": f"career_{c['name']}_{hash(href)}",
+                        "title": text,
+                        "company": c["name"],
+                        "location": "Various",
+                        "source": "Career Page",
+                        "applyLink": href if href.startswith("http") else c["url"] + href,
+                        "postedDate": self.now(),
+                    })
+    
+            except Exception as e:
+                print("❌ Career page failed:", c["name"], e)
 
 
     # ----------------------------------
@@ -571,7 +575,7 @@ class JobScraper:
             self.scrape_yc()
             self.scrape_internshala()
             self.scrape_ats()
-            self.scrape_scrape_career_pages()
+            self.scrape_career_pages()
 
         print("\n[SOURCE SUMMARY]")
         for k, v in self.stats.items():
