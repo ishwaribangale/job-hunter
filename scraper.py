@@ -121,60 +121,96 @@ class JobScraper:
     # ----------------------------------
     def scrape_workingnomads(self):
         print("\n[Working Nomads]")
-
+    
         base = "https://www.workingnomads.com/jobs"
-        page = 1
-        total = 0
-
         headers = {
             **HEADERS,
-            "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 Chrome/120.0.0.0 Safari/537.36",
+            "User-Agent": "Mozilla/5.0 (compatible; PJIS/1.0)",
+            "Accept": "text/html",
             "Accept-Language": "en-US,en;q=0.9",
         }
-
-        while page <= 20:
+    
+        MAX_PAGES = 5
+        MAX_FAILURES = 2
+    
+        page = 1
+        failures = 0
+        total = 0
+    
+        while page <= MAX_PAGES:
             url = base if page == 1 else f"{base}?page={page}"
-            r = requests.get(url, headers=headers, timeout=TIMEOUT)
-
-            soup = BeautifulSoup(r.text, "html.parser")
-
-            # New + old markup support
-            cards = soup.select("li.job") or soup.select("div.job-listing")
-
-            if not cards:
-                print(f"  Page {page}: 0 cards (blocked or markup changed)")
+    
+            try:
+                r = requests.get(url, headers=headers, timeout=6)
+    
+                if r.status_code != 200:
+                    print(f"  ⚠ Page {page}: HTTP {r.status_code}")
+                    break
+    
+                soup = BeautifulSoup(r.text, "html.parser")
+    
+                # Try multiple known patterns
+                cards = (
+                    soup.select("li.job") or
+                    soup.select("div.job-listing") or
+                    soup.select("article.job")
+                )
+    
+                if not cards:
+                    failures += 1
+                    print(f"  ⚠ Page {page}: no jobs found ({failures}/{MAX_FAILURES})")
+    
+                    # Likely bot-block or JS-required
+                    if failures >= MAX_FAILURES:
+                        print("  ⚠ Likely blocked or JS-only, stopping Working Nomads")
+                        break
+    
+                    page += 1
+                    continue
+    
+                print(f"  Page {page}: {len(cards)} cards")
+                failures = 0
+    
+                for c in cards:
+                    title = c.select_one("a")
+                    company = c.select_one(".company, span.company")
+    
+                    if not title or not company:
+                        continue
+    
+                    href = title.get("href")
+                    if not href:
+                        continue
+    
+                    self.add({
+                        "id": f"wn_{hash(href)}",
+                        "title": title.get_text(strip=True),
+                        "company": company.get_text(strip=True),
+                        "location": "Remote",
+                        "source": "Working Nomads",
+                        "applyLink": (
+                            href if href.startswith("http")
+                            else "https://www.workingnomads.com" + href
+                        ),
+                        "postedDate": self.now(),
+                    })
+    
+                    total += 1
+    
+                page += 1
+    
+            except requests.exceptions.ReadTimeout:
+                failures += 1
+                print(f"  ⏱ Page {page}: timeout ({failures}/{MAX_FAILURES})")
+    
+                if failures >= MAX_FAILURES:
+                    print("  ⚠ Too many timeouts, stopping Working Nomads")
+                    break
+    
+            except Exception as e:
+                print(f"  ❌ Page {page}: failed → {e}")
                 break
-
-            print(f"  Page {page}: {len(cards)} cards")
-
-            for c in cards:
-                title = c.select_one("a")
-                company = c.select_one(".company, span.company")
-
-                if not title or not company:
-                    continue
-
-                href = title.get("href")
-                if not href:
-                    continue
-
-                self.add({
-                    "id": f"wn_{hash(href)}",
-                    "title": title.get_text(strip=True),
-                    "company": company.get_text(strip=True),
-                    "location": "Remote",
-                    "source": "Working Nomads",
-                    "applyLink": (
-                        href if href.startswith("http")
-                        else "https://www.workingnomads.com" + href
-                    ),
-                    "postedDate": self.now(),
-                })
-
-                total += 1
-
-            page += 1
-
+    
         print(f"Total Working Nomads jobs fetched: {total}")
 
     # ----------------------------------
@@ -248,7 +284,7 @@ class JobScraper:
     # ----------------------------------
     def scrape_weworkremotely(self):
         print("\n[WeWorkRemotely]")
-
+    
         base = "https://weworkremotely.com/categories"
         categories = [
             "remote-programming-jobs",
@@ -257,52 +293,81 @@ class JobScraper:
             "remote-sales-and-marketing-jobs",
             "remote-customer-support-jobs",
         ]
-
-        headers = {**HEADERS, "Accept": "text/html"}
-
+    
+        headers = {
+            **HEADERS,
+            "User-Agent": "Mozilla/5.0 (compatible; PJIS/1.0)",
+            "Accept": "text/html",
+        }
+    
+        MAX_PAGES = 10
+        MAX_TIMEOUTS = 2
+    
         for cat in categories:
             print(f"\nCategory: {cat}")
+    
             page = 1
-
-            while page <= 20:
+            timeouts = 0
+    
+            while page <= MAX_PAGES:
                 url = f"{base}/{cat}"
                 if page > 1:
                     url += f"?page={page}"
-
-                r = requests.get(url, headers=headers, timeout=TIMEOUT)
-
-                # RSS protection
-                if "<rss" in r.text.lower():
-                    print("  ⚠ RSS feed detected, stopping category")
+    
+                try:
+                    r = requests.get(url, headers=headers, timeout=6)
+    
+                    if r.status_code != 200:
+                        print(f"  ⚠ Page {page}: HTTP {r.status_code}")
+                        break
+    
+                    # RSS / bot protection
+                    if "<rss" in r.text.lower():
+                        print("  ⚠ RSS or bot response detected, stopping category")
+                        break
+    
+                    soup = BeautifulSoup(r.text, "html.parser")
+                    cards = soup.select("li.feature")
+    
+                    if not cards:
+                        print(f"  Page {page}: 0 cards")
+                        break
+    
+                    print(f"  Page {page}: {len(cards)} cards")
+    
+                    for c in cards:
+                        title = c.select_one("span.title")
+                        company = c.select_one("span.company")
+                        link = c.select_one("a")
+    
+                        if not title or not company or not link:
+                            continue
+    
+                        self.add({
+                            "id": f"wwr_{hash(link['href'])}",
+                            "title": title.get_text(strip=True),
+                            "company": company.get_text(strip=True),
+                            "location": "Remote",
+                            "source": "WeWorkRemotely",
+                            "applyLink": "https://weworkremotely.com" + link["href"],
+                            "postedDate": self.now(),
+                        })
+    
+                    page += 1
+                    timeouts = 0  # reset after success
+    
+                except requests.exceptions.ReadTimeout:
+                    timeouts += 1
+                    print(f"  ⏱ Page {page}: timeout ({timeouts}/{MAX_TIMEOUTS})")
+    
+                    if timeouts >= MAX_TIMEOUTS:
+                        print("  ⚠ Too many timeouts, stopping category")
+                        break
+    
+                except Exception as e:
+                    print(f"  ❌ Page {page}: failed → {e}")
                     break
 
-                soup = BeautifulSoup(r.text, "html.parser")
-                cards = soup.select("li.feature")
-
-                if not cards:
-                    break
-
-                print(f"  Page {page}: {len(cards)} cards")
-
-                for c in cards:
-                    title = c.select_one("span.title")
-                    company = c.select_one("span.company")
-                    link = c.select_one("a")
-
-                    if not title or not company or not link:
-                        continue
-
-                    self.add({
-                        "id": f"wwr_{hash(link['href'])}",
-                        "title": title.get_text(strip=True),
-                        "company": company.get_text(strip=True),
-                        "location": "Remote",
-                        "source": "WeWorkRemotely",
-                        "applyLink": "https://weworkremotely.com" + link["href"],
-                        "postedDate": self.now(),
-                    })
-
-                page += 1
 
     # ----------------------------------
     # Y COMBINATOR
