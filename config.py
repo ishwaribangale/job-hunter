@@ -21,10 +21,6 @@ TOP_COMPANIES = [
     # --------------------
     # LEVER COMPANIES
     # --------------------
-    {"name": "Notion", "ats": "lever", "slug": "notion"},
-    {"name": "Figma", "ats": "lever", "slug": "figma"},
-    {"name": "Airtable", "ats": "lever", "slug": "airtable"},
-    
     # --------------------
     # GREENHOUSE - VERIFIED WORKING SLUGS
     # --------------------
