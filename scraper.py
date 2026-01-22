@@ -609,140 +609,114 @@ class JobScraper:
             print(f"  ❌ Lever: {e}")
             
     def scrape_ashby(self, company_name, slug):
-        """FIXED Ashby scraper with comprehensive detection"""
+        """FIXED Ashby scraper - API endpoint approach"""
         print(f"  Attempting Ashby scrape for: {slug}")
         
-        # Try JSON endpoint
+        # METHOD 1: Try the actual API endpoint
+        api_url = f"https://api.ashbyhq.com/posting-api/job-board/{slug}"
+        headers = {
+            **HEADERS,
+            "Accept": "application/json",
+            "Origin": "https://jobs.ashbyhq.com",
+            "Referer": f"https://jobs.ashbyhq.com/{slug}"
+        }
+        
         try:
-            json_url = f"https://jobs.ashbyhq.com/{slug}"
-            r = requests.get(json_url, headers={**HEADERS, "Accept": "application/json, text/html"}, timeout=10)
-            
+            r = requests.get(api_url, headers=headers, timeout=15)
             if r.status_code == 200:
-                try:
-                    data = r.json()
-                    if isinstance(data, dict):
-                        jobs = data.get("jobs", []) or data.get("postings", [])
-                        if jobs:
-                            print(f"  ✓ Ashby JSON: {len(jobs)} jobs")
-                            for j in jobs:
-                                job_id = j.get("id", "")
-                                title = j.get("title", "") or j.get("name", "")
-                                
-                                if not job_id or not title:
-                                    continue
-                                
-                                loc = j.get("location", {})
-                                location = loc.get("name", "Various") if isinstance(loc, dict) else j.get("locationName", "Various")
-                                
-                                self.add({
-                                    "id": f"ashby_{slug}_{job_id}",
-                                    "title": title,
-                                    "company": company_name,
-                                    "location": location,
-                                    "source": f"{company_name} (Ashby)",
-                                    "applyLink": f"https://jobs.ashbyhq.com/{slug}/{job_id}",
-                                    "postedDate": self.now(),
-                                })
-                            return
-                except:
-                    pass
+                data = r.json()
+                jobs = data.get("jobs", [])
+                
+                if jobs:
+                    print(f"  ✓ Ashby API: {len(jobs)} jobs")
+                    for j in jobs:
+                        job_id = j.get("id", "")
+                        title = j.get("title", "")
+                        
+                        if not job_id or not title:
+                            continue
+                        
+                        loc = j.get("location", {})
+                        location = loc.get("name", "Various") if isinstance(loc, dict) else "Various"
+                        
+                        self.add({
+                            "id": f"ashby_{slug}_{job_id}",
+                            "title": title,
+                            "company": company_name,
+                            "location": location,
+                            "source": f"{company_name} (Ashby)",
+                            "applyLink": f"https://jobs.ashbyhq.com/{slug}/{job_id}",
+                            "postedDate": self.now(),
+                        })
+                    return
         except Exception as e:
-            print(f"  ⚠ Ashby JSON attempt failed: {e}")
+            print(f"  ⚠ Ashby API failed: {e}")
         
-        # HTML scraping
-        url = f"https://jobs.ashbyhq.com/{slug}"
-        headers = {**HEADERS, "Accept": "text/html"}
-        
+        # METHOD 2: Try Playwright for JavaScript-rendered content
         try:
-            r = requests.get(url, headers=headers, timeout=10)
+            from playwright.sync_api import sync_playwright
             
-            if r.status_code != 200:
-                print(f"  ⚠ HTTP {r.status_code}")
-                return
+            url = f"https://jobs.ashbyhq.com/{slug}"
             
-            soup = BeautifulSoup(r.text, "html.parser")
-            print(f"  Page loaded, searching for jobs...")
-            
-            all_links = soup.find_all("a", href=True)
-            print(f"  Total links found: {len(all_links)}")
-            
-            valid_jobs = []
-            seen_hrefs = set()
-            
-            # Relaxed job patterns
-            job_patterns = [
-                r'[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}',
-                r'/[a-zA-Z0-9]{20,}',
-                r'/jobs?/[a-zA-Z0-9-]+',
-                r'ashbyhq\.com/[^/]+/[a-zA-Z0-9-]{8,}',
-            ]
-            
-            for a in all_links:
-                href = a.get("href", "")
-                title = a.get_text(strip=True)
+            print("  Trying Playwright...")
+            with sync_playwright() as p:
+                browser = p.chromium.launch(
+                    headless=True,
+                    args=["--no-sandbox", "--disable-dev-shm-usage"]
+                )
+                page = browser.new_page()
+                page.goto(url, wait_until="networkidle", timeout=30000)
+                page.wait_for_timeout(3000)  # Wait for JS to render
                 
-                if not href or href in seen_hrefs:
-                    continue
+                # Get all links after JS renders
+                links = page.query_selector_all("a[href]")
                 
-                has_job_pattern = any(re.search(pattern, href, re.I) for pattern in job_patterns)
-                has_company_id = f"ashbyhq.com/{slug}/" in href or f"/{slug}/" in href
+                valid_jobs = []
+                seen_hrefs = set()
                 
-                if not (has_job_pattern or has_company_id):
-                    continue
+                for link in links:
+                    href = link.get_attribute("href") or ""
+                    title = link.inner_text().strip()
+                    
+                    if not href or href in seen_hrefs:
+                        continue
+                    
+                    # Check if it's a job link
+                    if slug in href and len(title) > 3:
+                        skip_keywords = ["all positions", "view all", "privacy", "terms", "back to"]
+                        if any(skip in title.lower() for skip in skip_keywords):
+                            continue
+                        
+                        seen_hrefs.add(href)
+                        valid_jobs.append((href, title))
                 
-                skip_keywords = ["all positions", "view all", "see all jobs", "back to",
-                               "return to", "job board", "careers home", "about us",
-                               "contact", "privacy", "terms", "apply now"]
+                browser.close()
                 
-                if any(skip in title.lower() for skip in skip_keywords):
-                    continue
+                print(f"  ✓ Ashby Playwright: {len(valid_jobs)} jobs")
                 
-                if not title or len(title) < 2:
-                    parent = a.find_parent("div") or a.find_parent("li")
-                    if parent:
-                        title_elem = (parent.find("h3") or parent.find("h4") or 
-                                    parent.find("h2") or parent.find("span", class_=re.compile("title|name|job")))
-                        if title_elem:
-                            title = title_elem.get_text(strip=True)
+                for href, title in valid_jobs:
+                    full_url = href if href.startswith("http") else f"https://jobs.ashbyhq.com{href}"
+                    
+                    self.add({
+                        "id": f"ashby_{slug}_{hash(href)}",
+                        "title": title,
+                        "company": company_name,
+                        "location": "Various",
+                        "source": f"{company_name} (Ashby)",
+                        "applyLink": full_url,
+                        "postedDate": self.now(),
+                    })
                 
-                if not title or len(title) < 2:
-                    continue
-                
-                seen_hrefs.add(href)
-                valid_jobs.append((href, title))
-            
-            print(f"  ✓ Ashby HTML: {len(valid_jobs)} jobs found")
-            
-            if valid_jobs:
-                print(f"  Sample jobs:")
-                for i, (href, title) in enumerate(valid_jobs[:3]):
-                    print(f"    {i+1}. {title[:50]} | {href[:80]}")
-            else:
-                print(f"  ⚠ No jobs found. First 10 links:")
-                for i, a in enumerate(all_links[:10]):
-                    print(f"    {i+1}. {a.get('href', '')[:80]} | {a.get_text(strip=True)[:50]}")
-            
-            for href, title in valid_jobs:
-                if href.startswith("http"):
-                    full_url = href
-                elif href.startswith("/"):
-                    full_url = f"https://jobs.ashbyhq.com{href}"
-                else:
-                    full_url = f"https://jobs.ashbyhq.com/{slug}/{href}"
-                
-                self.add({
-                    "id": f"ashby_{slug}_{hash(href)}",
-                    "title": title,
-                    "company": company_name,
-                    "location": "Various",
-                    "source": f"{company_name} (Ashby)",
-                    "applyLink": full_url,
-                    "postedDate": self.now(),
-                })
-                
+                if valid_jobs:
+                    return
+                    
+        except ImportError:
+            print("  ⚠ Playwright not installed - run: pip install playwright && playwright install chromium")
         except Exception as e:
-            print(f"  ❌ Ashby HTML error: {e}")
-            
+            print(f"  ⚠ Playwright failed: {e}")
+        
+        print("  ❌ All Ashby methods failed")
+
     def scrape_ashby_companies(self):
         """Scrape companies using Ashby ATS"""
         print("\n[Ashby Companies]")
@@ -755,97 +729,96 @@ class JobScraper:
             print(f"\n[{name}] Ashby Slug: {slug}")
             
             if not slug:
-                print(f"  ⚠ Missing slug")
+                print("  ⚠ Missing slug")
                 continue
             
             try:
-                self.scrape_ashby(name, slug)  # Use the enhanced method
+                self.scrape_ashby(name, slug)
                 time.sleep(0.5)
             except Exception as e:
                 print(f"  ❌ Error: {e}")
-
-    
-    def scrape_generic(self, company_name, url):
-        """Comprehensive generic scraper"""
-        headers = {**HEADERS, "Accept": "text/html"}
         
-        try:
-            r = requests.get(url, headers=headers, timeout=10)
-            soup = BeautifulSoup(r.text, "html.parser")
+        def scrape_generic(self, company_name, url):
+            """Comprehensive generic scraper"""
+            headers = {**HEADERS, "Accept": "text/html"}
             
-            # 20+ selectors for maximum coverage
-            selectors = [
-                # Class-based
-                "a.job-title", "a.position-title", "a.posting-title", "a.role-title",
-                "a[class*='job']", "a[class*='position']", "a[class*='posting']",
-                "a[class*='opening']", "a[class*='role']", "a[class*='career']",
-                # Href-based
-                "a[href*='/jobs/']", "a[href*='/job/']", "a[href*='/careers/'][href*='job']",
-                "a[href*='/positions/']", "a[href*='/openings/']", "a[href*='/apply']",
-                "a[href*='/role/']", "a[href*='jobId']", "a[href*='position']",
-                # Container-based
-                "div.job a", "div.position a", "li.job a", "li.posting a",
-                "div[class*='job'] a", "div[class*='career'] a"
-            ]
-            
-            all_links = []
-            seen = set()
-            for sel in selectors:
-                for a in soup.select(sel):
+            try:
+                r = requests.get(url, headers=headers, timeout=10)
+                soup = BeautifulSoup(r.text, "html.parser")
+                
+                # 20+ selectors for maximum coverage
+                selectors = [
+                    # Class-based
+                    "a.job-title", "a.position-title", "a.posting-title", "a.role-title",
+                    "a[class*='job']", "a[class*='position']", "a[class*='posting']",
+                    "a[class*='opening']", "a[class*='role']", "a[class*='career']",
+                    # Href-based
+                    "a[href*='/jobs/']", "a[href*='/job/']", "a[href*='/careers/'][href*='job']",
+                    "a[href*='/positions/']", "a[href*='/openings/']", "a[href*='/apply']",
+                    "a[href*='/role/']", "a[href*='jobId']", "a[href*='position']",
+                    # Container-based
+                    "div.job a", "div.position a", "li.job a", "li.posting a",
+                    "div[class*='job'] a", "div[class*='career'] a"
+                ]
+                
+                all_links = []
+                seen = set()
+                for sel in selectors:
+                    for a in soup.select(sel):
+                        href = a.get("href", "")
+                        if href and href not in seen:
+                            seen.add(href)
+                            all_links.append(a)
+                
+                # Filter
+                skip_patterns = [r'^/$', r'^/careers/?$', r'^/jobs/?$', 
+                               r'/departments', r'/locations', r'/teams']
+                skip_words = ["all jobs", "view all", "see all", "departments", 
+                             "locations", "browse", "filter by"]
+                
+                valid_jobs = []
+                for a in all_links:
                     href = a.get("href", "")
-                    if href and href not in seen:
-                        seen.add(href)
-                        all_links.append(a)
-            
-            # Filter
-            skip_patterns = [r'^/$', r'^/careers/?$', r'^/jobs/?$', 
-                           r'/departments', r'/locations', r'/teams']
-            skip_words = ["all jobs", "view all", "see all", "departments", 
-                         "locations", "browse", "filter by"]
-            
-            valid_jobs = []
-            for a in all_links:
-                href = a.get("href", "")
-                title = a.get_text(strip=True)
+                    title = a.get_text(strip=True)
+                    
+                    if not href or not title or len(title) < 3:
+                        continue
+                    if any(re.search(p, href, re.I) for p in skip_patterns):
+                        continue
+                    if any(w in title.lower() for w in skip_words):
+                        continue
+                    
+                    # Must have job-like indicator
+                    indicators = ['/job', '/position', '/opening', '/role', '/apply', 
+                                '/posting', '/career', 'jobId', 'positionId']
+                    if not any(ind in href.lower() for ind in indicators):
+                        continue
+                    
+                    valid_jobs.append((href, title))
                 
-                if not href or not title or len(title) < 3:
-                    continue
-                if any(re.search(p, href, re.I) for p in skip_patterns):
-                    continue
-                if any(w in title.lower() for w in skip_words):
-                    continue
+                print(f"  ✓ Generic: {len(valid_jobs)} jobs")
                 
-                # Must have job-like indicator
-                indicators = ['/job', '/position', '/opening', '/role', '/apply', 
-                            '/posting', '/career', 'jobId', 'positionId']
-                if not any(ind in href.lower() for ind in indicators):
-                    continue
-                
-                valid_jobs.append((href, title))
-            
-            print(f"  ✓ Generic: {len(valid_jobs)} jobs")
-            
-            for href, title in valid_jobs:
-                if href.startswith("http"):
-                    full_url = href
-                elif href.startswith("/"):
-                    base = re.sub(r'/(careers|jobs|openings).*$', '', url)
-                    full_url = base + href
-                else:
-                    full_url = url.rstrip("/") + "/" + href
-                
-                self.add({
-                    "id": f"generic_{company_name}_{hash(href)}",
-                    "title": title,
-                    "company": company_name,
-                    "location": "Various",
-                    "source": f"{company_name}",
-                    "applyLink": full_url,
-                    "postedDate": self.now(),
-                })
-                
-        except Exception as e:
-            print(f"  ❌ Generic: {e}")
+                for href, title in valid_jobs:
+                    if href.startswith("http"):
+                        full_url = href
+                    elif href.startswith("/"):
+                        base = re.sub(r'/(careers|jobs|openings).*$', '', url)
+                        full_url = base + href
+                    else:
+                        full_url = url.rstrip("/") + "/" + href
+                    
+                    self.add({
+                        "id": f"generic_{company_name}_{hash(href)}",
+                        "title": title,
+                        "company": company_name,
+                        "location": "Various",
+                        "source": f"{company_name}",
+                        "applyLink": full_url,
+                        "postedDate": self.now(),
+                    })
+                    
+            except Exception as e:
+                print(f"  ❌ Generic: {e}")
 
     # ===================================================================
     # MAIN COMPANY SCRAPERS
