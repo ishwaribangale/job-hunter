@@ -17,11 +17,50 @@ TOP_COMPANIES = [
     {"name": "Notion", "ats": "lever", "slug": "notion"},
     {"name": "Figma", "ats": "lever", "slug": "figma"},
     {"name": "Airtable", "ats": "lever", "slug": "airtable"},
-
-    {"name": "Stripe", "ats": "greenhouse", "slug": "stripeinc"},
-    {"name": "Razorpay", "ats": "greenhouse", "slug": "razorpaysoftware"},
     {"name": "Atlassian", "ats": "greenhouse", "slug": "atlassian"},
-    {"name": "PhonePe", "ats": "greenhouse", "slug": "phonepejobs"},
+    {"name": "PhonePe", "ats": "greenhouse", "slug": "phonepe"},
+    
+
+     # INDIAN COMPANIES (GREENHOUSE)
+    {"name": "PayPay India", "ats": "greenhouse", "slug": "paypay"},
+    {"name": "Razorpay", "ats": "greenhouse", "slug": "razorpaysoftware"},  # Already have this
+    {"name": "Pippin Technologies", "ats": "greenhouse", "slug": "pippin"},
+    {"name": "RevX", "ats": "greenhouse", "slug": "revx"},
+    {"name": "Zinnia", "ats": "greenhouse", "slug": "zinnia"},
+    {"name": "MoEngage", "ats": "greenhouse", "slug": "moengage"},
+    {"name": "Netradyne", "ats": "greenhouse", "slug": "netradyne"},
+    {"name": "POSist", "ats": "greenhouse", "slug": "posist"},
+    {"name": "LTIMindtree", "ats": "greenhouse", "slug": "ltimindtree"},
+    {"name": "SupportYourApp", "ats": "greenhouse", "slug": "supportyourapp"},
+    {"name": "ETG Digital", "ats": "greenhouse", "slug": "etgdigital"},
+    {"name": "Brave Bison", "ats": "greenhouse", "slug": "bravebison"},
+    {"name": "Picarro", "ats": "greenhouse", "slug": "picarro"},
+    {"name": "Samsara", "ats": "greenhouse", "slug": "samsara"},
+    {"name": "QAD", "ats": "greenhouse", "slug": "qad"},
+    {"name": "Deepwatch", "ats": "greenhouse", "slug": "deepwatch"},
+    {"name": "Anthropic", "ats": "greenhouse", "slug": "anthropic"},
+    {"name": "OneTrust", "ats": "greenhouse", "slug": "onetrust"},
+    
+    # GLOBAL COMPANIES (GREENHOUSE)
+    {"name": "Airbnb", "ats": "greenhouse", "slug": "airbnb"},
+    {"name": "DoorDash", "ats": "greenhouse", "slug": "doordash"},
+    {"name": "DocuSign", "ats": "greenhouse", "slug": "docusign"},
+    {"name": "Cisco Meraki", "ats": "greenhouse", "slug": "meraki"},
+    {"name": "Dropbox", "ats": "greenhouse", "slug": "dropbox"},
+    {"name": "HubSpot", "ats": "greenhouse", "slug": "hubspot"},
+    {"name": "Stripe", "ats": "greenhouse", "slug": "stripe"},  # Already have as "stripeinc"
+    {"name": "Lyft", "ats": "greenhouse", "slug": "lyft"},
+    {"name": "Pinterest", "ats": "greenhouse", "slug": "pinterest"},
+    {"name": "Slack", "ats": "greenhouse", "slug": "slack"},
+    {"name": "Vimeo", "ats": "greenhouse", "slug": "vimeo"},
+    {"name": "Betterment", "ats": "greenhouse", "slug": "betterment"},
+    {"name": "Snap Inc", "ats": "greenhouse", "slug": "snap"},
+    {"name": "Instacart", "ats": "greenhouse", "slug": "instacart"},
+    {"name": "Evernote", "ats": "greenhouse", "slug": "evernote"},
+    {"name": "Wayfair", "ats": "greenhouse", "slug": "wayfair"},
+    {"name": "GoDaddy", "ats": "greenhouse", "slug": "godaddy"},
+    {"name": "Motor Trend", "ats": "greenhouse", "slug": "motortrend"},
+    {"name": "Warby Parker", "ats": "greenhouse", "slug": "warbyparker"},
 ]
 CAREER_PAGES = [
     # --------------------
@@ -102,4 +141,16 @@ CAREER_PAGES = [
     {"name": "Brex", "url": "https://www.brex.com/careers"},
     {"name": "Retool", "url": "https://retool.com/careers"},
     {"name": "Notion Labs", "url": "https://www.notion.so/careers"},
+]
+
+ASHBY_COMPANIES = [
+    {"name": "Zapier", "ats": "ashby", "slug": "zapier"},
+    {"name": "Ramp", "ats": "ashby", "slug": "ramp"},
+    {"name": "Notion", "ats": "ashby", "slug": "notion"},  # They might use both Lever and Ashby
+    {"name": "Linear", "ats": "ashby", "slug": "linear"},
+    {"name": "Retool", "ats": "ashby", "slug": "retool"},
+    {"name": "Mercury", "ats": "ashby", "slug": "mercury"},
+    {"name": "Anthropic", "ats": "ashby", "slug": "anthropic"},
+    {"name": "Scale AI", "ats": "ashby", "slug": "scale"},
+    # Add more Ashby companies here
 ]
