@@ -517,63 +517,67 @@ class JobScraper:
             print(f"  ❌ Lever: {e}")
 
     def scrape_ashby_companies(self, company_name, slug):
-        """Enhanced Ashby scraper with better detection"""
+    """Enhanced Ashby scraper with better detection"""
+
     url = f"https://jobs.ashbyhq.com/{slug}"
     headers = {**HEADERS, "Accept": "text/html"}
-    
+
     try:
         r = requests.get(url, headers=headers, timeout=10)
         if r.status_code != 200:
             print(f"  ⚠ HTTP {r.status_code}")
-                return
-            
+            return
+
         soup = BeautifulSoup(r.text, "html.parser")
-        
+
         # Multiple selection strategies
         all_links = (
-            soup.select("a[href*='/jobs/']") + 
+            soup.select("a[href*='/jobs/']") +
             soup.select("a[href*='/applications/']") +
             soup.select("a[class*='job']") +
             soup.select("a[class*='posting']") +
             soup.select("div[class*='job'] a") +
             soup.select("div[class*='posting'] a")
         )
-        
+
         valid_jobs = []
         seen_hrefs = set()
-        
-        # More lenient UUID pattern - match UUIDs and job IDs
+
+        # More lenient UUID / job-id pattern
         uuid_pattern = r'/([a-f0-9-]{8,}|jobs?/[^/\s]+)'
-        
+
         for a in all_links:
             href = a.get("href", "")
             title = a.get_text(strip=True)
-            
+
             # Skip if no href or already seen
             if not href or href in seen_hrefs:
                 continue
-            
-            # Must have some job-like pattern
+
+            # Must look like a job link
             if not re.search(uuid_pattern, href, re.I):
                 continue
-                
+
             # Skip navigation links
             skip_words = ["all jobs", "view all", "see all", "departments", "locations"]
             if any(w in title.lower() for w in skip_words):
                 continue
-            
-            # Title must be substantial
+
+            # Title must be meaningful
             if not title or len(title) < 3:
                 continue
-            
+
             seen_hrefs.add(href)
             valid_jobs.append((href, title))
-        
+
         print(f"  ✓ Ashby: {len(valid_jobs)} jobs")
-        
+
         for href, title in valid_jobs:
-            full_url = href if href.startswith("http") else f"https://jobs.ashbyhq.com{href}"
-            
+            full_url = (
+                href if href.startswith("http")
+                else f"https://jobs.ashbyhq.com{href}"
+            )
+
             self.add({
                 "id": f"ashby_{slug}_{hash(href)}",
                 "title": title,
@@ -583,9 +587,11 @@ class JobScraper:
                 "applyLink": full_url,
                 "postedDate": self.now(),
             })
-            
+
     except Exception as e:
         print(f"  ❌ Ashby: {e}")
+
+    
     def scrape_generic(self, company_name, url):
         """Comprehensive generic scraper"""
         headers = {**HEADERS, "Accept": "text/html"}
