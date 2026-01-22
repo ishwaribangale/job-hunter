@@ -517,7 +517,6 @@ class JobScraper:
             print(f"  ❌ Lever: {e}")
 
     def scrape_ashby_companies(self, company_name, slug):
-    """Enhanced Ashby scraper with better detection"""
 
     url = f"https://jobs.ashbyhq.com/{slug}"
     headers = {**HEADERS, "Accept": "text/html"}
