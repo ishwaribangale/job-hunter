@@ -115,7 +115,38 @@ class JobScraper:
     def scrape_wellfound(self):
         print("\n[Wellfound]")
         
-        # METHOD 1: Try with enhanced headers first
+        # METHOD 1: Try API endpoint first
+        api_url = "https://wellfound.com/api/jobs"
+        headers = {
+            **HEADERS,
+            "Accept": "application/json",
+            "Referer": "https://wellfound.com/jobs"
+        }
+        
+        try:
+            r = requests.get(api_url, headers=headers, timeout=10)
+            if r.status_code == 200:
+                data = r.json()
+                jobs = data.get("jobs", []) or data.get("results", [])
+                
+                if jobs and len(jobs) > 0:
+                    print(f"  ✓ Wellfound API: {len(jobs)} jobs")
+                    
+                    for j in jobs:
+                        self.add({
+                            "id": f"wellfound_{j.get('id', hash(str(j)))}",
+                            "title": j.get("title", ""),
+                            "company": j.get("company", {}).get("name", "Startup"),
+                            "location": j.get("location", "Remote / Hybrid"),
+                            "source": "Wellfound",
+                            "applyLink": j.get("url", ""),
+                            "postedDate": self.now(),
+                        })
+                    return
+        except Exception as e:
+            print(f"  ⚠ API failed: {e}")
+        
+        # METHOD 2: Try with enhanced headers
         url = "https://wellfound.com/jobs"
         headers = {
             "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
@@ -138,7 +169,7 @@ class JobScraper:
                 cards = soup.select("a[href^='/company/'][href*='/jobs/']")
                 
                 if len(cards) > 0:
-                    print(f"  ✓ Jobs found: {len(cards)}")
+                    print(f"  ✓ Wellfound HTML: {len(cards)} jobs")
                     
                     for a in cards:
                         href = a.get("href")
@@ -157,13 +188,12 @@ class JobScraper:
                         })
                     return
             
-            # If we got 403 or no jobs, try Playwright
             print(f"  ⚠ HTTP {r.status_code}, trying Playwright...")
             
         except Exception as e:
             print(f"  ⚠ Request failed: {e}, trying Playwright...")
         
-        # METHOD 2: Use Playwright for JavaScript-rendered content
+        # METHOD 3: Use Playwright for JavaScript-rendered content
         try:
             from playwright.sync_api import sync_playwright
             
@@ -189,7 +219,7 @@ class JobScraper:
                 # Find job links
                 job_links = page.query_selector_all("a[href*='/jobs/']")
                 
-                print(f"  ✓ Playwright found: {len(job_links)} job links")
+                print(f"  Found {len(job_links)} potential job links")
                 
                 valid_jobs = []
                 seen_hrefs = set()
@@ -211,7 +241,7 @@ class JobScraper:
                         continue
                     
                     # Skip navigation links
-                    skip_words = ["view all", "see all jobs", "browse", "search"]
+                    skip_words = ["view all", "see all jobs", "browse", "search", "filter"]
                     if any(w in title.lower() for w in skip_words):
                         continue
                     
@@ -246,8 +276,8 @@ class JobScraper:
             print("  ⚠ Playwright not installed - run: pip install playwright && playwright install chromium")
         except Exception as e:
             print(f"  ❌ Playwright failed: {e}")
-        
-        print("  ❌ Wellfound scraping failed")
+    
+    print("  ❌ Wellfound scraping failed - all methods exhausted")
 
     def scrape_remoteok(self):
         print("\n[RemoteOK]")
