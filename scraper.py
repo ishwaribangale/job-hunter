@@ -737,8 +737,80 @@ class JobScraper:
                 time.sleep(0.5)
             except Exception as e:
                 print(f"  ❌ Error: {e}")
-        
-   def scrape_generic(self, company_name, url):
+
+    # ===================================================================
+    # MAIN COMPANY SCRAPERS
+    # ===================================================================
+
+    def scrape_ats(self):
+        """Scrape TOP_COMPANIES with known ATS"""
+        print("\n[ATS Jobs - Enhanced Detection]")
+        print(f"Companies: {len(TOP_COMPANIES)}")
+    
+        for c in TOP_COMPANIES:
+            name = c.get('name', 'Unknown')
+            ats = c.get('ats', '')
+            slug = c.get('slug', '')
+            
+            print(f"\n[{name}] ATS: {ats}, Slug: {slug}")
+            
+            try:
+                if ats == "greenhouse" and slug:
+                    self.scrape_greenhouse(name, slug)
+                elif ats == "lever" and slug:
+                    self.scrape_lever(name, slug)
+                elif ats == "ashby" and slug:  # ADD THIS LINE
+                    self.scrape_ashby(name, slug)  # ADD THIS LINE
+                else:
+                    print(f"  ⚠ Unknown ATS or missing slug")
+                
+                time.sleep(0.5)
+            except Exception as e:
+                print(f"  ❌ Error: {e}")
+
+    def scrape_career_pages(self):
+        """Enhanced career page scraper with full auto-detection"""
+        print("\n[Career Pages - Full Auto-Detection]")
+        print(f"Companies: {len(CAREER_PAGES)}")
+    
+        for company in CAREER_PAGES:
+            name = company.get('name', 'Unknown')
+            url = company.get('url', '')
+            
+            if not url:
+                print(f"\n[{name}] ⚠ No URL")
+                continue
+            
+            print(f"\n[{name}]")
+            print(f"  URL: {url}")
+            
+            try:
+                # Auto-detect
+                ats_type, slug, final_url = self.detect_ats_system(url)
+                print(f"  Detected: {ats_type}" + (f" | Slug: {slug}" if slug else ""))
+                
+                # Scrape based on detection
+                if ats_type == "greenhouse" and slug:
+                    self.scrape_greenhouse(name, slug)
+                elif ats_type == "lever" and slug:
+                    self.scrape_lever(name, slug)
+                elif ats_type == "ashby" and slug:
+                    self.scrape_ashby(name, slug)
+                elif ats_type == "workday":
+                    print("  ⚠ Workday requires JS - skipped")
+                else:
+                    # Generic fallback
+                    self.scrape_generic(name, final_url)
+                
+                time.sleep(0.4)
+                
+            except Exception as e:
+                print(f"  ❌ Failed: {e}")
+    # ===================================================================
+    # MAIN COMPANY SCRAPERS
+    # ===================================================================
+
+     def scrape_generic(self, company_name, url):
         """Comprehensive generic scraper"""
         headers = {**HEADERS, "Accept": "text/html"}
     
@@ -820,75 +892,6 @@ class JobScraper:
     
         except Exception as e:
             print(f"  ❌ Generic: {e}")
-
-    # ===================================================================
-    # MAIN COMPANY SCRAPERS
-    # ===================================================================
-
-    def scrape_ats(self):
-        """Scrape TOP_COMPANIES with known ATS"""
-        print("\n[ATS Jobs - Enhanced Detection]")
-        print(f"Companies: {len(TOP_COMPANIES)}")
-    
-        for c in TOP_COMPANIES:
-            name = c.get('name', 'Unknown')
-            ats = c.get('ats', '')
-            slug = c.get('slug', '')
-            
-            print(f"\n[{name}] ATS: {ats}, Slug: {slug}")
-            
-            try:
-                if ats == "greenhouse" and slug:
-                    self.scrape_greenhouse(name, slug)
-                elif ats == "lever" and slug:
-                    self.scrape_lever(name, slug)
-                elif ats == "ashby" and slug:  # ADD THIS LINE
-                    self.scrape_ashby(name, slug)  # ADD THIS LINE
-                else:
-                    print(f"  ⚠ Unknown ATS or missing slug")
-                
-                time.sleep(0.5)
-            except Exception as e:
-                print(f"  ❌ Error: {e}")
-
-    def scrape_career_pages(self):
-        """Enhanced career page scraper with full auto-detection"""
-        print("\n[Career Pages - Full Auto-Detection]")
-        print(f"Companies: {len(CAREER_PAGES)}")
-    
-        for company in CAREER_PAGES:
-            name = company.get('name', 'Unknown')
-            url = company.get('url', '')
-            
-            if not url:
-                print(f"\n[{name}] ⚠ No URL")
-                continue
-            
-            print(f"\n[{name}]")
-            print(f"  URL: {url}")
-            
-            try:
-                # Auto-detect
-                ats_type, slug, final_url = self.detect_ats_system(url)
-                print(f"  Detected: {ats_type}" + (f" | Slug: {slug}" if slug else ""))
-                
-                # Scrape based on detection
-                if ats_type == "greenhouse" and slug:
-                    self.scrape_greenhouse(name, slug)
-                elif ats_type == "lever" and slug:
-                    self.scrape_lever(name, slug)
-                elif ats_type == "ashby" and slug:
-                    self.scrape_ashby(name, slug)
-                elif ats_type == "workday":
-                    print("  ⚠ Workday requires JS - skipped")
-                else:
-                    # Generic fallback
-                    self.scrape_generic(name, final_url)
-                
-                time.sleep(0.4)
-                
-            except Exception as e:
-                print(f"  ❌ Failed: {e}")
 
     def debug_page(self, url):
         """Debug helper to see what's on a page"""
