@@ -29,7 +29,7 @@ TOP_COMPANIES = [
     # GREENHOUSE - VERIFIED WORKING SLUGS
     # --------------------
     # Indian Companies
-    {"name": "PhonePe", "ats": "greenhouse", "slug": "phonepejobs"},
+   {"name": "PhonePe", "ats": "greenhouse", "slug": "phonepe"},  # Change from "phonepejobs"
     {"name": "PayPay India", "ats": "greenhouse", "slug": "paypay"},
     {"name": "RevX", "ats": "greenhouse", "slug": "revx"},
     {"name": "Zinnia", "ats": "greenhouse", "slug": "zinnia"},
@@ -52,16 +52,6 @@ TOP_COMPANIES = [
     {"name": "Postman", "ats": "greenhouse", "slug": "postman"},
     {"name": "Mercury", "ats": "greenhouse", "slug": "mercury"},
     
-    # --------------------
-    # ASHBY COMPANIES
-    # --------------------
-    {"name": "Zapier", "ats": "ashby", "slug": "zapier"},
-    {"name": "Ramp", "ats": "ashby", "slug": "ramp"},
-    {"name": "Linear", "ats": "ashby", "slug": "linear"},
-    {"name": "Retool", "ats": "ashby", "slug": "retool"},
-    {"name": "Scale AI", "ats": "ashby", "slug": "scale"},
-    {"name": "Supabase", "ats": "ashby", "slug": "supabase"},
-    {"name": "Vercel", "ats": "ashby", "slug": "vercel"},
 ]
 
 # ===================================================================
