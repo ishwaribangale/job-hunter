@@ -419,104 +419,104 @@ class JobScraper:
         except:
             return False
 
-def scrape_greenhouse(self, company_name, slug):
-    """Enhanced Greenhouse scraper with API + HTML fallback"""
-    
-    # Try API first
-    if self.scrape_greenhouse_api(company_name, slug):
-        return
-    
-    # Fallback to HTML scraping
-    url = f"https://boards.greenhouse.io/embed/job_board?for={slug}"
-    headers = {**HEADERS, "Accept": "text/html"}
-    
-    try:
-        r = requests.get(url, headers=headers, timeout=10)
-        if r.status_code != 200:
-            # Try without embed
-            url = f"https://boards.greenhouse.io/{slug}"
+    def scrape_greenhouse(self, company_name, slug):
+        """Enhanced Greenhouse scraper with API + HTML fallback"""
+        
+        # Try API first
+        if self.scrape_greenhouse_api(company_name, slug):
+            return
+        
+        # Fallback to HTML scraping
+        url = f"https://boards.greenhouse.io/embed/job_board?for={slug}"
+        headers = {**HEADERS, "Accept": "text/html"}
+        
+        try:
             r = requests.get(url, headers=headers, timeout=10)
             if r.status_code != 200:
-                print(f"  ⚠ HTTP {r.status_code}")
-                return
-        
-        soup = BeautifulSoup(r.text, "html.parser")
-        
-        # Find ALL links that contain /jobs/ followed by numbers
-        valid_jobs = []
-        seen_ids = set()
-        
-        for a in soup.find_all("a", href=True):
-            href = a.get("href", "")
+                # Try without embed
+                url = f"https://boards.greenhouse.io/{slug}"
+                r = requests.get(url, headers=headers, timeout=10)
+                if r.status_code != 200:
+                    print(f"  ⚠ HTTP {r.status_code}")
+                    return
             
-            # Look for job ID pattern
-            job_match = re.search(r'/jobs/(\d+)', href)
-            if not job_match:
-                continue
+            soup = BeautifulSoup(r.text, "html.parser")
             
-            job_id = job_match.group(1)
-            if job_id in seen_ids:
-                continue
+            # Find ALL links that contain /jobs/ followed by numbers
+            valid_jobs = []
+            seen_ids = set()
             
-            # Get title
-            title = a.get_text(strip=True)
-            
-            # Skip if no meaningful title
-            if not title or len(title) < 3:
-                # Try to find title in parent
-                parent = a.find_parent("div")
+            for a in soup.find_all("a", href=True):
+                href = a.get("href", "")
+                
+                # Look for job ID pattern
+                job_match = re.search(r'/jobs/(\d+)', href)
+                if not job_match:
+                    continue
+                
+                job_id = job_match.group(1)
+                if job_id in seen_ids:
+                    continue
+                
+                # Get title
+                title = a.get_text(strip=True)
+                
+                # Skip if no meaningful title
+                if not title or len(title) < 3:
+                    # Try to find title in parent
+                    parent = a.find_parent("div")
+                    if parent:
+                        title_elem = parent.find("h3") or parent.find("h4") or parent.find("span")
+                        if title_elem:
+                            title = title_elem.get_text(strip=True)
+                
+                if not title or len(title) < 3:
+                    continue
+                
+                # Skip navigation links
+                skip_words = ["view all", "see all", "back to", "return to"]
+                if any(w in title.lower() for w in skip_words):
+                    continue
+                
+                seen_ids.add(job_id)
+                
+                # Try to get location
+                location = "Various"
+                parent = a.find_parent("div", class_="opening")
+                if not parent:
+                    parent = a.find_parent("div")
+                
                 if parent:
-                    title_elem = parent.find("h3") or parent.find("h4") or parent.find("span")
-                    if title_elem:
-                        title = title_elem.get_text(strip=True)
+                    loc_elem = parent.find("span", class_="location") or parent.find(text=re.compile(r'\b(Remote|Hybrid|Onsite|India|USA|UK)\b'))
+                    if loc_elem:
+                        location = loc_elem.strip() if isinstance(loc_elem, str) else loc_elem.get_text(strip=True)
+                
+                # Build full URL
+                if href.startswith("http"):
+                    full_url = href
+                elif href.startswith("/"):
+                    full_url = f"https://boards.greenhouse.io{href}"
+                else:
+                    full_url = f"https://boards.greenhouse.io/{slug}/{href}"
+                
+                valid_jobs.append((job_id, title, location, full_url))
             
-            if not title or len(title) < 3:
-                continue
+            print(f"  ✓ Greenhouse HTML: {len(valid_jobs)} jobs")
             
-            # Skip navigation links
-            skip_words = ["view all", "see all", "back to", "return to"]
-            if any(w in title.lower() for w in skip_words):
-                continue
-            
-            seen_ids.add(job_id)
-            
-            # Try to get location
-            location = "Various"
-            parent = a.find_parent("div", class_="opening")
-            if not parent:
-                parent = a.find_parent("div")
-            
-            if parent:
-                loc_elem = parent.find("span", class_="location") or parent.find(text=re.compile(r'\b(Remote|Hybrid|Onsite|India|USA|UK)\b'))
-                if loc_elem:
-                    location = loc_elem.strip() if isinstance(loc_elem, str) else loc_elem.get_text(strip=True)
-            
-            # Build full URL
-            if href.startswith("http"):
-                full_url = href
-            elif href.startswith("/"):
-                full_url = f"https://boards.greenhouse.io{href}"
-            else:
-                full_url = f"https://boards.greenhouse.io/{slug}/{href}"
-            
-            valid_jobs.append((job_id, title, location, full_url))
-        
-        print(f"  ✓ Greenhouse HTML: {len(valid_jobs)} jobs")
-        
-        for job_id, title, location, full_url in valid_jobs:
-            self.add({
-                "id": f"gh_{slug}_{job_id}",
-                "title": title,
-                "company": company_name,
-                "location": location,
-                "source": f"{company_name} (Greenhouse)",
-                "applyLink": full_url,
-                "postedDate": self.now(),
-            })
-            
-    except Exception as e:
-        print(f"  ❌ Greenhouse HTML: {e}")
-
+            for job_id, title, location, full_url in valid_jobs:
+                self.add({
+                    "id": f"gh_{slug}_{job_id}",
+                    "title": title,
+                    "company": company_name,
+                    "location": location,
+                    "source": f"{company_name} (Greenhouse)",
+                    "applyLink": full_url,
+                    "postedDate": self.now(),
+                })
+                
+        except Exception as e:
+            print(f"  ❌ Greenhouse HTML: {e}")
+    
 
             
     def scrape_lever(self, company_name, slug):
@@ -909,10 +909,12 @@ def scrape_greenhouse(self, company_name, slug):
             self.scrape_career_pages()
             self.scrape_ashby_companies() 
             # Add to your run() method temporarily:
-            scraper.debug_page("https://boards.greenhouse.io/stripe")
-            scraper.debug_page("https://jobs.lever.co/figma")
-            scraper.debug_page("https://jobs.ashbyhq.com/zapier")
+            self.debug_page("https://boards.greenhouse.io/stripe")
+            self.debug_page("https://boards.greenhouse.io/stripe")
+            self.debug_page("https://jobs.lever.co/figma")
+            self.debug_page("https://jobs.ashbyhq.com/zapier")
 
+        
         print("\n[SOURCE SUMMARY]")
         for k, v in sorted(self.stats.items()):
             print(f"  {k}: {v}")
