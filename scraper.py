@@ -811,7 +811,7 @@ class JobScraper:
     # ===================================================================
 
     def scrape_generic(self, company_name, url):
-        """Comprehensive generic scraper"""
+        """Comprehensive generic scraper with Playwright fallback"""
         headers = {**HEADERS, "Accept": "text/html"}
     
         try:
@@ -844,9 +844,9 @@ class JobScraper:
     
             # Filter
             skip_patterns = [r'^/$', r'^/careers/?$', r'^/jobs/?$',
-                             r'/departments', r'/locations', r'/teams']
+                           r'/departments', r'/locations', r'/teams']
             skip_words = ["all jobs", "view all", "see all", "departments",
-                          "locations", "browse", "filter by"]
+                         "locations", "browse", "filter by"]
     
             valid_jobs = []
             for a in all_links:
@@ -869,26 +869,91 @@ class JobScraper:
     
                 valid_jobs.append((href, title))
     
-            print(f"  ✓ Generic: {len(valid_jobs)} jobs")
+            # If found jobs, process them
+            if valid_jobs:
+                print(f"  ✓ Generic: {len(valid_jobs)} jobs")
     
-            for href, title in valid_jobs:
-                if href.startswith("http"):
-                    full_url = href
-                elif href.startswith("/"):
-                    base = re.sub(r'/(careers|jobs|openings).*$', '', url)
-                    full_url = base + href
-                else:
-                    full_url = url.rstrip("/") + "/" + href
+                for href, title in valid_jobs:
+                    if href.startswith("http"):
+                        full_url = href
+                    elif href.startswith("/"):
+                        base = re.sub(r'/(careers|jobs|openings).*$', '', url)
+                        full_url = base + href
+                    else:
+                        full_url = url.rstrip("/") + "/" + href
     
-                self.add({
-                    "id": f"generic_{company_name}_{hash(href)}",
-                    "title": title,
-                    "company": company_name,
-                    "location": "Various",
-                    "source": f"{company_name}",
-                    "applyLink": full_url,
-                    "postedDate": self.now(),
-                })
+                    self.add({
+                        "id": f"generic_{company_name}_{hash(href)}",
+                        "title": title,
+                        "company": company_name,
+                        "location": "Various",
+                        "source": f"{company_name}",
+                        "applyLink": full_url,
+                        "postedDate": self.now(),
+                    })
+                return  # Successfully found jobs
+    
+            # If no jobs found, try Playwright for JS-rendered content
+            print(f"  ⚠ No jobs via requests, trying Playwright...")
+            
+            try:
+                from playwright.sync_api import sync_playwright
+                
+                with sync_playwright() as p:
+                    browser = p.chromium.launch(headless=True, args=["--no-sandbox"])
+                    page = browser.new_page()
+                    page.goto(url, wait_until="networkidle", timeout=30000)
+                    page.wait_for_timeout(2000)
+                    
+                    # Get all links after JS renders
+                    links = page.query_selector_all("a[href]")
+                    
+                    valid_jobs_pw = []
+                    seen_hrefs = set()
+                    
+                    for link in links:
+                        href = link.get_attribute("href") or ""
+                        title = link.inner_text().strip()
+                        
+                        if not href or href in seen_hrefs or len(title) < 3:
+                            continue
+                        
+                        # Must have job indicator
+                        if not any(ind in href.lower() for ind in ['/job', '/position', '/role', '/career', '/opening']):
+                            continue
+                        
+                        # Skip navigation
+                        if any(w in title.lower() for w in skip_words):
+                            continue
+                        
+                        seen_hrefs.add(href)
+                        valid_jobs_pw.append((href, title))
+                    
+                    browser.close()
+                    
+                    print(f"  ✓ Generic (Playwright): {len(valid_jobs_pw)} jobs")
+                    
+                    for href, title in valid_jobs_pw:
+                        full_url = href if href.startswith("http") else url.rstrip("/") + href
+                        
+                        self.add({
+                            "id": f"generic_{company_name}_{hash(href)}",
+                            "title": title,
+                            "company": company_name,
+                            "location": "Various",
+                            "source": f"{company_name}",
+                            "applyLink": full_url,
+                            "postedDate": self.now(),
+                        })
+                    return
+                    
+            except ImportError:
+                print(f"  ⚠ Playwright not installed")
+            except Exception as e:
+                print(f"  ⚠ Playwright failed: {e}")
+            
+            # Last resort - at least we tried
+            print(f"  ✓ Generic: 0 jobs")
     
         except Exception as e:
             print(f"  ❌ Generic: {e}")
