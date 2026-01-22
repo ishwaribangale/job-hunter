@@ -114,36 +114,140 @@ class JobScraper:
 
     def scrape_wellfound(self):
         print("\n[Wellfound]")
+        
+        # METHOD 1: Try with enhanced headers first
         url = "https://wellfound.com/jobs"
-        headers = {**HEADERS, "User-Agent": "Mozilla/5.0", "Accept": "text/html"}
+        headers = {
+            "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+            "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8",
+            "Accept-Language": "en-US,en;q=0.5",
+            "Accept-Encoding": "gzip, deflate, br",
+            "DNT": "1",
+            "Connection": "keep-alive",
+            "Upgrade-Insecure-Requests": "1",
+            "Sec-Fetch-Dest": "document",
+            "Sec-Fetch-Mode": "navigate",
+            "Sec-Fetch-Site": "none",
+            "Cache-Control": "max-age=0",
+        }
     
         try:
             r = requests.get(url, headers=headers, timeout=10)
-            if r.status_code != 200:
-                print(f"  ⚠ HTTP {r.status_code}")
-                return
+            if r.status_code == 200:
+                soup = BeautifulSoup(r.text, "html.parser")
+                cards = soup.select("a[href^='/company/'][href*='/jobs/']")
+                
+                if len(cards) > 0:
+                    print(f"  ✓ Jobs found: {len(cards)}")
+                    
+                    for a in cards:
+                        href = a.get("href")
+                        title = a.get_text(strip=True)
+                        if not href or not title:
+                            continue
     
-            soup = BeautifulSoup(r.text, "html.parser")
-            cards = soup.select("a[href^='/company/'][href*='/jobs/']")
-            print(f"  Jobs found: {len(cards)}")
-    
-            for a in cards:
-                href = a.get("href")
-                title = a.get_text(strip=True)
-                if not href or not title:
-                    continue
-    
-                self.add({
-                    "id": f"wellfound_{hash(href)}",
-                    "title": title,
-                    "company": "Startup (Wellfound)",
-                    "location": "Remote / Hybrid",
-                    "source": "Wellfound",
-                    "applyLink": "https://wellfound.com" + href,
-                    "postedDate": self.now(),
-                })
+                        self.add({
+                            "id": f"wellfound_{hash(href)}",
+                            "title": title,
+                            "company": "Startup (Wellfound)",
+                            "location": "Remote / Hybrid",
+                            "source": "Wellfound",
+                            "applyLink": "https://wellfound.com" + href,
+                            "postedDate": self.now(),
+                        })
+                    return
+            
+            # If we got 403 or no jobs, try Playwright
+            print(f"  ⚠ HTTP {r.status_code}, trying Playwright...")
+            
         except Exception as e:
-            print(f"  ❌ Wellfound failed: {e}")
+            print(f"  ⚠ Request failed: {e}, trying Playwright...")
+        
+        # METHOD 2: Use Playwright for JavaScript-rendered content
+        try:
+            from playwright.sync_api import sync_playwright
+            
+            print("  Attempting with Playwright...")
+            
+            with sync_playwright() as p:
+                browser = p.chromium.launch(
+                    headless=True,
+                    args=["--no-sandbox", "--disable-dev-shm-usage"]
+                )
+                
+                context = browser.new_context(
+                    user_agent="Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+                    viewport={"width": 1920, "height": 1080}
+                )
+                
+                page = context.new_page()
+                
+                # Go to jobs page
+                page.goto(url, wait_until="networkidle", timeout=30000)
+                page.wait_for_timeout(3000)  # Wait for JS to render
+                
+                # Find job links
+                job_links = page.query_selector_all("a[href*='/jobs/']")
+                
+                print(f"  ✓ Playwright found: {len(job_links)} job links")
+                
+                valid_jobs = []
+                seen_hrefs = set()
+                
+                for link in job_links:
+                    href = link.get_attribute("href") or ""
+                    title = link.inner_text().strip()
+                    
+                    # Must have valid href and title
+                    if not href or not title or len(title) < 3:
+                        continue
+                    
+                    # Skip duplicates
+                    if href in seen_hrefs:
+                        continue
+                    
+                    # Must be a job posting link
+                    if not ('/jobs/' in href or '/company/' in href):
+                        continue
+                    
+                    # Skip navigation links
+                    skip_words = ["view all", "see all jobs", "browse", "search"]
+                    if any(w in title.lower() for w in skip_words):
+                        continue
+                    
+                    seen_hrefs.add(href)
+                    
+                    # Extract company name from link if possible
+                    company_match = re.search(r'/company/([^/]+)', href)
+                    company = company_match.group(1).replace('-', ' ').title() if company_match else "Startup"
+                    
+                    valid_jobs.append((href, title, company))
+                
+                browser.close()
+                
+                print(f"  ✓ Wellfound (Playwright): {len(valid_jobs)} jobs")
+                
+                for href, title, company in valid_jobs:
+                    full_url = href if href.startswith("http") else f"https://wellfound.com{href}"
+                    
+                    self.add({
+                        "id": f"wellfound_{hash(href)}",
+                        "title": title,
+                        "company": f"{company} (Wellfound)",
+                        "location": "Remote / Hybrid",
+                        "source": "Wellfound",
+                        "applyLink": full_url,
+                        "postedDate": self.now(),
+                    })
+                
+                return
+                
+        except ImportError:
+            print("  ⚠ Playwright not installed - run: pip install playwright && playwright install chromium")
+        except Exception as e:
+            print(f"  ❌ Playwright failed: {e}")
+        
+        print("  ❌ Wellfound scraping failed")
 
     def scrape_remoteok(self):
         print("\n[RemoteOK]")
