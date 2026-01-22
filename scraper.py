@@ -516,48 +516,76 @@ class JobScraper:
         except Exception as e:
             print(f"  ❌ Lever: {e}")
 
-    def scrape_ashby(self, company_name, slug):
-        """Ashby scraper"""
-        url = f"https://jobs.ashbyhq.com/{slug}"
-        headers = {**HEADERS, "Accept": "text/html"}
+    def scrape_ashby_companies(self, company_name, slug):
+        """Enhanced Ashby scraper with better detection"""
+    url = f"https://jobs.ashbyhq.com/{slug}"
+    headers = {**HEADERS, "Accept": "text/html"}
+    
+    try:
+        r = requests.get(url, headers=headers, timeout=10)
+        if r.status_code != 200:
+            print(f"  ⚠ HTTP {r.status_code}")
+            return
+            
+        soup = BeautifulSoup(r.text, "html.parser")
         
-        try:
-            r = requests.get(url, headers=headers, timeout=10)
-            soup = BeautifulSoup(r.text, "html.parser")
+        # Multiple selection strategies
+        all_links = (
+            soup.select("a[href*='/jobs/']") + 
+            soup.select("a[href*='/applications/']") +
+            soup.select("a[class*='job']") +
+            soup.select("a[class*='posting']") +
+            soup.select("div[class*='job'] a") +
+            soup.select("div[class*='posting'] a")
+        )
+        
+        valid_jobs = []
+        seen_hrefs = set()
+        
+        # More lenient UUID pattern - match UUIDs and job IDs
+        uuid_pattern = r'/([a-f0-9-]{8,}|jobs?/[^/\s]+)'
+        
+        for a in all_links:
+            href = a.get("href", "")
+            title = a.get_text(strip=True)
             
-            all_links = soup.select("a[href*='/jobs/']") + soup.select("a[href*='/applications/']")
+            # Skip if no href or already seen
+            if not href or href in seen_hrefs:
+                continue
             
-            valid_jobs = []
-            uuid_pattern = r'/[a-f0-9-]{20,}'
-            
-            for a in all_links:
-                href = a.get("href", "")
-                title = a.get_text(strip=True)
+            # Must have some job-like pattern
+            if not re.search(uuid_pattern, href, re.I):
+                continue
                 
-                if not re.search(uuid_pattern, href, re.I):
-                    continue
-                if not title or len(title) < 3:
-                    continue
-                
-                valid_jobs.append((href, title))
+            # Skip navigation links
+            skip_words = ["all jobs", "view all", "see all", "departments", "locations"]
+            if any(w in title.lower() for w in skip_words):
+                continue
             
-            print(f"  ✓ Ashby: {len(valid_jobs)} jobs")
+            # Title must be substantial
+            if not title or len(title) < 3:
+                continue
             
-            for href, title in valid_jobs:
-                full_url = href if href.startswith("http") else f"https://jobs.ashbyhq.com{href}"
-                self.add({
-                    "id": f"ashby_{slug}_{hash(href)}",
-                    "title": title,
-                    "company": company_name,
-                    "location": "Various",
-                    "source": f"{company_name} (Ashby)",
-                    "applyLink": full_url,
-                    "postedDate": self.now(),
-                })
-                
-        except Exception as e:
-            print(f"  ❌ Ashby: {e}")
-
+            seen_hrefs.add(href)
+            valid_jobs.append((href, title))
+        
+        print(f"  ✓ Ashby: {len(valid_jobs)} jobs")
+        
+        for href, title in valid_jobs:
+            full_url = href if href.startswith("http") else f"https://jobs.ashbyhq.com{href}"
+            
+            self.add({
+                "id": f"ashby_{slug}_{hash(href)}",
+                "title": title,
+                "company": company_name,
+                "location": "Various",
+                "source": f"{company_name} (Ashby)",
+                "applyLink": full_url,
+                "postedDate": self.now(),
+            })
+            
+    except Exception as e:
+        print(f"  ❌ Ashby: {e}")
     def scrape_generic(self, company_name, url):
         """Comprehensive generic scraper"""
         headers = {**HEADERS, "Accept": "text/html"}
