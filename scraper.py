@@ -609,80 +609,80 @@ class JobScraper:
             print(f"  ❌ Lever: {e}")
             
     def scrape_ashby(self, company_name, slug):
-    """
-    FIXED Ashby scraper.
-    Uses Next.js _next/data JSON endpoint.
-    All other code remains unchanged.
-    """
-    print(f"  Attempting Ashby scrape for: {slug}")
-    headers = {**HEADERS, "Accept": "application/json,text/html"}
-
-    # --------------------------------------------------
-    # STEP 1: Load Ashby page to extract buildId
-    # --------------------------------------------------
-    try:
-        page_url = f"https://jobs.ashbyhq.com/{slug}"
-        r = requests.get(page_url, headers=headers, timeout=10)
-
-        if r.status_code != 200:
-            print(f"  ⚠ Ashby page HTTP {r.status_code}")
+        """
+        FIXED Ashby scraper.
+        Uses Next.js _next/data JSON endpoint.
+        All other code remains unchanged.
+        """
+        print(f"  Attempting Ashby scrape for: {slug}")
+        headers = {**HEADERS, "Accept": "application/json,text/html"}
+    
+        # --------------------------------------------------
+        # STEP 1: Load Ashby page to extract buildId
+        # --------------------------------------------------
+        try:
+            page_url = f"https://jobs.ashbyhq.com/{slug}"
+            r = requests.get(page_url, headers=headers, timeout=10)
+    
+            if r.status_code != 200:
+                print(f"  ⚠ Ashby page HTTP {r.status_code}")
+                return
+    
+            # Extract Next.js buildId
+            match = re.search(r'"buildId":"([^"]+)"', r.text)
+            if not match:
+                print("  ⚠ Ashby buildId not found (page is JS-only)")
+                return
+    
+            build_id = match.group(1)
+    
+        except Exception as e:
+            print(f"  ❌ Ashby bootstrap failed: {e}")
             return
-
-        # Extract Next.js buildId
-        match = re.search(r'"buildId":"([^"]+)"', r.text)
-        if not match:
-            print("  ⚠ Ashby buildId not found (page is JS-only)")
-            return
-
-        build_id = match.group(1)
-
-    except Exception as e:
-        print(f"  ❌ Ashby bootstrap failed: {e}")
-        return
-
-    # --------------------------------------------------
-    # STEP 2: Fetch Next.js JSON payload
-    # --------------------------------------------------
-    data_url = f"https://jobs.ashbyhq.com/_next/data/{build_id}/{slug}.json"
-
-    try:
-        r = requests.get(data_url, headers=headers, timeout=10)
-        if r.status_code != 200:
-            print(f"  ⚠ Ashby data HTTP {r.status_code}")
-            return
-
-        data = r.json()
-        jobs = (
-            data.get("pageProps", {})
-                .get("jobs", [])
-        )
-
-        if not jobs:
-            print("  ⚠ Ashby JSON loaded but no jobs found")
-            return
-
-        print(f"  ✓ Ashby JSON: {len(jobs)} jobs")
-
-        for j in jobs:
-            job_id = j.get("id")
-            title = j.get("title")
-            location = j.get("locationName", "Various")
-
-            if not job_id or not title:
-                continue
-
-            self.add({
-                "id": f"ashby_{slug}_{job_id}",
-                "title": title,
-                "company": company_name,
-                "location": location,
-                "source": f"{company_name} (Ashby)",
-                "applyLink": f"https://jobs.ashbyhq.com/{slug}/{job_id}",
-                "postedDate": self.now(),
-            })
-
-    except Exception as e:
-        print(f"  ❌ Ashby JSON parse failed: {e}")
+    
+        # --------------------------------------------------
+        # STEP 2: Fetch Next.js JSON payload
+        # --------------------------------------------------
+        data_url = f"https://jobs.ashbyhq.com/_next/data/{build_id}/{slug}.json"
+    
+        try:
+            r = requests.get(data_url, headers=headers, timeout=10)
+            if r.status_code != 200:
+                print(f"  ⚠ Ashby data HTTP {r.status_code}")
+                return
+    
+            data = r.json()
+            jobs = (
+                data.get("pageProps", {})
+                    .get("jobs", [])
+            )
+    
+            if not jobs:
+                print("  ⚠ Ashby JSON loaded but no jobs found")
+                return
+    
+            print(f"  ✓ Ashby JSON: {len(jobs)} jobs")
+    
+            for j in jobs:
+                job_id = j.get("id")
+                title = j.get("title")
+                location = j.get("locationName", "Various")
+    
+                if not job_id or not title:
+                    continue
+    
+                self.add({
+                    "id": f"ashby_{slug}_{job_id}",
+                    "title": title,
+                    "company": company_name,
+                    "location": location,
+                    "source": f"{company_name} (Ashby)",
+                    "applyLink": f"https://jobs.ashbyhq.com/{slug}/{job_id}",
+                    "postedDate": self.now(),
+                })
+    
+        except Exception as e:
+            print(f"  ❌ Ashby JSON parse failed: {e}")
 
             
     def scrape_ashby_companies(self):
