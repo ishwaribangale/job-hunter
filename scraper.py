@@ -609,81 +609,139 @@ class JobScraper:
             print(f"  ❌ Lever: {e}")
             
     def scrape_ashby(self, company_name, slug):
-        """
-        FIXED Ashby scraper.
-        Uses Next.js _next/data JSON endpoint.
-        All other code remains unchanged.
-        """
+        """FIXED Ashby scraper with comprehensive detection"""
         print(f"  Attempting Ashby scrape for: {slug}")
-        headers = {**HEADERS, "Accept": "application/json,text/html"}
-    
-        # --------------------------------------------------
-        # STEP 1: Load Ashby page to extract buildId
-        # --------------------------------------------------
+        
+        # Try JSON endpoint
         try:
-            page_url = f"https://jobs.ashbyhq.com/{slug}"
-            r = requests.get(page_url, headers=headers, timeout=10)
-    
-            if r.status_code != 200:
-                print(f"  ⚠ Ashby page HTTP {r.status_code}")
-                return
-    
-            # Extract Next.js buildId
-            match = re.search(r'"buildId":"([^"]+)"', r.text)
-            if not match:
-                print("  ⚠ Ashby buildId not found (page is JS-only)")
-                return
-    
-            build_id = match.group(1)
-    
+            json_url = f"https://jobs.ashbyhq.com/{slug}"
+            r = requests.get(json_url, headers={**HEADERS, "Accept": "application/json, text/html"}, timeout=10)
+            
+            if r.status_code == 200:
+                try:
+                    data = r.json()
+                    if isinstance(data, dict):
+                        jobs = data.get("jobs", []) or data.get("postings", [])
+                        if jobs:
+                            print(f"  ✓ Ashby JSON: {len(jobs)} jobs")
+                            for j in jobs:
+                                job_id = j.get("id", "")
+                                title = j.get("title", "") or j.get("name", "")
+                                
+                                if not job_id or not title:
+                                    continue
+                                
+                                loc = j.get("location", {})
+                                location = loc.get("name", "Various") if isinstance(loc, dict) else j.get("locationName", "Various")
+                                
+                                self.add({
+                                    "id": f"ashby_{slug}_{job_id}",
+                                    "title": title,
+                                    "company": company_name,
+                                    "location": location,
+                                    "source": f"{company_name} (Ashby)",
+                                    "applyLink": f"https://jobs.ashbyhq.com/{slug}/{job_id}",
+                                    "postedDate": self.now(),
+                                })
+                            return
+                except:
+                    pass
         except Exception as e:
-            print(f"  ❌ Ashby bootstrap failed: {e}")
-            return
-    
-        # --------------------------------------------------
-        # STEP 2: Fetch Next.js JSON payload
-        # --------------------------------------------------
-        data_url = f"https://jobs.ashbyhq.com/_next/data/{build_id}/{slug}.json"
-    
+            print(f"  ⚠ Ashby JSON attempt failed: {e}")
+        
+        # HTML scraping
+        url = f"https://jobs.ashbyhq.com/{slug}"
+        headers = {**HEADERS, "Accept": "text/html"}
+        
         try:
-            r = requests.get(data_url, headers=headers, timeout=10)
+            r = requests.get(url, headers=headers, timeout=10)
+            
             if r.status_code != 200:
-                print(f"  ⚠ Ashby data HTTP {r.status_code}")
+                print(f"  ⚠ HTTP {r.status_code}")
                 return
-    
-            data = r.json()
-            jobs = (
-                data.get("pageProps", {})
-                    .get("jobs", [])
-            )
-    
-            if not jobs:
-                print("  ⚠ Ashby JSON loaded but no jobs found")
-                return
-    
-            print(f"  ✓ Ashby JSON: {len(jobs)} jobs")
-    
-            for j in jobs:
-                job_id = j.get("id")
-                title = j.get("title")
-                location = j.get("locationName", "Various")
-    
-                if not job_id or not title:
+            
+            soup = BeautifulSoup(r.text, "html.parser")
+            print(f"  Page loaded, searching for jobs...")
+            
+            all_links = soup.find_all("a", href=True)
+            print(f"  Total links found: {len(all_links)}")
+            
+            valid_jobs = []
+            seen_hrefs = set()
+            
+            # Relaxed job patterns
+            job_patterns = [
+                r'[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}',
+                r'/[a-zA-Z0-9]{20,}',
+                r'/jobs?/[a-zA-Z0-9-]+',
+                r'ashbyhq\.com/[^/]+/[a-zA-Z0-9-]{8,}',
+            ]
+            
+            for a in all_links:
+                href = a.get("href", "")
+                title = a.get_text(strip=True)
+                
+                if not href or href in seen_hrefs:
                     continue
-    
+                
+                has_job_pattern = any(re.search(pattern, href, re.I) for pattern in job_patterns)
+                has_company_id = f"ashbyhq.com/{slug}/" in href or f"/{slug}/" in href
+                
+                if not (has_job_pattern or has_company_id):
+                    continue
+                
+                skip_keywords = ["all positions", "view all", "see all jobs", "back to",
+                               "return to", "job board", "careers home", "about us",
+                               "contact", "privacy", "terms", "apply now"]
+                
+                if any(skip in title.lower() for skip in skip_keywords):
+                    continue
+                
+                if not title or len(title) < 2:
+                    parent = a.find_parent("div") or a.find_parent("li")
+                    if parent:
+                        title_elem = (parent.find("h3") or parent.find("h4") or 
+                                    parent.find("h2") or parent.find("span", class_=re.compile("title|name|job")))
+                        if title_elem:
+                            title = title_elem.get_text(strip=True)
+                
+                if not title or len(title) < 2:
+                    continue
+                
+                seen_hrefs.add(href)
+                valid_jobs.append((href, title))
+            
+            print(f"  ✓ Ashby HTML: {len(valid_jobs)} jobs found")
+            
+            if valid_jobs:
+                print(f"  Sample jobs:")
+                for i, (href, title) in enumerate(valid_jobs[:3]):
+                    print(f"    {i+1}. {title[:50]} | {href[:80]}")
+            else:
+                print(f"  ⚠ No jobs found. First 10 links:")
+                for i, a in enumerate(all_links[:10]):
+                    print(f"    {i+1}. {a.get('href', '')[:80]} | {a.get_text(strip=True)[:50]}")
+            
+            for href, title in valid_jobs:
+                if href.startswith("http"):
+                    full_url = href
+                elif href.startswith("/"):
+                    full_url = f"https://jobs.ashbyhq.com{href}"
+                else:
+                    full_url = f"https://jobs.ashbyhq.com/{slug}/{href}"
+                
                 self.add({
-                    "id": f"ashby_{slug}_{job_id}",
+                    "id": f"ashby_{slug}_{hash(href)}",
                     "title": title,
                     "company": company_name,
-                    "location": location,
+                    "location": "Various",
                     "source": f"{company_name} (Ashby)",
-                    "applyLink": f"https://jobs.ashbyhq.com/{slug}/{job_id}",
+                    "applyLink": full_url,
                     "postedDate": self.now(),
                 })
-    
+                
         except Exception as e:
-            print(f"  ❌ Ashby JSON parse failed: {e}")
-
+            print(f"  ❌ Ashby HTML error: {e}")
             
     def scrape_ashby_companies(self):
         """Scrape companies using Ashby ATS"""
