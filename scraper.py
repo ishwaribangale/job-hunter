@@ -11,7 +11,7 @@ import time
 import requests
 from datetime import datetime
 from bs4 import BeautifulSoup
-from config import HEADERS, TIMEOUT, TOP_COMPANIES, CAREER_PAGES
+from config import HEADERS, TIMEOUT, TOP_COMPANIES, CAREER_PAGES, ASHBY_COMPANIES
 from roles import infer_role
 from scoring import score_job
 
@@ -726,6 +726,7 @@ class JobScraper:
             # Company-specific
             self.scrape_ats()
             self.scrape_career_pages()
+            self.scrape_ashby_companies() 
 
         print("\n[SOURCE SUMMARY]")
         for k, v in sorted(self.stats.items()):
