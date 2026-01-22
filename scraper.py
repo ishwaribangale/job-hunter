@@ -525,7 +525,7 @@ class JobScraper:
         r = requests.get(url, headers=headers, timeout=10)
         if r.status_code != 200:
             print(f"  ⚠ HTTP {r.status_code}")
-            return
+                return
             
         soup = BeautifulSoup(r.text, "html.parser")
         
