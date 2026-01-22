@@ -28,6 +28,18 @@ TOP_COMPANIES = [
     {"name": "Zinnia", "ats": "greenhouse", "slug": "zinnia"},
     {"name": "Netradyne", "ats": "greenhouse", "slug": "netradyne"},
     {"name": "Samsara", "ats": "greenhouse", "slug": "samsara"},
+        # Additional verified Indian companies using Greenhouse
+    {"name": "Dunzo", "ats": "greenhouse", "slug": "dunzo"},
+    {"name": "Razorpay", "ats": "greenhouse", "slug": "razorpaysoftwareprivatelimited"},
+    {"name": "Cred", "ats": "greenhouse", "slug": "cred"},
+    {"name": "Jupiter", "ats": "greenhouse", "slug": "amica"},  # Jupiter's parent company
+    {"name": "Slice", "ats": "greenhouse", "slug": "slice"},
+    {"name": "Zeta", "ats": "greenhouse", "slug": "zeta"},
+    {"name": "Innovaccer", "ats": "greenhouse", "slug": "innovaccer"},
+    {"name": "Whatfix", "ats": "greenhouse", "slug": "whatfix"},
+    {"name": "Chargebee", "ats": "greenhouse", "slug": "chargebee"},
+    {"name": "Freshworks", "ats": "greenhouse", "slug": "freshworks"},
+    {"name": "Zoho", "ats": "greenhouse", "slug": "zoho"},
     
     # Global Tech Companies (Greenhouse API - Clean job URLs)
     {"name": "Anthropic", "ats": "greenhouse", "slug": "anthropic"},
