@@ -738,87 +738,88 @@ class JobScraper:
             except Exception as e:
                 print(f"  ❌ Error: {e}")
         
-        def scrape_generic(self, company_name, url):
-            """Comprehensive generic scraper"""
-            headers = {**HEADERS, "Accept": "text/html"}
-            
-            try:
-                r = requests.get(url, headers=headers, timeout=10)
-                soup = BeautifulSoup(r.text, "html.parser")
-                
-                # 20+ selectors for maximum coverage
-                selectors = [
-                    # Class-based
-                    "a.job-title", "a.position-title", "a.posting-title", "a.role-title",
-                    "a[class*='job']", "a[class*='position']", "a[class*='posting']",
-                    "a[class*='opening']", "a[class*='role']", "a[class*='career']",
-                    # Href-based
-                    "a[href*='/jobs/']", "a[href*='/job/']", "a[href*='/careers/'][href*='job']",
-                    "a[href*='/positions/']", "a[href*='/openings/']", "a[href*='/apply']",
-                    "a[href*='/role/']", "a[href*='jobId']", "a[href*='position']",
-                    # Container-based
-                    "div.job a", "div.position a", "li.job a", "li.posting a",
-                    "div[class*='job'] a", "div[class*='career'] a"
-                ]
-                
-                all_links = []
-                seen = set()
-                for sel in selectors:
-                    for a in soup.select(sel):
-                        href = a.get("href", "")
-                        if href and href not in seen:
-                            seen.add(href)
-                            all_links.append(a)
-                
-                # Filter
-                skip_patterns = [r'^/$', r'^/careers/?$', r'^/jobs/?$', 
-                               r'/departments', r'/locations', r'/teams']
-                skip_words = ["all jobs", "view all", "see all", "departments", 
-                             "locations", "browse", "filter by"]
-                
-                valid_jobs = []
-                for a in all_links:
+   def scrape_generic(self, company_name, url):
+        """Comprehensive generic scraper"""
+        headers = {**HEADERS, "Accept": "text/html"}
+    
+        try:
+            r = requests.get(url, headers=headers, timeout=10)
+            soup = BeautifulSoup(r.text, "html.parser")
+    
+            # 20+ selectors for maximum coverage
+            selectors = [
+                # Class-based
+                "a.job-title", "a.position-title", "a.posting-title", "a.role-title",
+                "a[class*='job']", "a[class*='position']", "a[class*='posting']",
+                "a[class*='opening']", "a[class*='role']", "a[class*='career']",
+                # Href-based
+                "a[href*='/jobs/']", "a[href*='/job/']", "a[href*='/careers/'][href*='job']",
+                "a[href*='/positions/']", "a[href*='/openings/']", "a[href*='/apply']",
+                "a[href*='/role/']", "a[href*='jobId']", "a[href*='position']",
+                # Container-based
+                "div.job a", "div.position a", "li.job a", "li.posting a",
+                "div[class*='job'] a", "div[class*='career'] a"
+            ]
+    
+            all_links = []
+            seen = set()
+            for sel in selectors:
+                for a in soup.select(sel):
                     href = a.get("href", "")
-                    title = a.get_text(strip=True)
-                    
-                    if not href or not title or len(title) < 3:
-                        continue
-                    if any(re.search(p, href, re.I) for p in skip_patterns):
-                        continue
-                    if any(w in title.lower() for w in skip_words):
-                        continue
-                    
-                    # Must have job-like indicator
-                    indicators = ['/job', '/position', '/opening', '/role', '/apply', 
-                                '/posting', '/career', 'jobId', 'positionId']
-                    if not any(ind in href.lower() for ind in indicators):
-                        continue
-                    
-                    valid_jobs.append((href, title))
-                
-                print(f"  ✓ Generic: {len(valid_jobs)} jobs")
-                
-                for href, title in valid_jobs:
-                    if href.startswith("http"):
-                        full_url = href
-                    elif href.startswith("/"):
-                        base = re.sub(r'/(careers|jobs|openings).*$', '', url)
-                        full_url = base + href
-                    else:
-                        full_url = url.rstrip("/") + "/" + href
-                    
-                    self.add({
-                        "id": f"generic_{company_name}_{hash(href)}",
-                        "title": title,
-                        "company": company_name,
-                        "location": "Various",
-                        "source": f"{company_name}",
-                        "applyLink": full_url,
-                        "postedDate": self.now(),
-                    })
-                    
-            except Exception as e:
-                print(f"  ❌ Generic: {e}")
+                    if href and href not in seen:
+                        seen.add(href)
+                        all_links.append(a)
+    
+            # Filter
+            skip_patterns = [r'^/$', r'^/careers/?$', r'^/jobs/?$',
+                             r'/departments', r'/locations', r'/teams']
+            skip_words = ["all jobs", "view all", "see all", "departments",
+                          "locations", "browse", "filter by"]
+    
+            valid_jobs = []
+            for a in all_links:
+                href = a.get("href", "")
+                title = a.get_text(strip=True)
+    
+                if not href or not title or len(title) < 3:
+                    continue
+                if any(re.search(p, href, re.I) for p in skip_patterns):
+                    continue
+                if any(w in title.lower() for w in skip_words):
+                    continue
+    
+                indicators = [
+                    '/job', '/position', '/opening', '/role', '/apply',
+                    '/posting', '/career', 'jobId', 'positionId'
+                ]
+                if not any(ind in href.lower() for ind in indicators):
+                    continue
+    
+                valid_jobs.append((href, title))
+    
+            print(f"  ✓ Generic: {len(valid_jobs)} jobs")
+    
+            for href, title in valid_jobs:
+                if href.startswith("http"):
+                    full_url = href
+                elif href.startswith("/"):
+                    base = re.sub(r'/(careers|jobs|openings).*$', '', url)
+                    full_url = base + href
+                else:
+                    full_url = url.rstrip("/") + "/" + href
+    
+                self.add({
+                    "id": f"generic_{company_name}_{hash(href)}",
+                    "title": title,
+                    "company": company_name,
+                    "location": "Various",
+                    "source": f"{company_name}",
+                    "applyLink": full_url,
+                    "postedDate": self.now(),
+                })
+    
+        except Exception as e:
+            print(f"  ❌ Generic: {e}")
 
     # ===================================================================
     # MAIN COMPANY SCRAPERS
