@@ -810,7 +810,7 @@ class JobScraper:
     # MAIN COMPANY SCRAPERS
     # ===================================================================
 
-     def scrape_generic(self, company_name, url):
+    def scrape_generic(self, company_name, url):
         """Comprehensive generic scraper"""
         headers = {**HEADERS, "Accept": "text/html"}
     
