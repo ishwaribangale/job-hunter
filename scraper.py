@@ -563,7 +563,7 @@ class JobScraper:
             return ("generic", None, url)
 
     def scrape_greenhouse_api(self, company_name, slug):
-        """Try Greenhouse API endpoint with strict validation"""
+        """Try Greenhouse API endpoint"""
         url = f"https://boards-api.greenhouse.io/v1/boards/{slug}/jobs"
         headers = {**HEADERS, "Accept": "application/json"}
         
@@ -573,41 +573,9 @@ class JobScraper:
                 data = r.json()
                 jobs = data.get("jobs", [])
                 
-                # STRICT VALIDATION - Only actual jobs
-                valid_jobs = []
+                print(f"  ✓ Greenhouse API: {len(jobs)} jobs")
+                
                 for j in jobs:
-                    title = j.get("title", "")
-                    abs_url = j.get("absolute_url", "")
-                    job_id = j.get("id", "")
-                    
-                    # Must have all required fields
-                    if not title or not abs_url or not job_id:
-                        continue
-                    
-                    # Filter out non-job pages
-                    invalid_keywords = [
-                        "careers", "culture", "benefits", "home", "about",
-                        "teams", "university", "learn more", "how we", 
-                        "code of conduct", "diversity", "our story",
-                        "life at", "working at", "why", "values"
-                    ]
-                    
-                    if any(keyword in title.lower() for keyword in invalid_keywords):
-                        continue
-                    
-                    # Title must be at least 3 words (real jobs have descriptive titles)
-                    if len(title.split()) < 2:
-                        continue
-                    
-                    # URL must contain job ID
-                    if not re.search(r'/jobs?/\d+', abs_url):
-                        continue
-                    
-                    valid_jobs.append(j)
-                
-                print(f"  ✓ Greenhouse API: {len(valid_jobs)} jobs (filtered from {len(jobs)})")
-                
-                for j in valid_jobs:
                     self.add({
                         "id": f"gh_{slug}_{j.get('id')}",
                         "title": j.get("title", ""),
@@ -812,9 +780,10 @@ class JobScraper:
             print(f"  ❌ Lever: {e}")
             
     def scrape_ashby(self, company_name, slug):
-        """FIXED Ashby scraper with strict validation"""
+        """FIXED Ashby scraper - API endpoint approach"""
         print(f"  Attempting Ashby scrape for: {slug}")
         
+        # METHOD 1: Try the actual API endpoint
         api_url = f"https://api.ashbyhq.com/posting-api/job-board/{slug}"
         headers = {
             **HEADERS,
@@ -829,50 +798,95 @@ class JobScraper:
                 data = r.json()
                 jobs = data.get("jobs", [])
                 
-                # STRICT VALIDATION
-                valid_jobs = []
-                for j in jobs:
-                    job_id = j.get("id", "")
-                    title = j.get("title", "")
-                    
-                    if not job_id or not title:
-                        continue
-                    
-                    # Filter out invalid titles
-                    invalid_keywords = [
-                        "all positions", "view all", "careers", "culture",
-                        "benefits", "about", "team", "learn more"
-                    ]
-                    
-                    if any(keyword in title.lower() for keyword in invalid_keywords):
-                        continue
-                    
-                    # Must be descriptive
-                    if len(title.split()) < 2:
-                        continue
-                    
-                    valid_jobs.append(j)
-                
-                print(f"  ✓ Ashby API: {len(valid_jobs)} jobs (filtered from {len(jobs)})")
-                
-                for j in valid_jobs:
-                    loc = j.get("location", {})
-                    location = loc.get("name", "Various") if isinstance(loc, dict) else "Various"
-                    
-                    self.add({
-                        "id": f"ashby_{slug}_{j.get('id')}",
-                        "title": j.get("title"),
-                        "company": company_name,
-                        "location": location,
-                        "source": f"{company_name} (Ashby)",
-                        "applyLink": f"https://jobs.ashbyhq.com/{slug}/{j.get('id')}",
-                        "postedDate": self.now(),
-                    })
-                return
+                if jobs:
+                    print(f"  ✓ Ashby API: {len(jobs)} jobs")
+                    for j in jobs:
+                        job_id = j.get("id", "")
+                        title = j.get("title", "")
+                        
+                        if not job_id or not title:
+                            continue
+                        
+                        loc = j.get("location", {})
+                        location = loc.get("name", "Various") if isinstance(loc, dict) else "Various"
+                        
+                        self.add({
+                            "id": f"ashby_{slug}_{job_id}",
+                            "title": title,
+                            "company": company_name,
+                            "location": location,
+                            "source": f"{company_name} (Ashby)",
+                            "applyLink": f"https://jobs.ashbyhq.com/{slug}/{job_id}",
+                            "postedDate": self.now(),
+                        })
+                    return
         except Exception as e:
             print(f"  ⚠ Ashby API failed: {e}")
         
-        print("  ❌ Ashby scraping failed")
+        # METHOD 2: Try Playwright for JavaScript-rendered content
+        try:
+            from playwright.sync_api import sync_playwright
+            
+            url = f"https://jobs.ashbyhq.com/{slug}"
+            
+            print("  Trying Playwright...")
+            with sync_playwright() as p:
+                browser = p.chromium.launch(
+                    headless=True,
+                    args=["--no-sandbox", "--disable-dev-shm-usage"]
+                )
+                page = browser.new_page()
+                page.goto(url, wait_until="networkidle", timeout=30000)
+                page.wait_for_timeout(3000)  # Wait for JS to render
+                
+                # Get all links after JS renders
+                links = page.query_selector_all("a[href]")
+                
+                valid_jobs = []
+                seen_hrefs = set()
+                
+                for link in links:
+                    href = link.get_attribute("href") or ""
+                    title = link.inner_text().strip()
+                    
+                    if not href or href in seen_hrefs:
+                        continue
+                    
+                    # Check if it's a job link
+                    if slug in href and len(title) > 3:
+                        skip_keywords = ["all positions", "view all", "privacy", "terms", "back to"]
+                        if any(skip in title.lower() for skip in skip_keywords):
+                            continue
+                        
+                        seen_hrefs.add(href)
+                        valid_jobs.append((href, title))
+                
+                browser.close()
+                
+                print(f"  ✓ Ashby Playwright: {len(valid_jobs)} jobs")
+                
+                for href, title in valid_jobs:
+                    full_url = href if href.startswith("http") else f"https://jobs.ashbyhq.com{href}"
+                    
+                    self.add({
+                        "id": f"ashby_{slug}_{hash(href)}",
+                        "title": title,
+                        "company": company_name,
+                        "location": "Various",
+                        "source": f"{company_name} (Ashby)",
+                        "applyLink": full_url,
+                        "postedDate": self.now(),
+                    })
+                
+                if valid_jobs:
+                    return
+                    
+        except ImportError:
+            print("  ⚠ Playwright not installed - run: pip install playwright && playwright install chromium")
+        except Exception as e:
+            print(f"  ⚠ Playwright failed: {e}")
+        
+        print("  ❌ All Ashby methods failed")
 
     def scrape_ashby_companies(self):
         """Scrape companies using Ashby ATS"""
@@ -1182,4 +1196,3 @@ class JobScraper:
 if __name__ == "__main__":
     scraper = JobScraper()
     scraper.run()
-    scraper.save()
