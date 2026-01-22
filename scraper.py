@@ -391,100 +391,133 @@ class JobScraper:
             print(f"  ⚠ Detection error: {e}")
             return ("generic", None, url)
 
-    def scrape_greenhouse(self, company_name, slug):
-        """Enhanced Greenhouse scraper with better selectors"""
-        url = f"https://boards.greenhouse.io/{slug}"
-        headers = {**HEADERS, "Accept": "text/html"}
+    def scrape_greenhouse_api(self, company_name, slug):
+        """Try Greenhouse API endpoint"""
+        url = f"https://boards-api.greenhouse.io/v1/boards/{slug}/jobs"
+        headers = {**HEADERS, "Accept": "application/json"}
         
         try:
+            r = requests.get(url, headers=headers, timeout=10)
+            if r.status_code == 200:
+                data = r.json()
+                jobs = data.get("jobs", [])
+                
+                print(f"  ✓ Greenhouse API: {len(jobs)} jobs")
+                
+                for j in jobs:
+                    self.add({
+                        "id": f"gh_{slug}_{j.get('id')}",
+                        "title": j.get("title", ""),
+                        "company": company_name,
+                        "location": j.get("location", {}).get("name", "Various"),
+                        "source": f"{company_name} (Greenhouse)",
+                        "applyLink": j.get("absolute_url", ""),
+                        "postedDate": self.now(),
+                    })
+                return True
+            return False
+        except:
+            return False
+
+def scrape_greenhouse(self, company_name, slug):
+    """Enhanced Greenhouse scraper with API + HTML fallback"""
+    
+    # Try API first
+    if self.scrape_greenhouse_api(company_name, slug):
+        return
+    
+    # Fallback to HTML scraping
+    url = f"https://boards.greenhouse.io/embed/job_board?for={slug}"
+    headers = {**HEADERS, "Accept": "text/html"}
+    
+    try:
+        r = requests.get(url, headers=headers, timeout=10)
+        if r.status_code != 200:
+            # Try without embed
+            url = f"https://boards.greenhouse.io/{slug}"
             r = requests.get(url, headers=headers, timeout=10)
             if r.status_code != 200:
                 print(f"  ⚠ HTTP {r.status_code}")
                 return
+        
+        soup = BeautifulSoup(r.text, "html.parser")
+        
+        # Find ALL links that contain /jobs/ followed by numbers
+        valid_jobs = []
+        seen_ids = set()
+        
+        for a in soup.find_all("a", href=True):
+            href = a.get("href", "")
             
-            soup = BeautifulSoup(r.text, "html.parser")
+            # Look for job ID pattern
+            job_match = re.search(r'/jobs/(\d+)', href)
+            if not job_match:
+                continue
             
-            # Try MULTIPLE selectors - Greenhouse uses different layouts
-            all_links = []
+            job_id = job_match.group(1)
+            if job_id in seen_ids:
+                continue
             
-            # Strategy 1: Standard opening divs
-            all_links.extend(soup.select("div.opening a"))
+            # Get title
+            title = a.get_text(strip=True)
             
-            # Strategy 2: Section-based
-            all_links.extend(soup.select("section.level-0 a"))
-            
-            # Strategy 3: Any link with /jobs/ in href
-            for a in soup.find_all("a", href=True):
-                if "/jobs/" in a.get("href", ""):
-                    all_links.append(a)
-            
-            # Strategy 4: Links inside job containers
-            all_links.extend(soup.select("div[id*='job'] a"))
-            all_links.extend(soup.select("div[class*='job'] a"))
-            
-            valid_jobs = []
-            seen_hrefs = set()
-            job_pattern = r'/jobs/(\d+)'
-            skip_words = ["all jobs", "view all", "departments", "locations", "teams", "apply"]
-            
-            for a in all_links:
-                href = a.get("href", "")
-                title = a.get_text(strip=True)
-                
-                # Must have href
-                if not href:
-                    continue
-                
-                # Skip duplicates
-                if href in seen_hrefs:
-                    continue
-                
-                # Must match job pattern
-                if not re.search(job_pattern, href):
-                    continue
-                
-                # Must have meaningful title
-                if not title or len(title) < 3:
-                    continue
-                
-                # Skip navigation links
-                if any(w in title.lower() for w in skip_words):
-                    continue
-                
-                seen_hrefs.add(href)
-                valid_jobs.append((href, title, a))
-            
-            print(f"  ✓ Greenhouse: {len(valid_jobs)} jobs")
-            
-            for href, title, elem in valid_jobs:
-                location = "Various"
-                
-                # Try to extract location
-                parent = elem.find_parent("div", class_="opening")
+            # Skip if no meaningful title
+            if not title or len(title) < 3:
+                # Try to find title in parent
+                parent = a.find_parent("div")
                 if parent:
-                    loc = parent.select_one("span.location")
-                    if loc:
-                        location = loc.get_text(strip=True)
-                
-                # Build full URL
-                full_url = href if href.startswith("http") else f"https://boards.greenhouse.io{href}"
-                
-                # Extract job ID
-                job_match = re.search(job_pattern, href)
-                job_id = job_match.group(1) if job_match else hash(href)
-                
-                self.add({
-                    "id": f"gh_{slug}_{job_id}",
-                    "title": title,
-                    "company": company_name,
-                    "location": location,
-                    "source": f"{company_name} (Greenhouse)",
-                    "applyLink": full_url,
-                    "postedDate": self.now(),
-                })
-                
-        except Exception as e:
-            print(f"  ❌ Greenhouse: {e}")
+                    title_elem = parent.find("h3") or parent.find("h4") or parent.find("span")
+                    if title_elem:
+                        title = title_elem.get_text(strip=True)
+            
+            if not title or len(title) < 3:
+                continue
+            
+            # Skip navigation links
+            skip_words = ["view all", "see all", "back to", "return to"]
+            if any(w in title.lower() for w in skip_words):
+                continue
+            
+            seen_ids.add(job_id)
+            
+            # Try to get location
+            location = "Various"
+            parent = a.find_parent("div", class_="opening")
+            if not parent:
+                parent = a.find_parent("div")
+            
+            if parent:
+                loc_elem = parent.find("span", class_="location") or parent.find(text=re.compile(r'\b(Remote|Hybrid|Onsite|India|USA|UK)\b'))
+                if loc_elem:
+                    location = loc_elem.strip() if isinstance(loc_elem, str) else loc_elem.get_text(strip=True)
+            
+            # Build full URL
+            if href.startswith("http"):
+                full_url = href
+            elif href.startswith("/"):
+                full_url = f"https://boards.greenhouse.io{href}"
+            else:
+                full_url = f"https://boards.greenhouse.io/{slug}/{href}"
+            
+            valid_jobs.append((job_id, title, location, full_url))
+        
+        print(f"  ✓ Greenhouse HTML: {len(valid_jobs)} jobs")
+        
+        for job_id, title, location, full_url in valid_jobs:
+            self.add({
+                "id": f"gh_{slug}_{job_id}",
+                "title": title,
+                "company": company_name,
+                "location": location,
+                "source": f"{company_name} (Greenhouse)",
+                "applyLink": full_url,
+                "postedDate": self.now(),
+            })
+            
+    except Exception as e:
+        print(f"  ❌ Greenhouse HTML: {e}")
+
+
             
     def scrape_lever(self, company_name, slug):
         """Enhanced Lever scraper with better detection"""
@@ -575,94 +608,37 @@ class JobScraper:
         except Exception as e:
             print(f"  ❌ Lever: {e}")
             
-    def scrape_ashby_companies(self):
-        """Scrape companies using Ashby ATS"""
-        print("\n[Ashby Companies]")
-        print(f"Companies: {len(ASHBY_COMPANIES)}")
-
-        for c in ASHBY_COMPANIES:
-            name = c.get('name', 'Unknown')
-            slug = c.get('slug', '')
-            
-            print(f"\n[{name}] Ashby Slug: {slug}")
-            
-            try:
-                if not slug:
-                    print(f"  ⚠ Missing slug")
-                    continue
-                    
-                url = f"https://jobs.ashbyhq.com/{slug}"
-                headers = {**HEADERS, "Accept": "text/html"}
-                
-                r = requests.get(url, headers=headers, timeout=10)
-                if r.status_code != 200:
-                    print(f"  ⚠ HTTP {r.status_code}")
-                    continue
-                    
-                soup = BeautifulSoup(r.text, "html.parser")
-                
-                # Multiple selection strategies
-                all_links = (
-                    soup.select("a[href*='/jobs/']") +
-                    soup.select("a[href*='/applications/']") +
-                    soup.select("a[class*='job']") +
-                    soup.select("a[class*='posting']") +
-                    soup.select("div[class*='job'] a") +
-                    soup.select("div[class*='posting'] a")
-                )
-                
-                valid_jobs = []
-                seen_hrefs = set()
-                
-                # More lenient UUID / job-id pattern
-                uuid_pattern = r'/([a-f0-9-]{8,}|jobs?/[^/\s]+)'
-                
-                for a in all_links:
-                    href = a.get("href", "")
-                    title = a.get_text(strip=True)
-                    
-                    # Skip if no href or already seen
-                    if not href or href in seen_hrefs:
-                        continue
-                    
-                    # Must look like a job link
-                    if not re.search(uuid_pattern, href, re.I):
-                        continue
-                    
-                    # Skip navigation links
-                    skip_words = ["all jobs", "view all", "see all", "departments", "locations"]
-                    if any(w in title.lower() for w in skip_words):
-                        continue
-                    
-                    # Title must be meaningful
-                    if not title or len(title) < 3:
-                        continue
-                    
-                    seen_hrefs.add(href)
-                    valid_jobs.append((href, title))
-                
-                print(f"  ✓ Ashby: {len(valid_jobs)} jobs")
-                
-                for href, title in valid_jobs:
-                    full_url = href if href.startswith("http") else f"https://jobs.ashbyhq.com{href}"
-                    
-                    self.add({
-                        "id": f"ashby_{slug}_{hash(href)}",
-                        "title": title,
-                        "company": name,
-                        "location": "Various",
-                        "source": f"{name} (Ashby)",
-                        "applyLink": full_url,
-                        "postedDate": self.now(),
-                    })
-                
-                time.sleep(0.5)
-                
-            except Exception as e:
-                print(f"  ❌ Error: {e}")
-
     def scrape_ashby(self, company_name, slug):
-        """Enhanced Ashby scraper with better job detection"""
+        """Enhanced Ashby scraper with API support"""
+        
+        # Try API first
+        api_url = f"https://jobs.ashbyhq.com/{slug}/api/jobs"
+        try:
+            r = requests.get(api_url, headers={**HEADERS, "Accept": "application/json"}, timeout=10)
+            if r.status_code == 200:
+                data = r.json()
+                jobs = data.get("jobs", []) or data.get("data", [])
+                
+                if jobs:
+                    print(f"  ✓ Ashby API: {len(jobs)} jobs")
+                    for j in jobs:
+                        job_id = j.get("id", "")
+                        title = j.get("title", "") or j.get("name", "")
+                        
+                        self.add({
+                            "id": f"ashby_{slug}_{job_id}",
+                            "title": title,
+                            "company": company_name,
+                            "location": j.get("locationName", "Various"),
+                            "source": f"{company_name} (Ashby)",
+                            "applyLink": f"https://jobs.ashbyhq.com/{slug}/{job_id}",
+                            "postedDate": self.now(),
+                        })
+                    return
+        except:
+            pass
+        
+        # Fallback to HTML
         url = f"https://jobs.ashbyhq.com/{slug}"
         headers = {**HEADERS, "Accept": "text/html"}
         
@@ -674,54 +650,37 @@ class JobScraper:
                 
             soup = BeautifulSoup(r.text, "html.parser")
             
-            # MUCH more aggressive link finding
-            all_links = []
-            
-            # Strategy 1: Any link with /jobs/ or /applications/
-            for a in soup.find_all("a", href=True):
-                href = a.get("href", "")
-                if "/jobs/" in href or "/applications/" in href:
-                    all_links.append(a)
-            
-            # Strategy 2: Links with job-related classes
-            all_links.extend(soup.select("a[class*='job']"))
-            all_links.extend(soup.select("a[class*='posting']"))
-            all_links.extend(soup.select("a[class*='opening']"))
-            
-            # Strategy 3: Links inside job containers
-            all_links.extend(soup.select("div[class*='job'] a"))
-            all_links.extend(soup.select("div[class*='posting'] a"))
-            
             valid_jobs = []
             seen_hrefs = set()
             
-            # Very lenient pattern - just needs to look like a job link
-            job_indicators = ['/jobs/', '/applications/', 'ashbyhq.com']
-            
-            for a in all_links:
+            # Look for ANY link that contains UUID-like patterns
+            for a in soup.find_all("a", href=True):
                 href = a.get("href", "")
                 title = a.get_text(strip=True)
                 
-                if not href or href in seen_hrefs:
+                # Must contain ashby job pattern
+                if not ("/jobs/" in href or f"ashbyhq.com/{slug}/" in href):
                     continue
                 
-                # Must have some job indicator
-                if not any(ind in href.lower() for ind in job_indicators):
+                # Must have UUID or job ID (36 char UUID or similar)
+                if not re.search(r'[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}', href, re.I):
+                    continue
+                
+                if href in seen_hrefs:
                     continue
                 
                 # Skip navigation
-                skip_words = ["all jobs", "view all", "see all", "departments", "locations", "back to"]
-                if any(w in title.lower() for w in skip_words):
+                skip = ["all jobs", "view all", "back to", "see all"]
+                if any(s in title.lower() for s in skip):
                     continue
                 
-                # Must have meaningful title
                 if not title or len(title) < 3:
                     continue
                 
                 seen_hrefs.add(href)
                 valid_jobs.append((href, title))
             
-            print(f"  ✓ Ashby: {len(valid_jobs)} jobs")
+            print(f"  ✓ Ashby HTML: {len(valid_jobs)} jobs")
             
             for href, title in valid_jobs:
                 full_url = href if href.startswith("http") else f"https://jobs.ashbyhq.com{href}"
@@ -738,7 +697,29 @@ class JobScraper:
                 
         except Exception as e:
             print(f"  ❌ Ashby: {e}")
-        
+            
+    def scrape_ashby_companies(self):
+        """Scrape companies using Ashby ATS"""
+        print("\n[Ashby Companies]")
+        print(f"Companies: {len(ASHBY_COMPANIES)}")
+    
+        for c in ASHBY_COMPANIES:
+            name = c.get('name', 'Unknown')
+            slug = c.get('slug', '')
+            
+            print(f"\n[{name}] Ashby Slug: {slug}")
+            
+            if not slug:
+                print(f"  ⚠ Missing slug")
+                continue
+            
+            try:
+                self.scrape_ashby(name, slug)  # Use the enhanced method
+                time.sleep(0.5)
+            except Exception as e:
+                print(f"  ❌ Error: {e}")
+
+    
     def scrape_generic(self, company_name, url):
         """Comprehensive generic scraper"""
         headers = {**HEADERS, "Accept": "text/html"}
