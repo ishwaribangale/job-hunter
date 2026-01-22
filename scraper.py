@@ -1178,7 +1178,6 @@ class JobScraper:
             print(f"  {k}: {v}")
 
         print(f"\n✓ TOTAL JOBS: {len(self.jobs)}")
-
     def save(self):
         os.makedirs("data", exist_ok=True)
 
