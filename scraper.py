@@ -115,169 +115,206 @@ class JobScraper:
     def scrape_wellfound(self):
         print("\n[Wellfound]")
         
-        # METHOD 1: Try API endpoint first
-        api_url = "https://wellfound.com/api/jobs"
-        headers = {
-            **HEADERS,
-            "Accept": "application/json",
-            "Referer": "https://wellfound.com/jobs"
-        }
-        
+        # METHOD 1: Try their job search with filters (more reliable endpoint)
         try:
-            r = requests.get(api_url, headers=headers, timeout=10)
-            if r.status_code == 200:
-                data = r.json()
-                jobs = data.get("jobs", []) or data.get("results", [])
-                
-                if jobs and len(jobs) > 0:
-                    print(f"  ✓ Wellfound API: {len(jobs)} jobs")
-                    
-                    for j in jobs:
-                        self.add({
-                            "id": f"wellfound_{j.get('id', hash(str(j)))}",
-                            "title": j.get("title", ""),
-                            "company": j.get("company", {}).get("name", "Startup"),
-                            "location": j.get("location", "Remote / Hybrid"),
-                            "source": "Wellfound",
-                            "applyLink": j.get("url", ""),
-                            "postedDate": self.now(),
-                        })
-                    return
-        except Exception as e:
-            print(f"  ⚠ API failed: {e}")
-        
-        # METHOD 2: Try with enhanced headers
-        url = "https://wellfound.com/jobs"
-        headers = {
-            "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
-            "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8",
-            "Accept-Language": "en-US,en;q=0.5",
-            "Accept-Encoding": "gzip, deflate, br",
-            "DNT": "1",
-            "Connection": "keep-alive",
-            "Upgrade-Insecure-Requests": "1",
-            "Sec-Fetch-Dest": "document",
-            "Sec-Fetch-Mode": "navigate",
-            "Sec-Fetch-Site": "none",
-            "Cache-Control": "max-age=0",
-        }
-    
-        try:
-            r = requests.get(url, headers=headers, timeout=10)
+            # Search for remote jobs with broad filters
+            search_url = "https://wellfound.com/role/r/software-engineer"
+            
+            headers = {
+                "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+                "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+                "Accept-Language": "en-US,en;q=0.9",
+                "Referer": "https://wellfound.com/",
+                "sec-ch-ua": '"Not_A Brand";v="8", "Chromium";v="120", "Google Chrome";v="120"',
+                "sec-ch-ua-mobile": "?0",
+                "sec-ch-ua-platform": '"macOS"',
+            }
+            
+            session = requests.Session()
+            
+            # First, visit the homepage to get cookies
+            session.get("https://wellfound.com/", headers=headers, timeout=10)
+            time.sleep(1)
+            
+            # Now try the jobs page
+            r = session.get(search_url, headers=headers, timeout=10)
+            
             if r.status_code == 200:
                 soup = BeautifulSoup(r.text, "html.parser")
-                cards = soup.select("a[href^='/company/'][href*='/jobs/']")
                 
-                if len(cards) > 0:
-                    print(f"  ✓ Wellfound HTML: {len(cards)} jobs")
+                # Try multiple selectors
+                job_cards = (
+                    soup.select("div[class*='job']") +
+                    soup.select("div[class*='posting']") +
+                    soup.select("div[class*='startup-result']") +
+                    soup.select("article")
+                )
+                
+                print(f"  Found {len(job_cards)} potential job cards")
+                
+                valid_jobs = []
+                seen_urls = set()
+                
+                for card in job_cards:
+                    # Find links within the card
+                    links = card.find_all("a", href=True)
                     
-                    for a in cards:
-                        href = a.get("href")
-                        title = a.get_text(strip=True)
-                        if not href or not title:
+                    for link in links:
+                        href = link.get("href", "")
+                        title = link.get_text(strip=True)
+                        
+                        # Must contain job-related paths
+                        if not any(path in href for path in ['/jobs/', '/companies/', '/role/']):
                             continue
-    
+                        
+                        # Must have meaningful title
+                        if not title or len(title) < 3 or len(title) > 100:
+                            continue
+                        
+                        # Skip navigation
+                        skip = ["sign up", "log in", "learn more", "see all", "view all", "apply now"]
+                        if any(s in title.lower() for s in skip):
+                            continue
+                        
+                        # Build full URL
+                        if href.startswith("http"):
+                            full_url = href
+                        else:
+                            full_url = f"https://wellfound.com{href}"
+                        
+                        if full_url in seen_urls:
+                            continue
+                        
+                        seen_urls.add(full_url)
+                        
+                        # Try to extract company
+                        company_elem = card.find(["h2", "h3", "span"], class_=re.compile(r'company|startup', re.I))
+                        company = company_elem.get_text(strip=True) if company_elem else "Startup"
+                        
+                        valid_jobs.append((full_url, title, company))
+                
+                if valid_jobs:
+                    print(f"  ✓ Wellfound: {len(valid_jobs)} jobs")
+                    
+                    for url, title, company in valid_jobs:
                         self.add({
-                            "id": f"wellfound_{hash(href)}",
+                            "id": f"wellfound_{hash(url)}",
                             "title": title,
-                            "company": "Startup (Wellfound)",
+                            "company": f"{company} (Wellfound)",
                             "location": "Remote / Hybrid",
                             "source": "Wellfound",
-                            "applyLink": "https://wellfound.com" + href,
+                            "applyLink": url,
                             "postedDate": self.now(),
                         })
                     return
             
-            print(f"  ⚠ HTTP {r.status_code}, trying Playwright...")
+            print(f"  ⚠ Search page returned {r.status_code}")
             
         except Exception as e:
-            print(f"  ⚠ Request failed: {e}, trying Playwright...")
+            print(f"  ⚠ Search method failed: {e}")
         
-        # METHOD 3: Use Playwright for JavaScript-rendered content
+        # METHOD 2: Use Playwright with stealth
         try:
             from playwright.sync_api import sync_playwright
             
-            print("  Attempting with Playwright...")
+            print("  Trying Playwright with stealth mode...")
             
             with sync_playwright() as p:
+                # Launch with more realistic browser settings
                 browser = p.chromium.launch(
                     headless=True,
-                    args=["--no-sandbox", "--disable-dev-shm-usage"]
+                    args=[
+                        "--no-sandbox",
+                        "--disable-dev-shm-usage",
+                        "--disable-blink-features=AutomationControlled"
+                    ]
                 )
                 
                 context = browser.new_context(
                     user_agent="Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
-                    viewport={"width": 1920, "height": 1080}
+                    viewport={"width": 1920, "height": 1080},
+                    locale="en-US",
+                    timezone_id="America/New_York"
                 )
+                
+                # Add extra headers to avoid detection
+                context.set_extra_http_headers({
+                    "Accept-Language": "en-US,en;q=0.9",
+                    "sec-ch-ua": '"Not_A Brand";v="8", "Chromium";v="120"',
+                    "sec-ch-ua-mobile": "?0",
+                    "sec-ch-ua-platform": '"macOS"'
+                })
                 
                 page = context.new_page()
                 
                 # Go to jobs page
-                page.goto(url, wait_until="networkidle", timeout=30000)
-                page.wait_for_timeout(3000)  # Wait for JS to render
+                page.goto("https://wellfound.com/jobs", wait_until="domcontentloaded", timeout=30000)
                 
-                # Find job links
-                job_links = page.query_selector_all("a[href*='/jobs/']")
+                # Scroll to load lazy content
+                page.evaluate("window.scrollTo(0, document.body.scrollHeight)")
+                page.wait_for_timeout(3000)
                 
-                print(f"  Found {len(job_links)} potential job links")
+                # Get page content
+                content = page.content()
+                soup = BeautifulSoup(content, "html.parser")
+                
+                # Find all links
+                all_links = soup.find_all("a", href=True)
                 
                 valid_jobs = []
-                seen_hrefs = set()
+                seen_urls = set()
                 
-                for link in job_links:
-                    href = link.get_attribute("href") or ""
-                    title = link.inner_text().strip()
+                for link in all_links:
+                    href = link.get("href", "")
+                    title = link.get_text(strip=True)
                     
-                    # Must have valid href and title
-                    if not href or not title or len(title) < 3:
+                    # Must be a job link
+                    if not any(path in href for path in ['/jobs/', '/companies/', '/role/']):
                         continue
                     
-                    # Skip duplicates
-                    if href in seen_hrefs:
+                    # Must have title
+                    if not title or len(title) < 5 or len(title) > 100:
                         continue
                     
-                    # Must be a job posting link
-                    if not ('/jobs/' in href or '/company/' in href):
-                        continue
-                    
-                    # Skip navigation links
-                    skip_words = ["view all", "see all jobs", "browse", "search", "filter"]
+                    # Skip navigation
+                    skip_words = ["sign up", "log in", "see all", "view all", "browse", "filter"]
                     if any(w in title.lower() for w in skip_words):
                         continue
                     
-                    seen_hrefs.add(href)
+                    # Build full URL
+                    full_url = href if href.startswith("http") else f"https://wellfound.com{href}"
                     
-                    # Extract company name from link if possible
-                    company_match = re.search(r'/company/([^/]+)', href)
-                    company = company_match.group(1).replace('-', ' ').title() if company_match else "Startup"
+                    if full_url in seen_urls:
+                        continue
                     
-                    valid_jobs.append((href, title, company))
+                    seen_urls.add(full_url)
+                    valid_jobs.append((full_url, title))
                 
                 browser.close()
                 
-                print(f"  ✓ Wellfound (Playwright): {len(valid_jobs)} jobs")
-                
-                for href, title, company in valid_jobs:
-                    full_url = href if href.startswith("http") else f"https://wellfound.com{href}"
+                if valid_jobs:
+                    print(f"  ✓ Wellfound (Playwright): {len(valid_jobs)} jobs")
                     
-                    self.add({
-                        "id": f"wellfound_{hash(href)}",
-                        "title": title,
-                        "company": f"{company} (Wellfound)",
-                        "location": "Remote / Hybrid",
-                        "source": "Wellfound",
-                        "applyLink": full_url,
-                        "postedDate": self.now(),
-                    })
-                
-                return
+                    for url, title in valid_jobs:
+                        self.add({
+                            "id": f"wellfound_{hash(url)}",
+                            "title": title,
+                            "company": "Startup (Wellfound)",
+                            "location": "Remote / Hybrid",
+                            "source": "Wellfound",
+                            "applyLink": url,
+                            "postedDate": self.now(),
+                        })
+                    return
                 
         except ImportError:
-            print("  ⚠ Playwright not installed - run: pip install playwright && playwright install chromium")
+            print("  ⚠ Playwright not installed")
         except Exception as e:
-            print(f"  ❌ Playwright failed: {e}")
-    
-    print("  ❌ Wellfound scraping failed - all methods exhausted")
+            print(f"  ⚠ Playwright failed: {e}")
+        
+        # METHOD 3: Skip and inform user
+        print("  ⚠ Wellfound requires authentication or has strong bot protection")
+        print("  💡 Suggestion: Add Wellfound to CAREER_PAGES for auto-detection or skip")
 
     def scrape_remoteok(self):
         print("\n[RemoteOK]")
