@@ -112,24 +112,34 @@ ASHBY_COMPANIES = [
     {"name": "SigNoz", "ats": "ashby", "slug": "SigNoz"},
     {"name": "Plane Software, Inc.", "ats": "ashby", "slug": "plane"},
     {"name": "Kraken", "ats": "ashby", "slug": "kraken.com"},
-    {"name": "Deel", "ats": "ashby", "slug": "deel"},                    // jobs.ashbyhq.com/deel :contentReference[oaicite:0]{index=0}
-    {"name": "ElevenLabs", "ats": "ashby", "slug": "elevenlabs"},        // Sales Dev India role on Ashby :contentReference[oaicite:1]{index=1}
-    {"name": "Aspora", "ats": "ashby", "slug": "Aspora"},                // jobs.ashbyhq.com/Aspora :contentReference[oaicite:2]{index=2}
-    {"name": "SearchStax", "ats": "ashby", "slug": "searchstax"},        // jobs.ashbyhq.com/searchstax :contentReference[oaicite:3]{index=3}
-    {"name": "Almabase", "ats": "ashby", "slug": "Almabase"},            // Bangalore role on Ashby :contentReference[oaicite:4]{index=4}
-    {"name": "Credo.AI", "ats": "ashby", "slug": "credo.ai"},            // India remote roles :contentReference[oaicite:5]{index=5}
-    {"name": "Real", "ats": "ashby", "slug": "real"},                    // Lead Designer India role :contentReference[oaicite:6]{index=6}
-    {"name": "Zania", "ats": "ashby", "slug": "zania"},                  // Indian software role found :contentReference[oaicite:7]{index=7}
+    {"name": "Deel", "ats": "ashby", "slug": "deel"},                   
+    {"name": "ElevenLabs", "ats": "ashby", "slug": "elevenlabs"},        
+    {"name": "Aspora", "ats": "ashby", "slug": "Aspora"},               
+    {"name": "SearchStax", "ats": "ashby", "slug": "searchstax"},       
+    {"name": "Almabase", "ats": "ashby", "slug": "Almabase"},            
+    {"name": "Credo.AI", "ats": "ashby", "slug": "credo.ai"},           
+    {"name": "Real", "ats": "ashby", "slug": "real"},                   
+    {"name": "Zania", "ats": "ashby", "slug": "zania"},                  
     {"name": "Fourier", "ats": "ashby", "slug": "fourier"},
-    {"name": "Fermi AI", "ats": "ashby", "slug": "Fermi AI"},                   // Associate PM role – Bengaluru, India :contentReference[oaicite:1]{index=1}
-    {"name": "Decagon", "ats": "ashby", "slug": "decagon"},                     // Product Manager posting :contentReference[oaicite:2]{index=2}
-    {"name": "Lovable", "ats": "ashby", "slug": "lovable"},                     // Senior Product Manager role :contentReference[oaicite:3]{index=3}
-    {"name": "Assembled", "ats": "ashby", "slug": "assembledhq"},               // Multiple Product Manager listings (Workforce, Platform) :contentReference[oaicite:4]{index=4}
-    {"name": "Sierra", "ats": "ashby", "slug": "Sierra"},                       // Product Manager, Agent Platform :contentReference[oaicite:5]{index=5}
-    {"name": "Turnkey", "ats": "ashby", "slug": "turnkey"},                     // Product Manager role :contentReference[oaicite:6]{index=6}
-    {"name": "Campfire", "ats": "ashby", "slug": "campfire"},                   // PM opening :contentReference[oaicite:7]{index=7}
-    {"name": "LI.FI", "ats": "ashby", "slug": "li.fi"},                          // PM – Expansion & SDKs :contentReference[oaicite:8]{index=8}
-    {"name": "Clarity", "ats": "ashby", "slug": "clarity"},                     // Product Manager – Voice of the Customer :contentReference[oaicite:9]{index=9}
-    {"name": "Lindy", "ats": "ashby", "slug": "lindy"}       
+    {"name": "Fermi AI", "ats": "ashby", "slug": "Fermi AI"},                   
+    {"name": "Decagon", "ats": "ashby", "slug": "decagon"},                     
+    {"name": "Lovable", "ats": "ashby", "slug": "lovable"},                 
+    {"name": "Assembled", "ats": "ashby", "slug": "assembledhq"},            
+    {"name": "Sierra", "ats": "ashby", "slug": "Sierra"},                      
+    {"name": "Turnkey", "ats": "ashby", "slug": "turnkey"},                    
+    {"name": "Campfire", "ats": "ashby", "slug": "campfire"},                  
+    {"name": "LI.FI", "ats": "ashby", "slug": "li.fi"},                         
+    {"name": "Clarity", "ats": "ashby", "slug": "clarity"},                     
+    {"name": "Lindy", "ats": "ashby", "slug": "lindy"},
+    {"name": "Kit", "ats": "ashby", "slug": "kit"},
+    {"name": "ZeroRisk", "ats": "ashby", "slug": "zerorisk"},
+    {"name": "Clerk", "ats": "ashby", "slug": "clerk"},
+    {"name": "Fin", "ats": "ashby", "slug": "fin"},
+    {"name": "Vetcove", "ats": "ashby", "slug": "vetcove"},
+    {"name": "RoomPriceGenie", "ats": "ashby", "slug": "roompricegenie"},
+    {"name": "Scribd", "ats": "ashby", "slug": "scribd"},
+    {"name": "Jellyfish", "ats": "ashby", "slug": "jellyfish"},
+    {"name": "Avida", "ats": "ashby", "slug": "avida"},
+    {"name": "Weave", "ats": "ashby", "slug": "weave"}
 ]
 
