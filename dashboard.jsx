@@ -1,3 +1,5 @@
+import React from 'react';
+
 function App() {
   const [jobs, setJobs] = React.useState([]);
   const [loading, setLoading] = React.useState(true);
@@ -10,7 +12,7 @@ function App() {
   const [selectedLocation, setSelectedLocation] = React.useState('all');
   const [minScore, setMinScore] = React.useState(0);
 
-  // NEW: Resume matching states
+  // Resume matching states
   const [resumeText, setResumeText] = React.useState('');
   const [resumeKeywords, setResumeKeywords] = React.useState([]);
   const [resumeMatchEnabled, setResumeMatchEnabled] = React.useState(false);
@@ -45,7 +47,7 @@ function App() {
     return uniqueLocations.sort();
   }, [jobs]);
 
-  // NEW: Extract keywords from resume text
+  // Extract keywords from resume text
   const extractKeywords = (text) => {
     const techKeywords = [
       'javascript', 'python', 'java', 'react', 'node', 'angular', 'vue',
@@ -60,10 +62,10 @@ function App() {
     const lowerText = text.toLowerCase();
     const found = techKeywords.filter(kw => lowerText.includes(kw));
     
-    return [...new Set(found)]; // Remove duplicates
+    return [...new Set(found)];
   };
 
-  // NEW: Calculate match score between resume and job
+  // Calculate match score between resume and job
   const calculateMatchScore = (job, keywords) => {
     if (!keywords.length) return 0;
     
@@ -73,7 +75,7 @@ function App() {
     return Math.round((matches.length / keywords.length) * 100);
   };
 
-  // NEW: Handle resume upload
+  // Handle resume upload
   const handleResumeUpload = async (event) => {
     const file = event.target.files[0];
     if (!file) return;
@@ -91,8 +93,9 @@ function App() {
       fileReader.onload = async function() {
         const typedArray = new Uint8Array(this.result);
         
-        // Load PDF
-        const pdf = await pdfjsLib.getDocument(typedArray).promise;
+        // Load PDF using pdf.js
+        const loadingTask = window.pdfjsLib.getDocument(typedArray);
+        const pdf = await loadingTask.promise;
         let fullText = '';
         
         // Extract text from all pages
@@ -120,15 +123,16 @@ function App() {
     }
   };
 
-  // NEW: Clear resume
+  // Clear resume
   const clearResume = () => {
     setResumeText('');
     setResumeKeywords([]);
     setResumeMatchEnabled(false);
-    document.getElementById('resume-input').value = '';
+    const input = document.getElementById('resume-input');
+    if (input) input.value = '';
   };
 
-  // Apply filters (MODIFIED to include resume matching)
+  // Apply filters
   React.useEffect(() => {
     let filtered = jobs;
 
@@ -161,7 +165,7 @@ function App() {
       filtered = filtered.filter(job => (job.score || 0) >= minScore);
     }
 
-    // NEW: Resume matching filter
+    // Resume matching filter
     if (resumeMatchEnabled && resumeKeywords.length > 0) {
       filtered = filtered.map(job => ({
         ...job,
@@ -173,7 +177,7 @@ function App() {
     setFilteredJobs(filtered);
   }, [jobs, searchQuery, selectedSource, selectedRole, selectedLocation, minScore, resumeMatchEnabled, resumeKeywords]);
 
-  // Reset filters (MODIFIED)
+  // Reset filters
   const resetFilters = () => {
     setSearchQuery('');
     setSelectedSource('all');
@@ -213,7 +217,7 @@ function App() {
           <div className="lg:col-span-1">
             <div className="bg-white rounded-lg shadow p-6 sticky top-6 space-y-6">
               
-              {/* NEW: Resume Upload Section */}
+              {/* Resume Upload Section */}
               <div className="pb-6 border-b">
                 <h2 className="text-lg font-semibold text-gray-900 mb-4">📄 Resume Match</h2>
                 
@@ -414,7 +418,7 @@ function App() {
                             </p>
                           </div>
                           
-                          {/* NEW: Match Score Badge */}
+                          {/* Match Score Badge */}
                           {resumeMatchEnabled && job.matchScore > 0 && (
                             <div className="flex-shrink-0">
                               <div className={`px-3 py-1 rounded-full text-sm font-bold ${
@@ -448,7 +452,7 @@ function App() {
                         </div>
                       </div>
                       
-                      
+                      <a
                         href={job.applyLink}
                         target="_blank"
                         rel="noopener noreferrer"
@@ -467,6 +471,5 @@ function App() {
     </div>
   );
 }
-
 const root = ReactDOM.createRoot(document.getElementById('root'));
 root.render(<App />);
