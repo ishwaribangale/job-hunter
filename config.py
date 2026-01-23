@@ -104,26 +104,32 @@ ASHBY_COMPANIES = [
     {"name": "AcaiTravel", "ats": "ashby", "slug": "acai"},
     {"name": "AltimateAI", "ats": "ashby", "slug": "altimate"},
     {"name": "ParetoAI", "ats": "ashby", "slug": "pareto-ai"}
+    {"name": "Upflow", "ats": "ashby", "slug": "upflow"},        
+    {"name": "Articul8", "ats": "ashby", "slug": "articul8"},
+    {"name": "Axion", "ats": "ashby", "slug": "axion"}, 
+    {"name": "Axelera AI", "ats": "ashby", "slug": "axelera"},
+    {"name": "Poshmark", "ats": "ashby", "slug": "poshmark"},
+    {"name": "SigNoz", "ats": "ashby", "slug": "SigNoz"},
+    {"name": "Plane Software, Inc.", "ats": "ashby", "slug": "plane"},
+    {"name": "Kraken", "ats": "ashby", "slug": "kraken.com"},
+    {"name": "Deel", "ats": "ashby", "slug": "deel"},                    // jobs.ashbyhq.com/deel :contentReference[oaicite:0]{index=0}
+    {"name": "ElevenLabs", "ats": "ashby", "slug": "elevenlabs"},        // Sales Dev India role on Ashby :contentReference[oaicite:1]{index=1}
+    {"name": "Aspora", "ats": "ashby", "slug": "Aspora"},                // jobs.ashbyhq.com/Aspora :contentReference[oaicite:2]{index=2}
+    {"name": "SearchStax", "ats": "ashby", "slug": "searchstax"},        // jobs.ashbyhq.com/searchstax :contentReference[oaicite:3]{index=3}
+    {"name": "Almabase", "ats": "ashby", "slug": "Almabase"},            // Bangalore role on Ashby :contentReference[oaicite:4]{index=4}
+    {"name": "Credo.AI", "ats": "ashby", "slug": "credo.ai"},            // India remote roles :contentReference[oaicite:5]{index=5}
+    {"name": "Real", "ats": "ashby", "slug": "real"},                    // Lead Designer India role :contentReference[oaicite:6]{index=6}
+    {"name": "Zania", "ats": "ashby", "slug": "zania"},                  // Indian software role found :contentReference[oaicite:7]{index=7}
+    {"name": "Fourier", "ats": "ashby", "slug": "fourier"},
+    {"name": "Fermi AI", "ats": "ashby", "slug": "Fermi AI"},                   // Associate PM role – Bengaluru, India :contentReference[oaicite:1]{index=1}
+    {"name": "Decagon", "ats": "ashby", "slug": "decagon"},                     // Product Manager posting :contentReference[oaicite:2]{index=2}
+    {"name": "Lovable", "ats": "ashby", "slug": "lovable"},                     // Senior Product Manager role :contentReference[oaicite:3]{index=3}
+    {"name": "Assembled", "ats": "ashby", "slug": "assembledhq"},               // Multiple Product Manager listings (Workforce, Platform) :contentReference[oaicite:4]{index=4}
+    {"name": "Sierra", "ats": "ashby", "slug": "Sierra"},                       // Product Manager, Agent Platform :contentReference[oaicite:5]{index=5}
+    {"name": "Turnkey", "ats": "ashby", "slug": "turnkey"},                     // Product Manager role :contentReference[oaicite:6]{index=6}
+    {"name": "Campfire", "ats": "ashby", "slug": "campfire"},                   // PM opening :contentReference[oaicite:7]{index=7}
+    {"name": "LI.FI", "ats": "ashby", "slug": "li.fi"},                          // PM – Expansion & SDKs :contentReference[oaicite:8]{index=8}
+    {"name": "Clarity", "ats": "ashby", "slug": "clarity"},                     // Product Manager – Voice of the Customer :contentReference[oaicite:9]{index=9}
+    {"name": "Lindy", "ats": "ashby", "slug": "lindy"}       
 ]
 
-# ===================================================================
-# REMOVED COMPANIES (404 errors - don't use Greenhouse or wrong slugs)
-# ===================================================================
-# {"name": "Dunzo", "ats": "greenhouse", "slug": "dunzo"},  # 404
-# {"name": "Cred", "ats": "greenhouse", "slug": "cred"},  # 404
-# {"name": "Jupiter", "ats": "greenhouse", "slug": "amica"},  # 404
-# {"name": "Zeta", "ats": "greenhouse", "slug": "zeta"},  # 404
-# {"name": "Innovaccer", "ats": "greenhouse", "slug": "innovaccer"},  # 404
-# {"name": "Whatfix", "ats": "greenhouse", "slug": "whatfix"},  # 404
-# {"name": "Chargebee", "ats": "greenhouse", "slug": "chargebee"},  # 404
-# {"name": "Freshworks", "ats": "greenhouse", "slug": "freshworks"},  # 404
-# {"name": "Zoho", "ats": "greenhouse", "slug": "zoho"},  # 404
-# {"name": "Swiggy", "ats": "greenhouse", "slug": "swiggy"},  # 404
-# {"name": "Zepto", "ats": "greenhouse", "slug": "zepto"},  # 404
-# {"name": "Meesho", "ats": "greenhouse", "slug": "meesho"},  # 404
-# {"name": "Ola", "ats": "greenhouse", "slug": "olacabs"},  # 404
-# {"name": "Dream11", "ats": "greenhouse", "slug": "dream11"},  # 404
-# {"name": "Urban Company", "ats": "greenhouse", "slug": "urbancompany"},  # 404
-# {"name": "Cars24", "ats": "greenhouse", "slug": "cars24"},  # 404
-# {"name": "HubSpot", "ats": "greenhouse", "slug": "hubspot"},  # 0 jobs
-# {"name": "Vercel", "ats": "ashby", "slug": "vercel"},  # 0 jobs in Ashby
