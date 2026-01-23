@@ -27,18 +27,28 @@ class JobScraper:
     def now(self):
         return datetime.utcnow().isoformat()
 
-    def add(self, job):
+   def add(self, job):
         link = job.get("applyLink")
-        if not link or link in self.seen:
+        
+        # Skip if no link
+        if not link:
             return
-
+        
+        # Normalize the link (remove trailing slashes, query params for deduplication)
+        normalized_link = link.rstrip('/').split('?')[0]
+        
+        # Skip if already seen
+        if normalized_link in self.seen:
+            return
+        
+        # Add the job
         job["role"] = infer_role(job.get("title"))
         job["score"] = score_job(job)
         job["fetchedAt"] = self.now()
-
-        self.seen.add(link)
+    
+        self.seen.add(normalized_link)
         self.jobs.append(job)
-
+    
         src = job["source"]
         self.stats[src] = self.stats.get(src, 0) + 1
 
@@ -1154,10 +1164,10 @@ class JobScraper:
             self.scrape_career_pages()
             self.scrape_ashby_companies() 
             # Add to your run() method temporarily:
-            self.debug_page("https://boards.greenhouse.io/stripe")
-            self.debug_page("https://boards.greenhouse.io/stripe")
-            self.debug_page("https://jobs.lever.co/figma")
-            self.debug_page("https://jobs.ashbyhq.com/zapier")
+           # self.debug_page("https://boards.greenhouse.io/stripe")
+           # self.debug_page("https://boards.greenhouse.io/stripe")
+           # self.debug_page("https://jobs.lever.co/figma")
+           # self.debug_page("https://jobs.ashbyhq.com/zapier")
 
         
         print("\n[SOURCE SUMMARY]")
