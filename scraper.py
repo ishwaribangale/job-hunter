@@ -29,26 +29,19 @@ class JobScraper:
 
     def add(self, job):
         link = job.get("applyLink")
-        
-        # Skip if no link
         if not link:
             return
-        
-        # Normalize the link (remove trailing slashes, query params for deduplication)
+
         normalized_link = link.rstrip('/').split('?')[0]
-        
-        # Skip if already seen
         if normalized_link in self.seen:
             return
-        
-        # Add the job
+
         job["role"] = infer_role(job.get("title"))
         job["score"] = score_job(job)
         job["fetchedAt"] = self.now()
-    
+
         self.seen.add(normalized_link)
         self.jobs.append(job)
-    
         src = job["source"]
         self.stats[src] = self.stats.get(src, 0) + 1
 
@@ -56,24 +49,24 @@ class JobScraper:
         print("\n[Remote.co]")
         url = "https://remote.co/remote-jobs"
         headers = {**HEADERS, "User-Agent": "Mozilla/5.0", "Accept": "text/html"}
-    
+
         for attempt in range(2):
             try:
                 r = requests.get(url, headers=headers, timeout=(5, 10))
                 if r.status_code != 200:
                     print(f"  ⚠ HTTP {r.status_code}")
                     return
-    
+
                 soup = BeautifulSoup(r.text, "html.parser")
                 cards = soup.select("div.card")
                 print(f"  Jobs found: {len(cards)}")
-    
+
                 for c in cards:
                     title = c.select_one("h3 a")
                     company = c.select_one("p.company")
                     if not title or not company:
                         continue
-    
+
                     self.add({
                         "id": f"remoteco_{hash(title['href'])}",
                         "title": title.get_text(strip=True),
@@ -84,31 +77,31 @@ class JobScraper:
                         "postedDate": self.now(),
                     })
                 return
-    
+
             except requests.exceptions.ReadTimeout:
                 print(f"  ⏱ Timeout (attempt {attempt + 1}/2)")
             except Exception as e:
                 print(f"  ❌ Remote.co failed: {e}")
                 return
-    
+
         print("  ⚠ Remote.co skipped after retries")
 
     def scrape_remotive(self):
         print("\n[Remotive]")
-        categories = [None, "software-dev", "product", "design", "marketing", 
-                     "sales", "data", "customer-support", "devops", "qa", "finance"]
-    
+        categories = [None, "software-dev", "product", "design", "marketing",
+                      "sales", "data", "customer-support", "devops", "qa", "finance"]
+
         for cat in categories:
             url = "https://remotive.com/api/remote-jobs"
             if cat:
                 url += f"?category={cat}"
-    
+
             try:
                 r = requests.get(url, headers=HEADERS, timeout=10)
                 data = r.json().get("jobs", [])
                 label = "all" if not cat else cat
                 print(f"  Category '{label}': {len(data)} jobs")
-    
+
                 for j in data:
                     self.add({
                         "id": f"remotive_{j['id']}",
@@ -121,107 +114,6 @@ class JobScraper:
                     })
             except Exception as e:
                 print(f"  ❌ Remotive '{cat}' failed: {e}")
-
-    def scrape_wellfound(self):
-        print("\n[Wellfound]")
-        
-        # METHOD 1: Try their job search with filters (more reliable endpoint)
-        try:
-            # Search for remote jobs with broad filters
-            search_url = "https://wellfound.com/role/r/software-engineer"
-            
-            headers = {
-                "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
-                "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
-                "Accept-Language": "en-US,en;q=0.9",
-                "Referer": "https://wellfound.com/",
-                "sec-ch-ua": '"Not_A Brand";v="8", "Chromium";v="120", "Google Chrome";v="120"',
-                "sec-ch-ua-mobile": "?0",
-                "sec-ch-ua-platform": '"macOS"',
-            }
-            
-            session = requests.Session()
-            
-            # First, visit the homepage to get cookies
-            session.get("https://wellfound.com/", headers=headers, timeout=10)
-            time.sleep(1)
-            
-            # Now try the jobs page
-            r = session.get(search_url, headers=headers, timeout=10)
-            
-            if r.status_code == 200:
-                soup = BeautifulSoup(r.text, "html.parser")
-                
-                # Try multiple selectors
-                job_cards = (
-                    soup.select("div[class*='job']") +
-                    soup.select("div[class*='posting']") +
-                    soup.select("div[class*='startup-result']") +
-                    soup.select("article")
-                )
-                
-                print(f"  Found {len(job_cards)} potential job cards")
-                
-                valid_jobs = []
-                seen_urls = set()
-                
-                for card in job_cards:
-                    # Find links within the card
-                    links = card.find_all("a", href=True)
-                    
-                    for link in links:
-                        href = link.get("href", "")
-                        title = link.get_text(strip=True)
-                        
-                        # Must contain job-related paths
-                        if not any(path in href for path in ['/jobs/', '/companies/', '/role/']):
-                            continue
-                        
-                        # Must have meaningful title
-                        if not title or len(title) < 3 or len(title) > 100:
-                            continue
-                        
-                        # Skip navigation
-                        skip = ["sign up", "log in", "learn more", "see all", "view all", "apply now"]
-                        if any(s in title.lower() for s in skip):
-                            continue
-                        
-                        # Build full URL
-                        if href.startswith("http"):
-                            full_url = href
-                        else:
-                            full_url = f"https://wellfound.com{href}"
-                        
-                        if full_url in seen_urls:
-                            continue
-                        
-                        seen_urls.add(full_url)
-                        
-                        # Try to extract company
-                        company_elem = card.find(["h2", "h3", "span"], class_=re.compile(r'company|startup', re.I))
-                        company = company_elem.get_text(strip=True) if company_elem else "Startup"
-                        
-                        valid_jobs.append((full_url, title, company))
-                
-                if valid_jobs:
-                    print(f"  ✓ Wellfound: {len(valid_jobs)} jobs")
-                    
-                    for url, title, company in valid_jobs:
-                        self.add({
-                            "id": f"wellfound_{hash(url)}",
-                            "title": title,
-                            "company": f"{company} (Wellfound)",
-                            "location": "Remote / Hybrid",
-                            "source": "Wellfound",
-                            "applyLink": url,
-                            "postedDate": self.now(),
-                        })
-                    return
-            
-            print(f"  ⚠ Search page returned {r.status_code}")
-            
-        except Exception as e:
-            print(f"  ⚠ Search method failed: {e}")
         
         # METHOD 2: Use Playwright with stealth
         try:
@@ -1158,26 +1050,19 @@ class JobScraper:
             self.scrape_wellfound()
             self.scrape_yc()
             self.scrape_internshala()
-            
-            # Company-specific
+
             self.scrape_ats()
             self.scrape_career_pages()
-            self.scrape_ashby_companies() 
-            # Add to your run() method temporarily:
-           # self.debug_page("https://boards.greenhouse.io/stripe")
-           # self.debug_page("https://boards.greenhouse.io/stripe")
-           # self.debug_page("https://jobs.lever.co/figma")
-           # self.debug_page("https://jobs.ashbyhq.com/zapier")
+            self.scrape_ashby_companies()
 
-        
         print("\n[SOURCE SUMMARY]")
         for k, v in sorted(self.stats.items()):
             print(f"  {k}: {v}")
 
         print(f"\n✓ TOTAL JOBS: {len(self.jobs)}")
+
     def save(self):
         os.makedirs("data", exist_ok=True)
-
         with open("data/jobs.json", "w", encoding="utf-8") as f:
             json.dump(
                 sorted(self.jobs, key=lambda x: x["score"], reverse=True),
@@ -1185,14 +1070,10 @@ class JobScraper:
                 indent=2,
                 ensure_ascii=False,
             )
-
         print(f"\n✓ Saved → data/jobs.json ({len(self.jobs)} jobs)")
 
-    if __name__ == "__main__":
-    scraper = JobScraper()
-    scraper.run()
-        if __name__ == "__main__":
+
+if __name__ == "__main__":
     scraper = JobScraper()
     scraper.run()
     scraper.save()
-
