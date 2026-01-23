@@ -1192,7 +1192,7 @@ class JobScraper:
 if __name__ == "__main__":
     scraper = JobScraper()
     scraper.run()
-    if __name__ == "__main__":
+        if __name__ == "__main__":
     scraper = JobScraper()
     scraper.run()
     scraper.save() 
