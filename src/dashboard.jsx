@@ -14,6 +14,7 @@ export default function App() {
 
   const [resumeText, setResumeText] = React.useState("");
   const [resumeKeywords, setResumeKeywords] = React.useState([]);
+  const [resumePersona, setResumePersona] = React.useState(null); // ✅ ADDED
   const [resumeMatchEnabled, setResumeMatchEnabled] = React.useState(false);
   const [uploadingResume, setUploadingResume] = React.useState(false);
 
@@ -48,13 +49,85 @@ export default function App() {
 
   /* ---------------- RESUME HELPERS ---------------- */
   const extractKeywords = (text) => {
-    const keywords = [
-      "javascript","react","python","java","node","typescript","sql","aws",
-      "docker","kubernetes","frontend","backend","fullstack","devops",
-      "machine learning","ai","data science","engineer","developer"
-    ];
     const lower = text.toLowerCase();
-    return [...new Set(keywords.filter((k) => lower.includes(k)))];
+
+    const PERSONAS = {
+      pm: [
+        "product manager",
+        "product management",
+        "roadmap",
+        "stakeholder",
+        "user stories",
+        "requirements",
+        "prds",
+        "backlog",
+        "prioritization",
+        "go-to-market",
+        "g2m",
+        "metrics",
+        "kpis",
+        "experiments",
+        "a/b testing",
+        "customer discovery",
+        "product strategy",
+        "growth",
+        "analytics",
+        "sql",
+        "jira",
+        "confluence",
+        "figma"
+      ],
+      engineer: [
+        "javascript",
+        "react",
+        "node",
+        "typescript",
+        "python",
+        "java",
+        "sql",
+        "docker",
+        "kubernetes",
+        "aws",
+        "backend",
+        "frontend",
+        "fullstack",
+        "api",
+        "microservices",
+        "system design",
+        "devops"
+      ],
+      data: [
+        "data analysis",
+        "machine learning",
+        "ai",
+        "statistics",
+        "pandas",
+        "numpy",
+        "sql",
+        "etl",
+        "dashboard",
+        "modeling"
+      ]
+    };
+
+    // 1️⃣ Detect persona by signal strength
+    const personaScores = Object.entries(PERSONAS).map(([role, words]) => {
+      const score = words.filter((w) => lower.includes(w)).length;
+      return { role, score };
+    });
+
+    personaScores.sort((a, b) => b.score - a.score);
+    const detectedPersona = personaScores[0]?.role || "engineer";
+
+    // 2️⃣ Extract only persona-relevant keywords
+    const extracted = PERSONAS[detectedPersona]
+      .filter((kw) => lower.includes(kw))
+      .slice(0, 15);
+
+    return {
+      persona: detectedPersona,
+      keywords: [...new Set(extracted)],
+    };
   };
 
   const calculateMatchScore = (job, keywords) => {
@@ -82,9 +155,10 @@ export default function App() {
         text += content.items.map((i) => i.str).join(" ");
       }
 
-      const keywords = extractKeywords(text);
+      const result = extractKeywords(text);
       setResumeText(text);
-      setResumeKeywords(keywords);
+      setResumeKeywords(result.keywords);
+      setResumePersona(result.persona); // ✅ ADDED
     } finally {
       setUploadingResume(false);
     }
@@ -99,6 +173,7 @@ export default function App() {
   const clearResume = () => {
     setResumeText("");
     setResumeKeywords([]);
+    setResumePersona(null); // ✅ ADDED
     setResumeMatchEnabled(false);
   };
 
@@ -182,6 +257,12 @@ export default function App() {
                 <input type="file" accept=".pdf" onChange={handleResumeUpload} />
               ) : (
                 <>
+                  {resumePersona && (
+                    <div className="mb-2 inline-block px-2 py-1 text-xs font-semibold rounded bg-sky-800/40 text-sky-300">
+                      {resumePersona.toUpperCase()} Resume Detected
+                    </div>
+                  )}
+
                   <div className="flex flex-wrap gap-2 mt-2">
                     {resumeKeywords.map((k) => (
                       <span
