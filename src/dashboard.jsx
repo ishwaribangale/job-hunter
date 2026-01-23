@@ -313,7 +313,7 @@ export default function App() {
     if (minScore > 0)
       data = data.filter((j) => (j.score || 0) >= minScore);
 
-    // ✅ NEW: Improved matching with breakdown
+    // ✅ NEW: Improved matching with reason
     if (resumeMatchEnabled && resumeKeywords.length) {
       data = data
         .map((j) => {
@@ -321,6 +321,7 @@ export default function App() {
           return {
             ...j,
             matchScore: result.score,
+            reason: result.reason,
             matchBreakdown: result.breakdown
           };
         })
@@ -542,10 +543,10 @@ export default function App() {
                   )}
                 </div>
 
-                {/* ✅ NEW: Enhanced match display with breakdown */}
-                <div className="text-right ml-4">
+                {/* ✅ NEW: Enhanced match display with reason */}
+                <div className="text-right ml-4 flex flex-col items-end">
                   {resumeMatchEnabled && job.matchScore > 0 && (
-                    <div>
+                    <div className="mb-1">
                       <div className={`font-bold text-2xl ${
                         job.matchScore >= 70 ? 'text-green-400' :
                         job.matchScore >= 50 ? 'text-sky-400' :
@@ -553,13 +554,9 @@ export default function App() {
                       }`}>
                         {job.matchScore}%
                       </div>
-                      {job.matchBreakdown && (
-                        <div className="text-xs text-gray-400 mt-1 space-y-0.5">
-                          <div>Role: {job.matchBreakdown.persona}/40</div>
-                          <div>Skills: {job.matchBreakdown.skills}/40</div>
-                          <div>Level: {job.matchBreakdown.seniority}/20</div>
-                        </div>
-                      )}
+                      <div className="text-xs text-gray-300 mt-1 max-w-[180px] text-right">
+                        {job.reason || "Match found"}
+                      </div>
                     </div>
                   )}
 
@@ -567,7 +564,7 @@ export default function App() {
                     href={job.applyLink}
                     target="_blank"
                     rel="noreferrer"
-                    className="inline-block mt-3 bg-sky-600 px-4 py-2 rounded hover:bg-sky-700 transition-colors text-sm"
+                    className="bg-sky-600 px-4 py-2 rounded hover:bg-sky-700 transition-colors text-sm"
                   >
                     Apply →
                   </a>
