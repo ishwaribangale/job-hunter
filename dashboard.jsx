@@ -1,3 +1,5 @@
+import React from "react";
+
 function App() {
   const [jobs, setJobs] = React.useState([]);
   const [loading, setLoading] = React.useState(true);
@@ -287,3 +289,5 @@ function App() {
     </div>
   );
 }
+
+export default App;
