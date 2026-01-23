@@ -10,7 +10,6 @@ export default function App() {
   const [selectedSource, setSelectedSource] = React.useState("all");
   const [selectedRole, setSelectedRole] = React.useState("all");
   const [selectedLocation, setSelectedLocation] = React.useState("all");
-  const [minScore, setMinScore] = React.useState(0);
 
   const [resumeText, setResumeText] = React.useState("");
   const [resumeKeywords, setResumeKeywords] = React.useState([]);
@@ -18,6 +17,7 @@ export default function App() {
   const [resumeSeniority, setResumeSeniority] = React.useState("mid");
   const [resumeMatchEnabled, setResumeMatchEnabled] = React.useState(false);
   const [uploadingResume, setUploadingResume] = React.useState(false);
+  const [analyzingJobs, setAnalyzingJobs] = React.useState(false);
 
   const [sidebarOpen, setSidebarOpen] = React.useState(true);
 
@@ -121,7 +121,6 @@ export default function App() {
       senior: ["senior", "sr", "lead", "staff", "principal", "architect", "director"]
     };
 
-    // 1️⃣ Detect persona by signal strength
     const personaScores = Object.entries(PERSONAS).map(([role, words]) => {
       const score = words.filter((w) => lower.includes(w)).length;
       return { role, score };
@@ -130,12 +129,10 @@ export default function App() {
     personaScores.sort((a, b) => b.score - a.score);
     const detectedPersona = personaScores[0]?.role || "engineer";
 
-    // 2️⃣ Extract only persona-relevant keywords
     const extracted = PERSONAS[detectedPersona]
       .filter((kw) => lower.includes(kw))
       .slice(0, 15);
 
-    // 3️⃣ Detect seniority
     const seniority = SENIORITY_KEYWORDS.senior.some(s => lower.includes(s))
       ? "senior"
       : SENIORITY_KEYWORDS.junior.some(s => lower.includes(s))
@@ -149,98 +146,66 @@ export default function App() {
     };
   };
 
-  // ✅ NEW: Signal-based matching algorithm
-  const calculateMatchScore = (job, keywords, persona, resumeSeniority) => {
-    const jobText = `${job.title} ${job.role || ""}`.toLowerCase();
-    
-    // 1️⃣ PERSONA FIT (0-40 points) - Is this even the right type of role?
-    let personaScore = 0;
-    let personaFit = "unrelated";
-    const PERSONA_SIGNALS = {
-      pm: ["product", "manager", "pm", "management"],
-      engineer: ["engineer", "developer", "software", "frontend", "backend", "fullstack", "swe"],
-      data: ["data", "analyst", "analytics", "scientist", "ml", "machine learning"]
-    };
-    
-    const signals = PERSONA_SIGNALS[persona] || [];
-    const hasStrongSignal = signals.some(s => jobText.includes(s));
-    
-    if (hasStrongSignal) {
-      personaScore = 40;
-      personaFit = "strong";
-    } else {
-      const hasAnySignal = Object.values(PERSONA_SIGNALS)
-        .flat()
-        .some(s => jobText.includes(s));
-      if (hasAnySignal) {
-        personaScore = 15;
-        personaFit = "adjacent";
-      }
+  /* ---------------- AI-POWERED MATCHING ---------------- */
+  const analyzeJobWithAI = async (job, resumeSummary) => {
+    try {
+      const response = await fetch("https://api.anthropic.com/v1/messages", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          model: "claude-sonnet-4-20250514",
+          max_tokens: 1000,
+          messages: [{
+            role: "user",
+            content: `You are a job matching expert. Analyze this job against the candidate's resume.
+
+RESUME SUMMARY:
+- Persona: ${resumeSummary.persona}
+- Seniority: ${resumeSummary.seniority}
+- Key Skills: ${resumeSummary.keywords.join(", ")}
+
+JOB DETAILS:
+- Title: ${job.title}
+- Company: ${job.company}
+- Role Category: ${job.role || "Not specified"}
+- Location: ${job.location}
+
+Respond ONLY with a JSON object (no markdown, no backticks):
+{
+  "score": <number 0-100>,
+  "reason": "<5-7 word explanation>",
+  "insights": "<1 sentence about why this match works or doesn't>"
+}
+
+Consider:
+1. Does the job title align with their persona and seniority?
+2. For PM roles: look for product area fit (AI, Safety, Growth, Tools, etc)
+3. For similar seniority levels, differentiate based on role specificity
+4. Company reputation and role scope matter
+5. Give varied scores - don't rate everything the same!`
+          }]
+        })
+      });
+
+      const data = await response.json();
+      const text = data.content.find(c => c.type === "text")?.text || "{}";
+      const result = JSON.parse(text.trim());
+      
+      return {
+        score: Math.min(100, Math.max(0, result.score)),
+        reason: result.reason || "AI match analysis",
+        insights: result.insights || ""
+      };
+    } catch (error) {
+      console.error("AI matching failed:", error);
+      return {
+        score: 50,
+        reason: "Unable to analyze",
+        insights: "AI analysis unavailable"
+      };
     }
-    
-    // 2️⃣ SKILL MATCHES (0-40 points) - Do your skills appear?
-    const matchedKeywords = keywords.filter(k => jobText.includes(k));
-    const skillScore = Math.min(matchedKeywords.length * 8, 40);
-    const skillLevel = skillScore >= 32 ? "strong" : skillScore >= 16 ? "good" : skillScore > 0 ? "some" : "none";
-    
-    // 3️⃣ SENIORITY ALIGNMENT (0-20 points) - Does level match?
-    let seniorityScore = 10;
-    let seniorityFit = "neutral";
-    const SENIORITY_KEYWORDS = {
-      junior: ["junior", "entry", "associate", "jr", "graduate", "intern"],
-      mid: ["mid", "intermediate", "ii", "2"],
-      senior: ["senior", "sr", "lead", "staff", "principal", "architect"]
-    };
-    
-    const jobSeniority = SENIORITY_KEYWORDS.senior.some(s => jobText.includes(s))
-      ? "senior"
-      : SENIORITY_KEYWORDS.junior.some(s => jobText.includes(s))
-      ? "junior"
-      : "mid";
-    
-    if (resumeSeniority === jobSeniority) {
-      seniorityScore = 20;
-      seniorityFit = "perfect";
-    } else if (
-      (resumeSeniority === "mid" && jobSeniority !== "junior") ||
-      (resumeSeniority === "senior" && jobSeniority === "mid")
-    ) {
-      seniorityScore = 10;
-      seniorityFit = "stretch";
-    } else {
-      seniorityScore = 0;
-      seniorityFit = "mismatch";
-    }
-    
-    // Generate human-readable reason
-    const generateReason = () => {
-      const parts = [];
-      
-      if (personaFit === "strong") parts.push("Right role");
-      else if (personaFit === "adjacent") parts.push("Adjacent role");
-      
-      if (skillLevel === "strong") parts.push("strong skills match");
-      else if (skillLevel === "good") parts.push("good skills match");
-      else if (skillLevel === "some") parts.push("some skills match");
-      
-      if (seniorityFit === "perfect") parts.push("perfect level");
-      else if (seniorityFit === "stretch") parts.push("stretch level");
-      
-      return parts.join(", ") || "Possible fit";
-    };
-    
-    const totalScore = personaScore + skillScore + seniorityScore;
-    
-    return {
-      score: Math.round(totalScore),
-      reason: generateReason(),
-      breakdown: {
-        persona: personaScore,
-        skills: skillScore,
-        seniority: seniorityScore,
-        matchedKeywords
-      }
-    };
   };
 
   /* ---------------- RESUME UPLOAD ---------------- */
@@ -271,10 +236,47 @@ export default function App() {
     }
   };
 
-  /* ---------------- APPLY RESUME MATCH ---------------- */
-  const applyResumeMatch = () => {
+  /* ---------------- APPLY AI RESUME MATCH ---------------- */
+  const applyResumeMatch = async () => {
     if (!resumeKeywords.length) return;
+    
+    setAnalyzingJobs(true);
     setResumeMatchEnabled(true);
+
+    const resumeSummary = {
+      persona: resumePersona,
+      seniority: resumeSeniority,
+      keywords: resumeKeywords
+    };
+
+    // Analyze jobs in batches to avoid rate limits
+    const batchSize = 5;
+    const jobsToAnalyze = [...filteredJobs];
+    const analyzedJobs = [];
+
+    for (let i = 0; i < jobsToAnalyze.length; i += batchSize) {
+      const batch = jobsToAnalyze.slice(i, i + batchSize);
+      const results = await Promise.all(
+        batch.map(job => analyzeJobWithAI(job, resumeSummary))
+      );
+      
+      batch.forEach((job, idx) => {
+        analyzedJobs.push({
+          ...job,
+          matchScore: results[idx].score,
+          reason: results[idx].reason,
+          insights: results[idx].insights
+        });
+      });
+
+      // Update UI progressively
+      setFilteredJobs([...analyzedJobs, ...jobsToAnalyze.slice(i + batchSize)]);
+    }
+
+    // Sort by score
+    analyzedJobs.sort((a, b) => b.matchScore - a.matchScore);
+    setFilteredJobs(analyzedJobs);
+    setAnalyzingJobs(false);
   };
 
   const clearResume = () => {
@@ -283,10 +285,13 @@ export default function App() {
     setResumePersona(null);
     setResumeSeniority("mid");
     setResumeMatchEnabled(false);
+    setFilteredJobs(jobs); // Reset to original
   };
 
   /* ---------------- APPLY FILTERS ---------------- */
   React.useEffect(() => {
+    if (resumeMatchEnabled) return; // Don't filter when AI matching is active
+
     let data = [...jobs];
 
     if (searchQuery)
@@ -310,25 +315,6 @@ export default function App() {
     if (selectedLocation !== "all")
       data = data.filter((j) => j.location === selectedLocation);
 
-    if (minScore > 0)
-      data = data.filter((j) => (j.score || 0) >= minScore);
-
-    // ✅ NEW: Improved matching with reason
-    if (resumeMatchEnabled && resumeKeywords.length) {
-      data = data
-        .map((j) => {
-          const result = calculateMatchScore(j, resumeKeywords, resumePersona, resumeSeniority);
-          return {
-            ...j,
-            matchScore: result.score,
-            reason: result.reason,
-            matchBreakdown: result.breakdown
-          };
-        })
-        .filter((j) => j.matchScore >= 30) // Only show reasonable matches
-        .sort((a, b) => b.matchScore - a.matchScore);
-    }
-
     setFilteredJobs(data);
   }, [
     jobs,
@@ -337,11 +323,7 @@ export default function App() {
     selectedSource,
     selectedRole,
     selectedLocation,
-    minScore,
-    resumeMatchEnabled,
-    resumeKeywords,
-    resumePersona,
-    resumeSeniority
+    resumeMatchEnabled
   ]);
 
   if (loading) {
@@ -367,7 +349,7 @@ export default function App() {
           <div className="p-4 space-y-8">
             {/* RESUME MATCHER */}
             <div>
-              <h3 className="font-semibold text-sky-400 mb-2">Resume Matcher</h3>
+              <h3 className="font-semibold text-sky-400 mb-2">🤖 AI Resume Matcher</h3>
 
               {!resumeText ? (
                 <div>
@@ -376,14 +358,14 @@ export default function App() {
                     accept=".pdf" 
                     onChange={handleResumeUpload}
                     className="text-sm text-gray-400"
+                    disabled={uploadingResume}
                   />
                   {uploadingResume && (
-                    <div className="text-xs text-gray-500 mt-2">Processing...</div>
+                    <div className="text-xs text-gray-500 mt-2">Processing PDF...</div>
                   )}
                 </div>
               ) : (
                 <>
-                  {/* ✅ NEW: Show both persona and seniority */}
                   <div className="flex gap-2 mb-2">
                     {resumePersona && (
                       <div className="inline-block px-2 py-1 text-xs font-semibold rounded bg-sky-800/40 text-sky-300">
@@ -398,7 +380,7 @@ export default function App() {
                   </div>
 
                   <div className="flex flex-wrap gap-2 mt-2">
-                    {resumeKeywords.map((k) => (
+                    {resumeKeywords.slice(0, 8).map((k) => (
                       <span
                         key={k}
                         className="px-2 py-1 bg-sky-900/40 text-sky-300 text-xs rounded"
@@ -411,9 +393,10 @@ export default function App() {
                   <div className="flex gap-2 mt-3">
                     <button
                       onClick={applyResumeMatch}
-                      className="bg-sky-600 px-3 py-1 rounded text-sm hover:bg-sky-700"
+                      disabled={analyzingJobs}
+                      className="bg-sky-600 px-3 py-1 rounded text-sm hover:bg-sky-700 disabled:opacity-50 disabled:cursor-not-allowed"
                     >
-                      Apply Match
+                      {analyzingJobs ? "Analyzing..." : "🚀 AI Match"}
                     </button>
                     <button
                       onClick={clearResume}
@@ -422,61 +405,69 @@ export default function App() {
                       Clear
                     </button>
                   </div>
+
+                  {analyzingJobs && (
+                    <div className="mt-3 text-xs text-gray-400">
+                      AI is analyzing each job against your resume...
+                    </div>
+                  )}
                 </>
               )}
             </div>
 
             {/* FILTERS */}
-            <div>
-              <h3 className="font-semibold text-sky-400 mb-2">Filters</h3>
+            {!resumeMatchEnabled && (
+              <div>
+                <h3 className="font-semibold text-sky-400 mb-2">Filters</h3>
 
-              <input
-                placeholder="Search title or company"
-                className="w-full mb-2 p-2 bg-gray-800 rounded text-sm"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-              />
+                <input
+                  placeholder="Search title or company"
+                  className="w-full mb-2 p-2 bg-gray-800 rounded text-sm"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                />
 
-              <input
-                placeholder="Company"
-                className="w-full mb-2 p-2 bg-gray-800 rounded text-sm"
-                value={companyQuery}
-                onChange={(e) => setCompanyQuery(e.target.value)}
-              />
+                <input
+                  placeholder="Company"
+                  className="w-full mb-2 p-2 bg-gray-800 rounded text-sm"
+                  value={companyQuery}
+                  onChange={(e) => setCompanyQuery(e.target.value)}
+                />
 
-              <select
-                className="w-full mb-2 p-2 bg-gray-800 rounded text-sm"
-                value={selectedSource}
-                onChange={(e) => setSelectedSource(e.target.value)}
-              >
-                <option value="all">All Sources</option>
-                {sources.map((s) => (
-                  <option key={s}>{s}</option>
-                ))}
-              </select>
+                <select
+                  className="w-full mb-2 p-2 bg-gray-800 rounded text-sm"
+                  value={selectedSource}
+                  onChange={(e) => setSelectedSource(e.target.value)}
+                >
+                  <option value="all">All Sources</option>
+                  {sources.map((s) => (
+                    <option key={s}>{s}</option>
+                  ))}
+                </select>
 
-              <select
-                className="w-full mb-2 p-2 bg-gray-800 rounded text-sm"
-                value={selectedRole}
-                onChange={(e) => setSelectedRole(e.target.value)}
-              >
-                <option value="all">All Roles</option>
-                {roles.map((r) => (
-                  <option key={r}>{r}</option>
-                ))}
-              </select>
+                <select
+                  className="w-full mb-2 p-2 bg-gray-800 rounded text-sm"
+                  value={selectedRole}
+                  onChange={(e) => setSelectedRole(e.target.value)}
+                >
+                  <option value="all">All Roles</option>
+                  {roles.map((r) => (
+                    <option key={r}>{r}</option>
+                  ))}
+                </select>
 
-              <select
-                className="w-full mb-2 p-2 bg-gray-800 rounded text-sm"
-                value={selectedLocation}
-                onChange={(e) => setSelectedLocation(e.target.value)}
-              >
-                <option value="all">All Locations</option>
-                {locations.map((l) => (
-                  <option key={l}>{l}</option>
-                ))}
-              </select>
-            </div>
+                <select
+                  className="w-full mb-2 p-2 bg-gray-800 rounded text-sm"
+                  value={selectedLocation}
+                  onChange={(e) => setSelectedLocation(e.target.value)}
+                >
+                  <option value="all">All Locations</option>
+                  {locations.map((l) => (
+                    <option key={l}>{l}</option>
+                  ))}
+                </select>
+              </div>
+            )}
           </div>
         )}
       </div>
@@ -489,7 +480,7 @@ export default function App() {
           </h1>
           {resumeMatchEnabled && (
             <div className="text-sm text-gray-400">
-              Showing {filteredJobs.length} matches (≥30%)
+              {analyzingJobs ? "Analyzing..." : `${filteredJobs.length} jobs analyzed`}
             </div>
           )}
         </div>
@@ -523,34 +514,23 @@ export default function App() {
                     </span>
                   </div>
 
-                  {/* ✅ NEW: Show matched keywords */}
-                  {resumeMatchEnabled && job.matchBreakdown?.matchedKeywords?.length > 0 && (
-                    <div className="mt-3 flex flex-wrap gap-1">
-                      {job.matchBreakdown.matchedKeywords.slice(0, 5).map((kw) => (
-                        <span
-                          key={kw}
-                          className="px-2 py-0.5 bg-green-900/30 text-green-400 text-xs rounded border border-green-800/50"
-                        >
-                          {kw}
-                        </span>
-                      ))}
-                      {job.matchBreakdown.matchedKeywords.length > 5 && (
-                        <span className="text-xs text-gray-500 self-center">
-                          +{job.matchBreakdown.matchedKeywords.length - 5} more
-                        </span>
-                      )}
+                  {/* AI Insights */}
+                  {resumeMatchEnabled && job.insights && (
+                    <div className="mt-3 text-sm text-gray-300 italic">
+                      "{job.insights}"
                     </div>
                   )}
                 </div>
 
-                {/* ✅ NEW: Enhanced match display with reason */}
+                {/* Match Display */}
                 <div className="text-right ml-4 flex flex-col items-end">
-                  {resumeMatchEnabled && job.matchScore > 0 && (
+                  {resumeMatchEnabled && job.matchScore !== undefined && (
                     <div className="mb-1">
                       <div className={`font-bold text-2xl ${
-                        job.matchScore >= 70 ? 'text-green-400' :
-                        job.matchScore >= 50 ? 'text-sky-400' :
-                        'text-yellow-400'
+                        job.matchScore >= 75 ? 'text-green-400' :
+                        job.matchScore >= 60 ? 'text-sky-400' :
+                        job.matchScore >= 45 ? 'text-yellow-400' :
+                        'text-orange-400'
                       }`}>
                         {job.matchScore}%
                       </div>
