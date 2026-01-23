@@ -814,67 +814,67 @@ class JobScraper:
             print(f"  ❌ Lever: {e}")
             
     def scrape_ashby(self, company_name, slug):
-    """Ashby scraper with SMART validation"""
-    print(f"  Attempting Ashby scrape for: {slug}")
-    
-    api_url = f"https://api.ashbyhq.com/posting-api/job-board/{slug}"
-    headers = {
-        **HEADERS,
-        "Accept": "application/json",
-        "Origin": "https://jobs.ashbyhq.com",
-        "Referer": f"https://jobs.ashbyhq.com/{slug}"
-    }
-    
-    try:
-        r = requests.get(api_url, headers=headers, timeout=15)
-        if r.status_code == 200:
-            data = r.json()
-            jobs = data.get("jobs", [])
-            
-            # SMART VALIDATION
-            valid_jobs = []
-            for j in jobs:
-                job_id = j.get("id", "")
-                title = j.get("title", "")
+        """Ashby scraper with SMART validation"""
+        print(f"  Attempting Ashby scrape for: {slug}")
+        
+        api_url = f"https://api.ashbyhq.com/posting-api/job-board/{slug}"
+        headers = {
+            **HEADERS,
+            "Accept": "application/json",
+            "Origin": "https://jobs.ashbyhq.com",
+            "Referer": f"https://jobs.ashbyhq.com/{slug}"
+        }
+        
+        try:
+            r = requests.get(api_url, headers=headers, timeout=15)
+            if r.status_code == 200:
+                data = r.json()
+                jobs = data.get("jobs", [])
                 
-                if not job_id or not title:
-                    continue
+                # SMART VALIDATION
+                valid_jobs = []
+                for j in jobs:
+                    job_id = j.get("id", "")
+                    title = j.get("title", "")
+                    
+                    if not job_id or not title:
+                        continue
+                    
+                    # Filter ONLY obvious non-jobs
+                    title_lower = title.lower().strip()
+                    
+                    standalone_pages = [
+                        "all positions", "view all positions", "careers home",
+                        "about us", "privacy policy", "terms of service"
+                    ]
+                    
+                    if title_lower in standalone_pages:
+                        continue
+                    
+                    # Everything else is valid
+                    valid_jobs.append(j)
                 
-                # Filter ONLY obvious non-jobs
-                title_lower = title.lower().strip()
+                print(f"  ✓ Ashby API: {len(valid_jobs)} jobs (filtered {len(jobs) - len(valid_jobs)} non-jobs)")
                 
-                standalone_pages = [
-                    "all positions", "view all positions", "careers home",
-                    "about us", "privacy policy", "terms of service"
-                ]
-                
-                if title_lower in standalone_pages:
-                    continue
-                
-                # Everything else is valid
-                valid_jobs.append(j)
-            
-            print(f"  ✓ Ashby API: {len(valid_jobs)} jobs (filtered {len(jobs) - len(valid_jobs)} non-jobs)")
-            
-            for j in valid_jobs:
-                loc = j.get("location", {})
-                location = loc.get("name", "Various") if isinstance(loc, dict) else "Various"
-                
-                self.add({
-                    "id": f"ashby_{slug}_{j.get('id')}",
-                    "title": j.get("title"),
-                    "company": company_name,
-                    "location": location,
-                    "source": f"{company_name} (Ashby)",
-                    "applyLink": f"https://jobs.ashbyhq.com/{slug}/{j.get('id')}",
-                    "postedDate": self.now(),
-                })
-            return
-    except Exception as e:
-        print(f"  ⚠ Ashby API failed: {e}")
-    
-    print("  ❌ Ashby scraping failed")
-    
+                for j in valid_jobs:
+                    loc = j.get("location", {})
+                    location = loc.get("name", "Various") if isinstance(loc, dict) else "Various"
+                    
+                    self.add({
+                        "id": f"ashby_{slug}_{j.get('id')}",
+                        "title": j.get("title"),
+                        "company": company_name,
+                        "location": location,
+                        "source": f"{company_name} (Ashby)",
+                        "applyLink": f"https://jobs.ashbyhq.com/{slug}/{j.get('id')}",
+                        "postedDate": self.now(),
+                    })
+                return
+        except Exception as e:
+            print(f"  ⚠ Ashby API failed: {e}")
+        
+        print("  ❌ Ashby scraping failed")
+        
     def scrape_ashby_companies(self):
         """Scrape companies using Ashby ATS"""
         print("\n[Ashby Companies]")
