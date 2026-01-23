@@ -15,33 +15,26 @@ HEADERS = {
 TIMEOUT = 12
 
 # ===================================================================
-# TOP_COMPANIES - Only Greenhouse companies with verified job-level URLs
+# TOP_COMPANIES - Only Greenhouse companies with VERIFIED working slugs
+# All 404 companies removed, no duplicates
 # ===================================================================
 TOP_COMPANIES = [
     # --------------------
-    # GREENHOUSE - VERIFIED WORKING (Job-level URLs only)
+    # GREENHOUSE - INDIAN COMPANIES (Working)
     # --------------------
-    # Indian Companies
     {"name": "PhonePe", "ats": "greenhouse", "slug": "phonepe"},
     {"name": "PayPay India", "ats": "greenhouse", "slug": "paypay"},
     {"name": "RevX", "ats": "greenhouse", "slug": "revx"},
     {"name": "Zinnia", "ats": "greenhouse", "slug": "zinnia"},
     {"name": "Netradyne", "ats": "greenhouse", "slug": "netradyne"},
     {"name": "Samsara", "ats": "greenhouse", "slug": "samsara"},
-        # Additional verified Indian companies using Greenhouse
-    {"name": "Dunzo", "ats": "greenhouse", "slug": "dunzo"},
     {"name": "Razorpay", "ats": "greenhouse", "slug": "razorpaysoftwareprivatelimited"},
-    {"name": "Cred", "ats": "greenhouse", "slug": "cred"},
-    {"name": "Jupiter", "ats": "greenhouse", "slug": "amica"},  # Jupiter's parent company
     {"name": "Slice", "ats": "greenhouse", "slug": "slice"},
-    {"name": "Zeta", "ats": "greenhouse", "slug": "zeta"},
-    {"name": "Innovaccer", "ats": "greenhouse", "slug": "innovaccer"},
-    {"name": "Whatfix", "ats": "greenhouse", "slug": "whatfix"},
-    {"name": "Chargebee", "ats": "greenhouse", "slug": "chargebee"},
-    {"name": "Freshworks", "ats": "greenhouse", "slug": "freshworks"},
-    {"name": "Zoho", "ats": "greenhouse", "slug": "zoho"},
+    {"name": "Groww", "ats": "greenhouse", "slug": "groww"},
     
-    # Global Tech Companies (Greenhouse API - Clean job URLs)
+    # --------------------
+    # GREENHOUSE - GLOBAL TECH COMPANIES (Working)
+    # --------------------
     {"name": "Anthropic", "ats": "greenhouse", "slug": "anthropic"},
     {"name": "OneTrust", "ats": "greenhouse", "slug": "onetrust"},
     {"name": "Airbnb", "ats": "greenhouse", "slug": "airbnb"},
@@ -55,58 +48,28 @@ TOP_COMPANIES = [
     {"name": "Netlify", "ats": "greenhouse", "slug": "netlify"},
     {"name": "Postman", "ats": "greenhouse", "slug": "postman"},
     {"name": "Mercury", "ats": "greenhouse", "slug": "mercury"},
-    
-    # Additional Indian Companies (Greenhouse)
-    {"name": "Razorpay", "ats": "greenhouse", "slug": "razorpaysoftwareprivatelimited"},
-    {"name": "Swiggy", "ats": "greenhouse", "slug": "swiggy"},
-    {"name": "Cred", "ats": "greenhouse", "slug": "cred"},
-    {"name": "Zepto", "ats": "greenhouse", "slug": "zepto"},
-    {"name": "Meesho", "ats": "greenhouse", "slug": "meesho"},
-    {"name": "Ola", "ats": "greenhouse", "slug": "olacabs"},
-    {"name": "Dream11", "ats": "greenhouse", "slug": "dream11"},
-    {"name": "Urban Company", "ats": "greenhouse", "slug": "urbancompany"},
-    {"name": "Cars24", "ats": "greenhouse", "slug": "cars24"},
-    {"name": "Groww", "ats": "greenhouse", "slug": "groww"},
 ]
 
 # ===================================================================
-# CAREER_PAGES - Only companies with clean auto-detectable ATS
-# REMOVED: All problematic companies listed in requirements
+# CAREER_PAGES - Only working companies with auto-detectable ATS
+# Removed: BYJU'S (6 jobs), Nykaa (errors), PolicyBazaar (timeout), 
+#          Snyk (1 job), Confluent (0 jobs)
 # ===================================================================
 CAREER_PAGES = [
-    # --------------------
-    # FIGMA (Greenhouse - works well)
-    # --------------------
     {"name": "Figma", "url": "https://www.figma.com/careers"},
-    
-    # --------------------
-    # NOTION (Ashby - works well)
-    # --------------------
     {"name": "Notion", "url": "https://www.notion.so/careers"},
-    
-    # --------------------
-    # FINTECH (Clean job URLs)
-    # --------------------
-    {"name": "Wise", "url": "https://www.wise.jobs"},
-    
-    # --------------------
-    # INDIAN STARTUPS (Internshala-like, clean URLs)
-    # --------------------
-    {"name": "BYJU'S", "url": "https://byjus.com/careers"},
-    {"name": "Nykaa", "url": "https://www.nykaa.com/careers"},
-    {"name": "PolicyBazaar", "url": "https://www.policybazaar.com/about-us/careers"},
-    
-    # --------------------
-    # DATA / SECURITY (Only if they have clean URLs)
-    # --------------------
-    {"name": "Snyk", "url": "https://snyk.io/careers"},
+    {"name": "Linear", "url": "https://linear.app/careers"},
+    {"name": "Vercel", "url": "https://vercel.com/careers"},
+    {"name": "Render", "url": "https://render.com/careers"},
+    {"name": "Supabase", "url": "https://supabase.com/careers"},
     {"name": "1Password", "url": "https://1password.com/careers"},
-    {"name": "Confluent", "url": "https://www.confluent.io/careers"},
+    {"name": "Wise", "url": "https://www.wise.jobs"},
 ]
 
 # ===================================================================
 # ASHBY_COMPANIES - Only companies with working Ashby API
-# REMOVED: Cursor, Retool, Scale AI (problematic)
+# Removed: Cursor (in previous list, moved to CAREER_PAGES if needed)
+# Note: Vercel returned 0 jobs but keeping for now
 # ===================================================================
 ASHBY_COMPANIES = [
     {"name": "Zapier", "ats": "ashby", "slug": "zapier"},
@@ -114,7 +77,28 @@ ASHBY_COMPANIES = [
     {"name": "Notion", "ats": "ashby", "slug": "notion"},
     {"name": "Linear", "ats": "ashby", "slug": "linear"},
     {"name": "Supabase", "ats": "ashby", "slug": "supabase"},
-    {"name": "Vercel", "ats": "ashby", "slug": "vercel"},
     {"name": "Vanta", "ats": "ashby", "slug": "vanta"},
     {"name": "Watershed", "ats": "ashby", "slug": "watershed"},
 ]
+
+# ===================================================================
+# REMOVED COMPANIES (404 errors - don't use Greenhouse or wrong slugs)
+# ===================================================================
+# {"name": "Dunzo", "ats": "greenhouse", "slug": "dunzo"},  # 404
+# {"name": "Cred", "ats": "greenhouse", "slug": "cred"},  # 404
+# {"name": "Jupiter", "ats": "greenhouse", "slug": "amica"},  # 404
+# {"name": "Zeta", "ats": "greenhouse", "slug": "zeta"},  # 404
+# {"name": "Innovaccer", "ats": "greenhouse", "slug": "innovaccer"},  # 404
+# {"name": "Whatfix", "ats": "greenhouse", "slug": "whatfix"},  # 404
+# {"name": "Chargebee", "ats": "greenhouse", "slug": "chargebee"},  # 404
+# {"name": "Freshworks", "ats": "greenhouse", "slug": "freshworks"},  # 404
+# {"name": "Zoho", "ats": "greenhouse", "slug": "zoho"},  # 404
+# {"name": "Swiggy", "ats": "greenhouse", "slug": "swiggy"},  # 404
+# {"name": "Zepto", "ats": "greenhouse", "slug": "zepto"},  # 404
+# {"name": "Meesho", "ats": "greenhouse", "slug": "meesho"},  # 404
+# {"name": "Ola", "ats": "greenhouse", "slug": "olacabs"},  # 404
+# {"name": "Dream11", "ats": "greenhouse", "slug": "dream11"},  # 404
+# {"name": "Urban Company", "ats": "greenhouse", "slug": "urbancompany"},  # 404
+# {"name": "Cars24", "ats": "greenhouse", "slug": "cars24"},  # 404
+# {"name": "HubSpot", "ats": "greenhouse", "slug": "hubspot"},  # 0 jobs
+# {"name": "Vercel", "ats": "ashby", "slug": "vercel"},  # 0 jobs in Ashby
