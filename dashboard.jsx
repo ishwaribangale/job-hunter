@@ -1,4 +1,3 @@
-import React from 'react';
 
 function App() {
   const [jobs, setJobs] = React.useState([]);
@@ -289,5 +288,6 @@ function App() {
     </div>
   );
 }
+const root = ReactDOM.createRoot(document.getElementById('root'));
+root.render(<App />);
 
-export default App;
