@@ -94,6 +94,16 @@ ASHBY_COMPANIES = [
     {"name": "Vanta", "ats": "ashby", "slug": "vanta"},
     {"name": "Watershed", "ats": "ashby", "slug": "watershed"},
     {"name": "gigaml", "ats": "ashby", "slug": "gigaml"},
+    {"name": "Cartesia", "ats": "ashby", "slug": "cartesia"},
+    {"name": "Ema", "ats": "ashby", "slug": "ema"},
+    {"name": "Granica", "ats": "ashby", "slug": "granica"},
+    {"name": "GigaML", "ats": "ashby", "slug": "gigaml"},
+    {"name": "Commure", "ats": "ashby", "slug": "commure"},
+    {"name": "Mercor", "ats": "ashby", "slug": "mercor"},
+    {"name": "JuniperSquare", "ats": "ashby", "slug": "junipersquare"},
+    {"name": "AcaiTravel", "ats": "ashby", "slug": "acai"},
+    {"name": "AltimateAI", "ats": "ashby", "slug": "altimate"},
+    {"name": "ParetoAI", "ats": "ashby", "slug": "pareto-ai"}
 ]
 
 # ===================================================================
