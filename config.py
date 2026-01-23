@@ -103,7 +103,7 @@ ASHBY_COMPANIES = [
     {"name": "JuniperSquare", "ats": "ashby", "slug": "junipersquare"},
     {"name": "AcaiTravel", "ats": "ashby", "slug": "acai"},
     {"name": "AltimateAI", "ats": "ashby", "slug": "altimate"},
-    {"name": "ParetoAI", "ats": "ashby", "slug": "pareto-ai"}
+    {"name": "ParetoAI", "ats": "ashby", "slug": "pareto-ai"},
     {"name": "Upflow", "ats": "ashby", "slug": "upflow"},        
     {"name": "Articul8", "ats": "ashby", "slug": "articul8"},
     {"name": "Axion", "ats": "ashby", "slug": "axion"}, 
@@ -140,6 +140,6 @@ ASHBY_COMPANIES = [
     {"name": "Scribd", "ats": "ashby", "slug": "scribd"},
     {"name": "Jellyfish", "ats": "ashby", "slug": "jellyfish"},
     {"name": "Avida", "ats": "ashby", "slug": "avida"},
-    {"name": "Weave", "ats": "ashby", "slug": "weave"}
+    {"name": "Weave", "ats": "ashby", "slug": "weave"},
 ]
 
