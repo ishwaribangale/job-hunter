@@ -31,11 +31,10 @@ TOP_COMPANIES = [
     {"name": "Razorpay", "ats": "greenhouse", "slug": "razorpaysoftwareprivatelimited"},
     {"name": "Slice", "ats": "greenhouse", "slug": "slice"},
     {"name": "Groww", "ats": "greenhouse", "slug": "groww"},
-    
+
     # --------------------
     # GREENHOUSE - GLOBAL TECH COMPANIES (Working)
     # --------------------
-   COMPANIES = [
     {"name": "Anthropic", "ats": "greenhouse", "slug": "anthropic"},
     {"name": "OneTrust", "ats": "greenhouse", "slug": "onetrust"},
     {"name": "Airbnb", "ats": "greenhouse", "slug": "airbnb"},
@@ -56,10 +55,11 @@ TOP_COMPANIES = [
     {"name": "Liquid Web", "ats": "greenhouse", "slug": "liquidweb"},
     {"name": "Wipro", "ats": "greenhouse", "slug": "wipro"},
     {"name": "Accenture", "ats": "greenhouse", "slug": "accenture"},
-    {"name": "Groww", "ats": "greenhouse", "slug": "groww"},
 ]
 
-]
+CAREER_PAGES = []
+ASHBY_COMPANIES = []
+
 
 COMPANIES = [
     {"name":"Pixlogix Infotech", "ats":"unknown", "source":"Indeed/LinkedIn"},
