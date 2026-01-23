@@ -4,8 +4,26 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Job Intelligence Dashboard</title>
+
+    <!-- ✅ Tailwind CDN (required for your UI) -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+      tailwind.config = {
+        theme: {
+          extend: {
+            colors: {
+              brand: {
+                dark: "#0b0f19",
+                navy: "#0f172a",
+                sky: "#38bdf8"
+              }
+            }
+          }
+        }
+      };
+    </script>
   </head>
-  <body>
+  <body class="bg-brand-dark">
     <div id="root"></div>
     <script type="module" src="/src/main.jsx"></script>
   </body>
