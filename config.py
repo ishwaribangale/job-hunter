@@ -79,6 +79,7 @@ ASHBY_COMPANIES = [
     {"name": "Supabase", "ats": "ashby", "slug": "supabase"},
     {"name": "Vanta", "ats": "ashby", "slug": "vanta"},
     {"name": "Watershed", "ats": "ashby", "slug": "watershed"},
+    {"name": "gigaml", "ats": "ashby", "slug": "gigaml"},
 ]
 
 # ===================================================================
