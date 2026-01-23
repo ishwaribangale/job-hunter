@@ -35,6 +35,7 @@ TOP_COMPANIES = [
     # --------------------
     # GREENHOUSE - GLOBAL TECH COMPANIES (Working)
     # --------------------
+   COMPANIES = [
     {"name": "Anthropic", "ats": "greenhouse", "slug": "anthropic"},
     {"name": "OneTrust", "ats": "greenhouse", "slug": "onetrust"},
     {"name": "Airbnb", "ats": "greenhouse", "slug": "airbnb"},
@@ -48,8 +49,28 @@ TOP_COMPANIES = [
     {"name": "Netlify", "ats": "greenhouse", "slug": "netlify"},
     {"name": "Postman", "ats": "greenhouse", "slug": "postman"},
     {"name": "Mercury", "ats": "greenhouse", "slug": "mercury"},
+    {"name": "Pixlogix Infotech", "ats": "greenhouse", "slug": "pixlogixinfotech"},
+    {"name": "CloudOne Digital", "ats": "greenhouse", "slug": "cloudonedigital"},
+    {"name": "Freemius", "ats": "greenhouse", "slug": "freemius"},
+    {"name": "Awesome Motive", "ats": "greenhouse", "slug": "awesomemotive"},
+    {"name": "Liquid Web", "ats": "greenhouse", "slug": "liquidweb"},
+    {"name": "Wipro", "ats": "greenhouse", "slug": "wipro"},
+    {"name": "Accenture", "ats": "greenhouse", "slug": "accenture"},
+    {"name": "Groww", "ats": "greenhouse", "slug": "groww"},
 ]
 
+]
+
+COMPANIES = [
+    {"name":"Pixlogix Infotech", "ats":"unknown", "source":"Indeed/LinkedIn"},
+    {"name":"CloudOne Digital", "ats":"unknown"},
+    {"name":"Freemius", "ats":"unknown"},
+    {"name":"Awesome Motive", "ats":"unknown"},
+    {"name":"Liquid Web", "ats":"unknown"},
+    {"name":"Wipro", "ats":"unknown"},
+    {"name":"Accenture", "ats":"unknown"},
+    {"name":"Groww", "ats":"unknown"},
+]
 # ===================================================================
 # CAREER_PAGES - Only working companies with auto-detectable ATS
 # Removed: BYJU'S (6 jobs), Nykaa (errors), PolicyBazaar (timeout), 
