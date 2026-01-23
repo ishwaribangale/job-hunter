@@ -48,7 +48,6 @@ TOP_COMPANIES = [
     {"name": "Netlify", "ats": "greenhouse", "slug": "netlify"},
     {"name": "Postman", "ats": "greenhouse", "slug": "postman"},
     {"name": "Mercury", "ats": "greenhouse", "slug": "mercury"},
-    {"name": "CloudOne Digital", "ats": "greenhouse", "slug": "cloudonedigital"},
 ]
 
 CAREER_PAGES = []
