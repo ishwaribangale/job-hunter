@@ -48,13 +48,7 @@ TOP_COMPANIES = [
     {"name": "Netlify", "ats": "greenhouse", "slug": "netlify"},
     {"name": "Postman", "ats": "greenhouse", "slug": "postman"},
     {"name": "Mercury", "ats": "greenhouse", "slug": "mercury"},
-    {"name": "Pixlogix Infotech", "ats": "greenhouse", "slug": "pixlogixinfotech"},
     {"name": "CloudOne Digital", "ats": "greenhouse", "slug": "cloudonedigital"},
-    {"name": "Freemius", "ats": "greenhouse", "slug": "freemius"},
-    {"name": "Awesome Motive", "ats": "greenhouse", "slug": "awesomemotive"},
-    {"name": "Liquid Web", "ats": "greenhouse", "slug": "liquidweb"},
-    {"name": "Wipro", "ats": "greenhouse", "slug": "wipro"},
-    {"name": "Accenture", "ats": "greenhouse", "slug": "accenture"},
 ]
 
 CAREER_PAGES = []
