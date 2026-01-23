@@ -45,47 +45,6 @@ class JobScraper:
         src = job["source"]
         self.stats[src] = self.stats.get(src, 0) + 1
 
-    def scrape_remoteco(self):
-        print("\n[Remote.co]")
-        url = "https://remote.co/remote-jobs"
-        headers = {**HEADERS, "User-Agent": "Mozilla/5.0", "Accept": "text/html"}
-
-        for attempt in range(2):
-            try:
-                r = requests.get(url, headers=headers, timeout=(5, 10))
-                if r.status_code != 200:
-                    print(f"  ⚠ HTTP {r.status_code}")
-                    return
-
-                soup = BeautifulSoup(r.text, "html.parser")
-                cards = soup.select("div.card")
-                print(f"  Jobs found: {len(cards)}")
-
-                for c in cards:
-                    title = c.select_one("h3 a")
-                    company = c.select_one("p.company")
-                    if not title or not company:
-                        continue
-
-                    self.add({
-                        "id": f"remoteco_{hash(title['href'])}",
-                        "title": title.get_text(strip=True),
-                        "company": company.get_text(strip=True),
-                        "location": "Remote",
-                        "source": "Remote.co",
-                        "applyLink": title["href"],
-                        "postedDate": self.now(),
-                    })
-                return
-
-            except requests.exceptions.ReadTimeout:
-                print(f"  ⏱ Timeout (attempt {attempt + 1}/2)")
-            except Exception as e:
-                print(f"  ❌ Remote.co failed: {e}")
-                return
-
-        print("  ⚠ Remote.co skipped after retries")
-
     def scrape_remotive(self):
         print("\n[Remotive]")
         categories = [None, "software-dev", "product", "design", "marketing",
@@ -1046,8 +1005,6 @@ class JobScraper:
             self.scrape_remotive()
             self.scrape_remoteok()
             self.scrape_weworkremotely()
-            self.scrape_remoteco()
-            self.scrape_wellfound()
             self.scrape_yc()
             self.scrape_internshala()
 
