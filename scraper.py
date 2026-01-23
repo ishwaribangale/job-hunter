@@ -27,7 +27,7 @@ class JobScraper:
     def now(self):
         return datetime.utcnow().isoformat()
 
-   def add(self, job):
+    def add(self, job):
         link = job.get("applyLink")
         
         # Skip if no link
