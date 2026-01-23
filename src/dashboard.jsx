@@ -130,12 +130,31 @@ export default function App() {
     };
   };
 
-  const calculateMatchScore = (job, keywords) => {
-    if (!keywords.length) return 0;
-    const text = `${job.title} ${job.company} ${job.role || ""}`.toLowerCase();
-    const matches = keywords.filter((k) => text.includes(k));
-    return Math.round((matches.length / keywords.length) * 100);
+  const calculateMatchScore = (job, keywords, persona) => {
+  const text = `${job.title} ${job.company} ${job.role || ""}`.toLowerCase();
+
+  let score = 0;
+
+  // 1️⃣ Strong baseline if persona matches job intent
+  if (
+    text.includes(persona) ||
+    job.role?.toLowerCase().includes(persona)
+  ) {
+    score = 60;
+  } else {
+    score = 35; // stretch / adjacent roles
+  }
+
+  // 2️⃣ Keyword reinforcement (soft boost)
+  const matches = keywords.filter((k) => text.includes(k)).length;
+  score += Math.min(matches * 6, 30); // cap boost
+
+  // 3️⃣ Final clamp (UX guarantee)
+  score = Math.min(100, Math.max(score, 25));
+
+  return Math.round(score);
   };
+
 
   /* ---------------- RESUME UPLOAD ---------------- */
   const handleResumeUpload = async (e) => {
