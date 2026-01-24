@@ -163,4 +163,61 @@ ASHBY_COMPANIES = [
     {"name": "Sanity", "ats": "ashby", "slug": "sanity"},
 
 ]
+# config.py
+# -------------------------------------------------
+# Curated companies list (Antler / user-provided)
+# Scraped via dedicated function, same job pipeline
+# -------------------------------------------------
+
+ANTLER_COMPANIES = [
+    {
+        "name": "Dealroom",
+        "careers": ["https://dealroom.co/careers"]
+    },
+    {
+        "name": "PitchBook",
+        "careers": ["https://pitchbook.com/careers"]
+    },
+    {
+        "name": "Antler",
+        "careers": ["https://antler.co/careers"]
+    },
+    {
+        "name": "Navana AI",
+        "careers": ["https://navana.ai/careers"]
+    },
+    {
+        "name": "Navana Tech India Pvt. Ltd.",
+        "careers": ["https://navana.ai/careers"]
+    },
+    {
+        "name": "Figr",
+        "careers": ["https://join.figr.design"]
+    },
+    {
+        "name": "Pascal AI Labs",
+        "careers": ["https://pascalailabs.com/careers"]
+    },
+    {
+        "name": "Plotch AI",
+        "careers": ["https://plotch.ai/careers"]
+    },
+    {
+        "name": "Build ChatGPT App",
+        "careers": ["https://buildchatgpt.app/careers"]
+    },
+    {
+        "name": "Segwise",
+        "careers": ["https://segwise.ai/careers"]
+    },
+    {
+        "name": "Autodraft",
+        "careers": ["https://autodraft.in/careers"]
+    },
+    {
+        "name": "MyAlt",
+        "careers": ["https://myalt.shop/careers"]
+    }
+]
+
 
