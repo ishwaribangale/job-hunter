@@ -31,6 +31,8 @@ TOP_COMPANIES = [
     {"name": "Razorpay", "ats": "greenhouse", "slug": "razorpaysoftwareprivatelimited"},
     {"name": "Slice", "ats": "greenhouse", "slug": "slice"},
     {"name": "Groww", "ats": "greenhouse", "slug": "groww"},
+    {"name": "Pitchbookdata", "ats": "greenhouse", "slug": "pitchbookdata"},
+    
 
     # --------------------
     # GREENHOUSE - GLOBAL TECH COMPANIES (Working)
