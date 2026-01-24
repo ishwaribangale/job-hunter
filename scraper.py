@@ -184,15 +184,6 @@ class JobScraper:
         self.seen = set()
         self.stats = {}
         self.req_extractor = RequirementsExtractor()
-        self.req_cache = {}  # cache per run
-
-        link = job.get("applyLink")
-        if link in self.req_cache:
-            return self.req_cache[link]
-
-        reqs = self.req_extractor.extract_from_url(link)
-        self.req_cache[link] = reqs
-        return reqs
 
     def now(self):
         return datetime.utcnow().isoformat()
