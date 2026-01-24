@@ -21,6 +21,8 @@ concurrency:
 jobs:
   scrape-and-save:
     runs-on: ubuntu-latest
+    env:
+      EXTRACT_REQUIREMENTS: "true"
     
     steps:
       - name: 🛎️ Checkout Repository
