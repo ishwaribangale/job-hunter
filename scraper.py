@@ -1,4 +1,31 @@
 
+# scraper.py
+# ----------------------------------
+# PJIS – Job Intelligence Scraper
+# ENHANCED - Fixed Company Scraping
+# ----------------------------------
+
+# scraper.py - CLEAN VERSION
+import os
+import json
+import re
+import time
+import requests
+from datetime import datetime
+from bs4 import BeautifulSoup
+from config import HEADERS, TIMEOUT, TOP_COMPANIES, CAREER_PAGES, ASHBY_COMPANIES
+from roles import infer_role
+from scoring import score_job
+
+SCRAPE_MODE = "VOLUME"
+EXTRACT_REQUIREMENTS = True  # SET THIS TO TRUE
+
+# scraper.py
+# ----------------------------------
+# PJIS – Job Intelligence Scraper
+# ENHANCED - With Requirements Extraction
+# ----------------------------------
+
 import os
 import json
 import re
