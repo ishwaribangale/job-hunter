@@ -3,9 +3,9 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>JobFlow - Job Intelligence Dashboard</title>
-    
-    <!-- ✅ Tailwind CSS -->
+    <title>Job Intelligence Dashboard</title>
+
+    <!-- ✅ Tailwind (for UI) -->
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
       tailwind.config = {
@@ -17,9 +17,6 @@
                 navy: "#0f172a",
                 sky: "#38bdf8"
               }
-            },
-            backgroundColor: {
-              "gray-850": "#111827"
             }
           }
         }
@@ -29,71 +26,13 @@
     <!-- ✅ PDF.js (for resume parsing) -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
     <script>
-      if (window.pdfjsLib) {
-        window.pdfjsLib.GlobalWorkerOptions.workerSrc =
-          "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js";
-      }
+      window.pdfjsLib.GlobalWorkerOptions.workerSrc =
+        "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js";
     </script>
-
-    <!-- ✅ Lucide Icons -->
-    <script src="https://unpkg.com/lucide@latest"></script>
-
-    <style>
-      * {
-        margin: 0;
-        padding: 0;
-        box-sizing: border-box;
-      }
-
-      body {
-        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
-          'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
-          sans-serif;
-        -webkit-font-smoothing: antialiased;
-        -moz-osx-font-smoothing: grayscale;
-      }
-
-      /* Scrollbar Styling */
-      ::-webkit-scrollbar {
-        width: 8px;
-      }
-
-      ::-webkit-scrollbar-track {
-        background: transparent;
-      }
-
-      ::-webkit-scrollbar-thumb {
-        background: #374151;
-        border-radius: 4px;
-      }
-
-      ::-webkit-scrollbar-thumb:hover {
-        background: #4b5563;
-      }
-
-      /* Smooth transitions */
-      button, select, input {
-        transition: all 0.3s ease;
-      }
-
-      .job-card-hover {
-        transition: all 0.3s ease;
-      }
-
-      .job-card-hover:hover {
-        transform: translateY(-2px);
-      }
-    </style>
   </head>
-  <body class="bg-gray-950">
+
+  <body class="bg-brand-dark">
     <div id="root"></div>
-    
-    <!-- React Root Mount -->
-    <script type="module">
-      // This will mount the React app
-      // For development with Vite, use: import('./src/main.jsx').then(m => m.default())
-      // For production, your bundler will handle this
-      console.log("JobFlow Dashboard Ready");
-    </script>
+    <script type="module" src="/src/main.jsx"></script>
   </body>
 </html>
