@@ -183,6 +183,17 @@ class JobScraper:
         self.seen = set()
         self.stats = {}
         self.req_extractor = RequirementsExtractor()  # NOW THIS WILL WORK
+        # in __init__
+        
+        self.req_cache = {}
+        link = job.get("applyLink")
+        if link in self.req_cache:
+            return self.req_cache[link]
+
+reqs = self.req_extractor.extract_from_url(link)
+self.req_cache[link] = reqs
+return reqs
+
 
     # ... rest of your existing JobScraper code ...
 class JobScraper:
