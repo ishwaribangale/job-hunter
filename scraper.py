@@ -19,6 +19,172 @@ from requirements_extractor import RequirementsExtractor
 SCRAPE_MODE = "VOLUME"  # VOLUME | INTELLIGENCE
 
 
+# scraper.py
+# ----------------------------------
+# PJIS – Job Intelligence Scraper
+# ENHANCED - With Requirements Extraction
+# ----------------------------------
+
+import os
+import json
+import re
+import time
+import requests
+from datetime import datetime
+from bs4 import BeautifulSoup
+from config import HEADERS, TIMEOUT, TOP_COMPANIES, CAREER_PAGES, ASHBY_COMPANIES
+from roles import infer_role
+from scoring import score_job
+
+SCRAPE_MODE = "VOLUME"  # VOLUME | INTELLIGENCE
+
+
+# ===================================================================
+# REQUIREMENTS EXTRACTOR (inline to avoid import issues)
+# ===================================================================
+
+class RequirementsExtractor:
+    """Extracts structured requirements from job postings"""
+    
+    TECH_SKILLS = {
+        'languages': ['python', 'javascript', 'java', 'typescript', 'go', 'rust', 
+                     'c\\+\\+', 'ruby', 'php', 'swift', 'kotlin', 'scala'],
+        'frameworks': ['react', 'vue', 'angular', 'django', 'flask', 'spring', 
+                      'node\\.?js', 'express', 'fastapi', 'rails', 'laravel'],
+        'tools': ['docker', 'kubernetes', 'aws', 'gcp', 'azure', 'jenkins', 
+                 'git', 'jira', 'figma', 'postgres', 'mongodb', 'redis'],
+        'concepts': ['machine learning', 'ml', 'ai', 'devops', 'agile', 'scrum',
+                    'microservices', 'rest api', 'graphql', 'ci/cd', 'tdd']
+    }
+    
+    EXP_PATTERNS = [
+        r'(\d+)\+?\s*(?:years?|yrs?).*?(?:experience|exp)',
+        r'(?:experience|exp).*?(\d+)\+?\s*(?:years?|yrs?)',
+        r'minimum\s+(\d+)\s+years?',
+        r'at\s+least\s+(\d+)\s+years?'
+    ]
+    
+    def extract_from_url(self, url, timeout=8):
+        """Fetch job page and extract requirements"""
+        try:
+            headers = {'User-Agent': 'Mozilla/5.0 (compatible; JobScraper/1.0)'}
+            r = requests.get(url, headers=headers, timeout=timeout)
+            soup = BeautifulSoup(r.text, 'html.parser')
+            text = soup.get_text()
+            return self.extract_from_text(text)
+        except Exception as e:
+            return self._empty_requirements()
+    
+    def extract_from_text(self, text):
+        """Extract structured requirements from text"""
+        if not text:
+            return self._empty_requirements()
+        
+        text_lower = text.lower()
+        
+        # Extract skills
+        skills = self._extract_skills(text_lower)
+        
+        # Extract experience
+        experience = self._extract_experience(text_lower)
+        
+        # Extract education
+        education = self._extract_education(text_lower)
+        
+        # Extract keywords
+        keywords = self._extract_keywords(text)
+        
+        return {
+            'skills': list(skills)[:10],
+            'experience_years': experience,
+            'education': education,
+            'keywords': keywords[:15]
+        }
+    
+    def _extract_skills(self, text):
+        """Extract technical skills"""
+        found_skills = set()
+        for category, skills in self.TECH_SKILLS.items():
+            for skill in skills:
+                pattern = r'\b' + skill + r'\b'
+                if re.search(pattern, text, re.IGNORECASE):
+                    found_skills.add(skill.replace('\\', ''))
+        return found_skills
+    
+    def _extract_experience(self, text):
+        """Extract years of experience"""
+        for pattern in self.EXP_PATTERNS:
+            match = re.search(pattern, text, re.IGNORECASE)
+            if match:
+                try:
+                    years = int(match.group(1))
+                    if 0 <= years <= 20:
+                        return years
+                except:
+                    continue
+        return 0
+    
+    def _extract_education(self, text):
+        """Extract education level"""
+        education_levels = {
+            'phd': ['ph\\.?d', 'doctorate', 'doctoral'],
+            'masters': ['master', 'msc', 'mba', 'm\\.s\\.'],
+            'bachelors': ['bachelor', 'bsc', 'b\\.s\\.', 'b\\.a\\.', 'undergraduate']
+        }
+        
+        for level, patterns in education_levels.items():
+            for pattern in patterns:
+                if re.search(pattern, text, re.IGNORECASE):
+                    return level
+        return 'not_specified'
+    
+    def _extract_keywords(self, text):
+        """Extract important keywords"""
+        keywords = set()
+        
+        # Extract first 1000 chars
+        text_sample = text[:1000]
+        
+        # Extract capitalized terms
+        caps_pattern = r'\b[A-Z][a-zA-Z]{1,19}\b'
+        for match in re.finditer(caps_pattern, text_sample):
+            word = match.group()
+            if len(word) > 2 and word.lower() not in ['the', 'and', 'for', 'with']:
+                keywords.add(word)
+        
+        # Common phrases
+        phrases = ['remote', 'hybrid', 'full-time', 'part-time', 'contract',
+                  'startup', 'enterprise', 'saas', 'b2b', 'b2c']
+        
+        text_lower = text_sample.lower()
+        for phrase in phrases:
+            if phrase in text_lower:
+                keywords.add(phrase)
+        
+        return list(keywords)
+    
+    def _empty_requirements(self):
+        """Return empty requirements"""
+        return {
+            'skills': [],
+            'experience_years': 0,
+            'education': 'not_specified',
+            'keywords': []
+        }
+
+
+# ===================================================================
+# JOB SCRAPER (your existing code continues below)
+# ===================================================================
+
+class JobScraper:
+    def __init__(self):
+        self.jobs = []
+        self.seen = set()
+        self.stats = {}
+        self.req_extractor = RequirementsExtractor()  # NOW THIS WILL WORK
+
+    # ... rest of your existing JobScraper code ...
 class JobScraper:
     def __init__(self):
         self.jobs = []
