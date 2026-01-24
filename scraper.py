@@ -17,7 +17,7 @@ from scoring import score_job
 from requirements_extracter import RequirementsExtractor
 
 SCRAPE_MODE = "VOLUME"  # VOLUME | INTELLIGENCE
-
+EXTRACT_REQUIREMENTS = os.getenv("EXTRACT_REQUIREMENTS") == "true"
 
 # scraper.py
 # ----------------------------------
