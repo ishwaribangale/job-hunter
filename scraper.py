@@ -4,6 +4,7 @@
 # ENHANCED - Fixed Company Scraping
 # ----------------------------------
 
+# scraper.py - CLEAN VERSION
 import os
 import json
 import re
@@ -14,10 +15,9 @@ from bs4 import BeautifulSoup
 from config import HEADERS, TIMEOUT, TOP_COMPANIES, CAREER_PAGES, ASHBY_COMPANIES
 from roles import infer_role
 from scoring import score_job
-from requirements_extracter import RequirementsExtractor
 
-SCRAPE_MODE = "VOLUME"  # VOLUME | INTELLIGENCE
-EXTRACT_REQUIREMENTS = os.getenv("EXTRACT_REQUIREMENTS") == "true"
+SCRAPE_MODE = "VOLUME"
+EXTRACT_REQUIREMENTS = True  # SET THIS TO TRUE
 
 # scraper.py
 # ----------------------------------
@@ -201,20 +201,19 @@ class JobScraper:
         job["score"] = score_job(job)
         job["fetchedAt"] = self.now()
     
-        if EXTRACT_REQUIREMENTS:
+        # ONLY fetch requirements for first 50 jobs (for testing)
+        if EXTRACT_REQUIREMENTS and len(self.jobs) < 50:
+            print(f"  [{len(self.jobs)+1}/50] Fetching requirements...")
             job["requirements"] = self.fetch_requirements(job)
         else:
-            job["requirements"] = job.get(
-                "requirements",
-                self.req_extractor._empty_requirements()
-            )
+            job["requirements"] = self.req_extractor._empty_requirements()
     
         self.seen.add(normalized_link)
         self.jobs.append(job)
-    
+        
         src = job.get("source", "unknown")
-        self.stats[src] = self.stats.get(src, 0) + 1     
-
+        self.stats[src] = self.stats.get(src, 0) + 1
+        
     def scrape_remotive(self):
         print("\n[Remotive]")
         categories = [None, "software-dev", "product", "design", "marketing",
