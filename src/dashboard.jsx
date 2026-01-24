@@ -22,89 +22,32 @@ export default function App() {
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [savedJobs, setSavedJobs] = useState(new Set());
 
-  // Mock data
-  const mockJobs = [
-    {
-      id: 1,
-      title: "Product Manager (ex-founder or ex-product engineer)",
-      company: "PostHog",
-      location: "Remote (US/EU)",
-      role: "Product",
-      type: "Full-time",
-      level: "Senior",
-      matchScore: 92,
-      reason: "Exceptional fit",
-      insights: "Your PM background aligns perfectly with PostHog's culture",
-      new: true,
-      applyLink: "#"
-    },
-    {
-      id: 2,
-      title: "Software Engineer — Warehouse Pipelines",
-      company: "PostHog",
-      location: "Remote",
-      role: "Engineering",
-      type: "Full-time",
-      level: "Mid",
-      matchScore: 87,
-      reason: "Strong match",
-      insights: "Backend experience matches their pipeline infrastructure needs",
-      new: true,
-      applyLink: "#"
-    },
-    {
-      id: 3,
-      title: "AI Product Engineer",
-      company: "PostHog",
-      location: "San Francisco, CA",
-      role: "Engineering",
-      type: "Full-time",
-      level: "Senior",
-      matchScore: 78,
-      reason: "Good fit",
-      insights: "AI/ML skills are valuable for PostHog's platform expansion",
-      new: true,
-      applyLink: "#"
-    },
-    {
-      id: 4,
-      title: "Senior Full Stack Engineer",
-      company: "Anthropic",
-      location: "San Francisco, CA",
-      role: "Engineering",
-      type: "Full-time",
-      level: "Senior",
-      matchScore: 85,
-      reason: "Excellent match",
-      insights: "Your experience with scalable systems matches their needs",
-      new: false,
-      applyLink: "#"
-    },
-    {
-      id: 5,
-      title: "Product Strategy Lead",
-      company: "Stripe",
-      location: "Remote",
-      role: "Product",
-      type: "Full-time",
-      level: "Senior",
-      matchScore: 81,
-      reason: "Strong alignment",
-      insights: "Product leadership experience valued at scale",
-      new: false,
-      applyLink: "#"
-    }
-  ];
-
+  // Fetch jobs from your API
   useEffect(() => {
-    try {
-      setJobs(mockJobs);
-      setFilteredJobs(mockJobs);
-      setLoading(false);
-    } catch (err) {
-      setError("Failed to load jobs");
-      setLoading(false);
-    }
+    const fetchJobs = async () => {
+      try {
+        // Replace this URL with your actual jobs API endpoint
+        const response = await fetch("/api/jobs"); // or your jobs.json URL
+        
+        if (!response.ok) {
+          throw new Error("Failed to fetch jobs");
+        }
+        
+        const data = await response.json();
+        setJobs(data);
+        setFilteredJobs(data);
+        setLoading(false);
+      } catch (err) {
+        console.error("Error fetching jobs:", err);
+        // Fallback to empty state if API fails
+        setJobs([]);
+        setFilteredJobs([]);
+        setLoading(false);
+        setError("Failed to load jobs. Please try again later.");
+      }
+    };
+
+    fetchJobs();
   }, []);
 
   const companies = useMemo(
