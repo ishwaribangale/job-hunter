@@ -53,66 +53,9 @@ export default function App() {
     const lower = text.toLowerCase();
 
     const PERSONAS = {
-      pm: [
-        "product manager",
-        "product management",
-        "roadmap",
-        "stakeholder",
-        "user stories",
-        "requirements",
-        "prds",
-        "backlog",
-        "prioritization",
-        "go-to-market",
-        "g2m",
-        "metrics",
-        "kpis",
-        "experiments",
-        "a/b testing",
-        "customer discovery",
-        "product strategy",
-        "growth",
-        "analytics",
-        "sql",
-        "jira",
-        "confluence",
-        "figma"
-      ],
-      engineer: [
-        "javascript",
-        "react",
-        "node",
-        "typescript",
-        "python",
-        "java",
-        "sql",
-        "docker",
-        "kubernetes",
-        "aws",
-        "backend",
-        "frontend",
-        "fullstack",
-        "api",
-        "microservices",
-        "system design",
-        "devops",
-        "software engineer",
-        "developer"
-      ],
-      data: [
-        "data analysis",
-        "machine learning",
-        "ai",
-        "statistics",
-        "pandas",
-        "numpy",
-        "sql",
-        "etl",
-        "dashboard",
-        "modeling",
-        "data scientist",
-        "analyst"
-      ]
+      pm: ["product manager", "product management", "roadmap", "stakeholder", "user stories", "requirements", "prds", "backlog", "prioritization", "go-to-market", "g2m", "metrics", "kpis", "experiments", "a/b testing", "customer discovery", "product strategy", "growth", "analytics", "sql", "jira", "confluence", "figma"],
+      engineer: ["javascript", "react", "node", "typescript", "python", "java", "sql", "docker", "kubernetes", "aws", "backend", "frontend", "fullstack", "api", "microservices", "system design", "devops", "software engineer", "developer"],
+      data: ["data analysis", "machine learning", "ai", "statistics", "pandas", "numpy", "sql", "etl", "dashboard", "modeling", "data scientist", "analyst"]
     };
 
     const SENIORITY_KEYWORDS = {
@@ -146,80 +89,55 @@ export default function App() {
     };
   };
 
-/* ---------------- AI-POWERED MATCHING ---------------- */
-const analyzeJobWithAI = async (job, resumeSummary) => {
-  try {
-    console.log("Analyzing job:", job.title); // Debug log
+  /* ---------------- KEYWORD-BASED MATCHING (Fast) ---------------- */
+  const calculateKeywordMatch = (job, resumeData) => {
+    let score = 50; // Base score
     
-    const response = await fetch("https://api.anthropic.com/v1/messages", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        model: "claude-sonnet-4-20250514",
-        max_tokens: 1000,
-        messages: [{
-          role: "user",
-          content: `You are a job matching expert. Analyze this job against the candidate's resume.
-
-RESUME SUMMARY:
-- Persona: ${resumeSummary.persona}
-- Seniority: ${resumeSummary.seniority}
-- Key Skills: ${resumeSummary.keywords.join(", ")}
-
-JOB DETAILS:
-- Title: ${job.title}
-- Company: ${job.company}
-- Role Category: ${job.role || "Not specified"}
-- Location: ${job.location}
-
-Respond ONLY with a JSON object (no markdown, no backticks):
-{
-  "score": <number 0-100>,
-  "reason": "<5-7 word explanation>",
-  "insights": "<1 sentence about why this match works or doesn't>"
-}
-
-Consider:
-1. Does the job title align with their persona and seniority?
-2. For PM roles: look for product area fit (AI, Safety, Growth, Tools, etc)
-3. For similar seniority levels, differentiate based on role specificity
-4. Company reputation and role scope matter
-5. Give varied scores - don't rate everything the same!`
-        }]
-      })
-    });
-
-    if (!response.ok) {
-      const errorText = await response.text();
-      console.error("API Error:", response.status, errorText);
-      throw new Error(`API returned ${response.status}`);
+    // Match on job requirements if available
+    const jobReqs = job.requirements || {};
+    const jobSkills = jobReqs.skills || [];
+    
+    // Skill matching (40 points possible)
+    if (jobSkills.length > 0) {
+      const matchedSkills = jobSkills.filter(skill => 
+        resumeData.keywords.some(kw => kw.toLowerCase().includes(skill.toLowerCase()))
+      );
+      score += (matchedSkills.length / jobSkills.length) * 40;
     }
+    
+    // Title matching (20 points possible)
+    const titleLower = job.title.toLowerCase();
+    
+    if (resumeData.persona === 'pm' && titleLower.includes('product')) score += 20;
+    else if (resumeData.persona === 'engineer' && (titleLower.includes('engineer') || titleLower.includes('developer'))) score += 20;
+    else if (resumeData.persona === 'data' && titleLower.includes('data')) score += 20;
+    else if (resumeData.keywords.some(kw => titleLower.includes(kw.toLowerCase()))) score += 10;
+    
+    // Seniority matching (10 points possible)
+    if (resumeData.seniority === 'senior' && (titleLower.includes('senior') || titleLower.includes('lead'))) score += 10;
+    else if (resumeData.seniority === 'junior' && (titleLower.includes('junior') || titleLower.includes('entry'))) score += 10;
+    else if (resumeData.seniority === 'mid') score += 5;
+    
+    return Math.min(100, Math.max(0, Math.round(score)));
+  };
 
-    const data = await response.json();
-    console.log("API Response:", data); // Debug log
-    
-    const text = data.content?.find(c => c.type === "text")?.text || "{}";
-    
-    // Clean the text - remove markdown code blocks if present
-    const cleanText = text.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
-    const result = JSON.parse(cleanText);
-    
-    return {
-      score: Math.min(100, Math.max(0, result.score || 50)),
-      reason: result.reason || "AI match analysis",
-      insights: result.insights || ""
-    };
-  } catch (error) {
-    console.error("AI matching failed for job:", job.title, error);
-    return {
-      score: 50,
-      reason: "Unable to analyze",
-      insights: "AI analysis unavailable"
-    };
-  }
-};
+  /* ---------------- AI-POWERED MATCHING (for top jobs only) ---------------- */
+  const analyzeJobWithAI = async (job, resumeSummary) => {
+    try {
+      console.log("Analyzing job:", job.title);
+      
+      const response = await fetch("https://api.anthropic.com/v1/messages", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          model: "claude-sonnet-4-20250514",
+          max_tokens: 1000,
+          messages: [{
+            role: "user",
+            content: `You are a job matching expert. Analyze this job against the candidate's resume.
+
 RESUME SUMMARY:
 - Persona: ${resumeSummary.persona}
 - Seniority: ${resumeSummary.seniority}
@@ -248,17 +166,28 @@ Consider:
         })
       });
 
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error("API Error:", response.status, errorText);
+        throw new Error(`API returned ${response.status}`);
+      }
+
       const data = await response.json();
-      const text = data.content.find(c => c.type === "text")?.text || "{}";
-      const result = JSON.parse(text.trim());
+      console.log("API Response:", data);
+      
+      const text = data.content?.find(c => c.type === "text")?.text || "{}";
+      
+      // Clean the text - remove markdown code blocks if present
+      const cleanText = text.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
+      const result = JSON.parse(cleanText);
       
       return {
-        score: Math.min(100, Math.max(0, result.score)),
+        score: Math.min(100, Math.max(0, result.score || 50)),
         reason: result.reason || "AI match analysis",
         insights: result.insights || ""
       };
     } catch (error) {
-      console.error("AI matching failed:", error);
+      console.error("AI matching failed for job:", job.title, error);
       return {
         score: 50,
         reason: "Unable to analyze",
@@ -295,85 +224,75 @@ Consider:
     }
   };
 
-  /* ---------------- APPLY AI RESUME MATCH ---------------- */
-const applyResumeMatch = async () => {
-  if (!resumeKeywords.length) return;
-  
-  setAnalyzingJobs(true);
-  setResumeMatchEnabled(true);
-
-  const resumeSummary = {
-    persona: resumePersona,
-    seniority: resumeSeniority,
-    keywords: resumeKeywords
-  };
-
-  // Analyze jobs in batches to avoid rate limits
-  const batchSize = 3; // Changed from 5 to 3
-  const jobsToAnalyze = [...filteredJobs];
-  const analyzedJobs = [];
-
-  for (let i = 0; i < jobsToAnalyze.length; i += batchSize) {
-    const batch = jobsToAnalyze.slice(i, i + batchSize);
+  /* ---------------- HYBRID MATCHING: Keyword + AI ---------------- */
+  const applyResumeMatch = async () => {
+    if (!resumeKeywords.length) return;
     
-    console.log(`Analyzing batch ${Math.floor(i/batchSize) + 1}/${Math.ceil(jobsToAnalyze.length/batchSize)}`);
-    
-    const results = await Promise.all(
-      batch.map(job => analyzeJobWithAI(job, resumeSummary))
-    );
-    
-    batch.forEach((job, idx) => {
-      analyzedJobs.push({
-        ...job,
-        matchScore: results[idx].score,
-        reason: results[idx].reason,
-        insights: results[idx].insights
-      });
-    });
+    setAnalyzingJobs(true);
+    setResumeMatchEnabled(true);
 
-    // Update UI progressively
-    setFilteredJobs([...analyzedJobs, ...jobsToAnalyze.slice(i + batchSize)]);
+    const resumeSummary = {
+      persona: resumePersona,
+      seniority: resumeSeniority,
+      keywords: resumeKeywords
+    };
+
+    // STEP 1: Quick keyword matching on ALL jobs
+    console.log("⚡ Starting keyword matching on all jobs...");
+    const keywordScored = filteredJobs.map(job => ({
+      ...job,
+      matchScore: calculateKeywordMatch(job, resumeSummary),
+      reason: "Keyword match",
+      insights: "Based on resume keywords and job requirements"
+    }));
+
+    // Sort by keyword score
+    keywordScored.sort((a, b) => b.matchScore - a.matchScore);
     
-    // Add delay between batches to avoid rate limits
-    if (i + batchSize < jobsToAnalyze.length) {
-      await new Promise(resolve => setTimeout(resolve, 1000));
-    }
-  }
+    // Show initial results immediately
+    setFilteredJobs(keywordScored);
 
-  // Sort by score
-  analyzedJobs.sort((a, b) => b.matchScore - a.matchScore);
-  setFilteredJobs(analyzedJobs);
-  setAnalyzingJobs(false);
-};
+    // STEP 2: AI analysis on top 20 jobs only (saves 95% of API costs)
+    const TOP_JOBS_TO_ANALYZE = 20;
+    const topJobs = keywordScored.slice(0, TOP_JOBS_TO_ANALYZE);
+    const restJobs = keywordScored.slice(TOP_JOBS_TO_ANALYZE);
 
+    console.log(`🤖 AI analyzing top ${topJobs.length} jobs...`);
+
+    const aiAnalyzed = [];
+    
     // Analyze jobs in batches to avoid rate limits
-    const batchSize = 5;
-    const jobsToAnalyze = [...filteredJobs];
-    const analyzedJobs = [];
-
-    for (let i = 0; i < jobsToAnalyze.length; i += batchSize) {
-      const batch = jobsToAnalyze.slice(i, i + batchSize);
-      const results = await Promise.all(
-        batch.map(job => analyzeJobWithAI(job, resumeSummary))
-      );
+    for (let i = 0; i < topJobs.length; i++) {
+      const job = topJobs[i];
       
-      batch.forEach((job, idx) => {
-        analyzedJobs.push({
-          ...job,
-          matchScore: results[idx].score,
-          reason: results[idx].reason,
-          insights: results[idx].insights
-        });
+      console.log(`[${i + 1}/${topJobs.length}] Analyzing: ${job.title}`);
+      
+      const aiResult = await analyzeJobWithAI(job, resumeSummary);
+      
+      aiAnalyzed.push({
+        ...job,
+        matchScore: aiResult.score,
+        reason: aiResult.reason,
+        insights: aiResult.insights
       });
 
-      // Update UI progressively
-      setFilteredJobs([...analyzedJobs, ...jobsToAnalyze.slice(i + batchSize)]);
+      // Update UI progressively so user sees results coming in
+      setFilteredJobs([...aiAnalyzed, ...topJobs.slice(i + 1), ...restJobs]);
+      
+      // Rate limit protection - wait between API calls
+      if (i < topJobs.length - 1) {
+        await new Promise(resolve => setTimeout(resolve, 500));
+      }
     }
 
-    // Sort by score
-    analyzedJobs.sort((a, b) => b.matchScore - a.matchScore);
-    setFilteredJobs(analyzedJobs);
+    // Final sort by score
+    const finalJobs = [...aiAnalyzed, ...restJobs];
+    finalJobs.sort((a, b) => b.matchScore - a.matchScore);
+    
+    setFilteredJobs(finalJobs);
     setAnalyzingJobs(false);
+    
+    console.log("✅ Matching complete!");
   };
 
   const clearResume = () => {
@@ -446,7 +365,8 @@ const applyResumeMatch = async () => {
           <div className="p-4 space-y-8">
             {/* RESUME MATCHER */}
             <div>
-              <h3 className="font-semibold text-sky-400 mb-2">🤖 AI Resume Matcher</h3>
+              <h3 className="font-semibold text-sky-400 mb-2">🤖 Smart Resume Matcher</h3>
+              <p className="text-xs text-gray-500 mb-3">Keyword + AI hybrid matching</p>
 
               {!resumeText ? (
                 <div>
@@ -493,7 +413,7 @@ const applyResumeMatch = async () => {
                       disabled={analyzingJobs}
                       className="bg-sky-600 px-3 py-1 rounded text-sm hover:bg-sky-700 disabled:opacity-50 disabled:cursor-not-allowed"
                     >
-                      {analyzingJobs ? "Analyzing..." : "🚀 AI Match"}
+                      {analyzingJobs ? "Analyzing..." : "🚀 Match Jobs"}
                     </button>
                     <button
                       onClick={clearResume}
@@ -505,7 +425,8 @@ const applyResumeMatch = async () => {
 
                   {analyzingJobs && (
                     <div className="mt-3 text-xs text-gray-400">
-                      AI is analyzing each job against your resume...
+                      ⚡ Keyword matching all jobs...<br/>
+                      🤖 AI analyzing top 20...
                     </div>
                   )}
                 </>
