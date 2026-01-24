@@ -1,48 +1,33 @@
 # requirements_extractor.py
+# Extracts key requirements from job descriptions WITHOUT storing full text
+
 import re
 import requests
 from bs4 import BeautifulSoup
+from typing import Dict, List, Set
 
 class RequirementsExtractor:
-    """Extract requirements from job posting URLs"""
+    """Extracts structured requirements from job postings"""
     
-   TECH_SKILLS = {
-    # Product Strategy & Roadmap
-    'product strategy', 'product roadmap', 'product vision', 'product discovery',
-    'product lifecycle', 'product-market fit', 'prioritization', 'backlog management',
-    'okrs', 'kpis', 'metrics', 'user stories', 'requirements gathering', 'prd',
-    'go-to-market', 'stakeholder management', 'cross-functional collaboration',
-
-    # Analytics & Data
-    'data analysis', 'sql', 'a/b testing', 'experimentation', 'cohort analysis',
-    'funnel analysis', 'dashboards', 'amplitude', 'mixpanel', 'google analytics',
-    'ga4', 'looker', 'tableau', 'power bi',
-
-    # AI / ML
-    'artificial intelligence', 'machine learning', 'generative ai', 'llms',
-    'prompt engineering', 'nlp', 'recommendation systems', 'data science',
-    'mlops', 'openai api', 'embeddings', 'vector databases', 'rag',
-
-    # UX / Design
-    'ux design', 'ui design', 'user research', 'usability testing',
-    'customer journey mapping', 'wireframing', 'prototyping',
-    'figma', 'design systems', 'accessibility',
-
-    # Customer Success & Growth
-    'customer success', 'customer onboarding', 'customer retention',
-    'churn reduction', 'nps', 'csat', 'user feedback', 'growth strategy',
-    'pricing strategy', 'monetization',
-
-    # Tech Foundations
-    'apis', 'rest', 'graphql', 'microservices', 'cloud', 'aws',
-    'docker', 'ci/cd', 'system design', 'scalability',
-    'security', 'data privacy', 'gdpr',
-
-    # Tools
-    'jira', 'confluence', 'notion', 'slack', 'git', 'github',
-    'linear', 'asana', 'trello', 'miro'  
-}
-
+    # Common tech skills patterns
+    TECH_SKILLS = {
+        'languages': ['python', 'javascript', 'java', 'typescript', 'go', 'rust', 
+                     'c\\+\\+', 'ruby', 'php', 'swift', 'kotlin', 'scala'],
+        'frameworks': ['react', 'vue', 'angular', 'django', 'flask', 'spring', 
+                      'node\\.?js', 'express', 'fastapi', 'rails', 'laravel'],
+        'tools': ['docker', 'kubernetes', 'aws', 'gcp', 'azure', 'jenkins', 
+                 'git', 'jira', 'figma', 'postgres', 'mongodb', 'redis'],
+        'concepts': ['machine learning', 'ml', 'ai', 'devops', 'agile', 'scrum',
+                    'microservices', 'rest api', 'graphql', 'ci/cd', 'tdd']
+    }
+    
+    # Experience patterns
+    EXP_PATTERNS = [
+        r'(\d+)\+?\s*(?:years?|yrs?).*?(?:experience|exp)',
+        r'(?:experience|exp).*?(\d+)\+?\s*(?:years?|yrs?)',
+        r'minimum\s+(\d+)\s+years?',
+        r'at\s+least\s+(\d+)\s+years?'
+    ]
     
     def extract_from_url(self, url, timeout=10):
         """Fetch job page and extract requirements"""
@@ -57,37 +42,149 @@ class RequirementsExtractor:
             text = soup.get_text()
             
             return self.extract_from_text(text)
-        except:
+        except Exception as e:
+            print(f"    ⚠ Error extracting from {url}: {e}")
             return self._empty_requirements()
     
-    def extract_from_text(self, text):
-        """Extract structured requirements from text"""
+    def extract_from_text(self, text: str) -> Dict:
+        """
+        Extract structured requirements from job description text
+        Returns: {
+            'skills': [...],
+            'experience_years': int,
+            'education': str,
+            'keywords': [...]
+        }
+        """
+        if not text:
+            return self._empty_requirements()
+        
         text_lower = text.lower()
         
         # Extract skills
-        skills = [skill for skill in self.TECH_SKILLS 
-                  if re.search(r'\b' + skill.replace('.', r'\.') + r'\b', text_lower)]
+        skills = self._extract_skills(text_lower)
         
-        # Extract years of experience
-        exp_match = re.search(r'(\d+)\+?\s*(?:years?|yrs?).*?(?:experience|exp)', text_lower)
-        experience_years = int(exp_match.group(1)) if exp_match else 0
+        # Extract experience
+        experience = self._extract_experience(text_lower)
         
         # Extract education
-        education = 'bachelors' if 'bachelor' in text_lower else 'not_specified'
-        if 'master' in text_lower or 'mba' in text_lower:
-            education = 'masters'
-        if 'phd' in text_lower or 'doctorate' in text_lower:
-            education = 'phd'
+        education = self._extract_education(text_lower)
+        
+        # Extract general keywords
+        keywords = self._extract_keywords(text)
         
         return {
-            'skills': skills[:10],  # Top 10 skills
-            'experience_years': experience_years,
-            'education': education
+            'skills': list(skills)[:10],  # Top 10 skills
+            'experience_years': experience,
+            'education': education,
+            'keywords': keywords[:15]  # Top 15 keywords
         }
     
-    def _empty_requirements(self):
+    def _extract_skills(self, text: str) -> Set[str]:
+        """Extract technical skills from text"""
+        found_skills = set()
+        
+        for category, skills in self.TECH_SKILLS.items():
+            for skill in skills:
+                # Use word boundaries to avoid false matches
+                pattern = r'\b' + skill + r'\b'
+                if re.search(pattern, text, re.IGNORECASE):
+                    found_skills.add(skill.replace('\\', ''))
+        
+        return found_skills
+    
+    def _extract_experience(self, text: str) -> int:
+        """Extract years of experience required"""
+        for pattern in self.EXP_PATTERNS:
+            match = re.search(pattern, text, re.IGNORECASE)
+            if match:
+                try:
+                    years = int(match.group(1))
+                    if 0 <= years <= 20:  # Sanity check
+                        return years
+                except:
+                    continue
+        return 0  # Default to 0 if not found
+    
+    def _extract_education(self, text: str) -> str:
+        """Extract education level"""
+        education_levels = {
+            'phd': ['ph\\.?d', 'doctorate', 'doctoral'],
+            'masters': ['master', 'msc', 'mba', 'm\\.s\\.'],
+            'bachelors': ['bachelor', 'bsc', 'b\\.s\\.', 'b\\.a\\.', 'undergraduate']
+        }
+        
+        for level, patterns in education_levels.items():
+            for pattern in patterns:
+                if re.search(pattern, text, re.IGNORECASE):
+                    return level
+        
+        return 'not_specified'
+    
+    def _extract_keywords(self, text: str) -> List[str]:
+        """Extract important keywords from requirements sections"""
+        
+        # Find requirements/qualifications sections
+        requirements_text = self._extract_requirements_section(text)
+        
+        if not requirements_text:
+            requirements_text = text[:1000]  # Fallback to first 1000 chars
+        
+        keywords = set()
+        
+        # Extract capitalized terms (2-20 chars)
+        caps_pattern = r'\b[A-Z][a-zA-Z]{1,19}\b'
+        for match in re.finditer(caps_pattern, requirements_text):
+            word = match.group()
+            if len(word) > 2 and word.lower() not in ['the', 'and', 'for', 'with']:
+                keywords.add(word)
+        
+        # Extract common phrases
+        phrases = [
+            'remote', 'hybrid', 'full-time', 'part-time', 'contract',
+            'startup', 'enterprise', 'saas', 'b2b', 'b2c'
+        ]
+        
+        text_lower = requirements_text.lower()
+        for phrase in phrases:
+            if phrase in text_lower:
+                keywords.add(phrase)
+        
+        return list(keywords)
+    
+    def _extract_requirements_section(self, text: str) -> str:
+        """Extract just the requirements/qualifications section"""
+        
+        # Common section headers
+        section_markers = [
+            r'(?:requirements|qualifications|what we.*looking for|what you.*bring|'
+            r'must have|required skills|key qualifications)[:\s]*',
+        ]
+        
+        for marker in section_markers:
+            match = re.search(marker, text, re.IGNORECASE)
+            if match:
+                start = match.end()
+                section = text[start:start+800]
+                
+                # Stop at next major section if found
+                next_section = re.search(
+                    r'\n\s*(?:benefits|perks|about us|company|apply|how to)',
+                    section,
+                    re.IGNORECASE
+                )
+                if next_section:
+                    section = section[:next_section.start()]
+                
+                return section
+        
+        return ""
+    
+    def _empty_requirements(self) -> Dict:
+        """Return empty requirements structure"""
         return {
             'skills': [],
             'experience_years': 0,
-            'education': 'not_specified'
+            'education': 'not_specified',
+            'keywords': []
         }
