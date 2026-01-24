@@ -979,6 +979,21 @@ class JobScraper:
         except Exception as e:
             print(f"  ❌ Generic: {e}")
 
+    def fetch_requirements(self, job):
+        """Fetch and extract requirements for a job"""
+        try:
+            link = job.get("applyLink")
+            if not link:
+                return self.req_extractor._empty_requirements()
+            
+            print(f"    Fetching requirements for: {job['title'][:50]}...")
+            requirements = self.req_extractor.extract_from_url(link)
+            time.sleep(0.3)  # Be nice to servers
+            return requirements
+        except Exception as e:
+            print(f"    ⚠ Error: {e}")
+            return self.req_extractor._empty_requirements()
+
     def debug_page(self, url):
         """Debug helper to see what's on a page"""
         try:
