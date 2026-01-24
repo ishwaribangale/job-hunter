@@ -19,7 +19,9 @@ export default function App() {
   const [uploadingResume, setUploadingResume] = React.useState(false);
   const [analyzingJobs, setAnalyzingJobs] = React.useState(false);
 
-  const [sidebarOpen, setSidebarOpen] = React.useState(true);
+  const [activeSection, setActiveSection] = React.useState("all-jobs");
+  const [savedJobs, setSavedJobs] = React.useState([]);
+  const [appliedJobs, setAppliedJobs] = React.useState([]);
 
   /* ---------------- FETCH JOBS ---------------- */
   React.useEffect(() => {
@@ -47,6 +49,18 @@ export default function App() {
     () => [...new Set(jobs.map((j) => j?.location).filter(Boolean))],
     [jobs]
   );
+
+  /* Quick Filter Options */
+  const quickFilters = [
+    { label: "Remote Only", key: "remote", filter: (j) => j.location?.toLowerCase().includes("remote") },
+    { label: "Full-time", key: "fulltime", filter: (j) => j.employment_type === "Full-time" || j.title?.toLowerCase().includes("full-time") },
+    { label: "Engineering", key: "engineering", filter: (j) => j.role === "Engineering" || j.title?.toLowerCase().includes("engineer") }
+  ];
+
+  /* Top Matches Count */
+  const topMatchesCount = React.useMemo(() => {
+    return filteredJobs.filter(j => j.matchScore >= 75).length;
+  }, [filteredJobs]);
 
   /* ---------------- RESUME HELPERS ---------------- */
   const extractKeywords = (text) => {
@@ -91,13 +105,11 @@ export default function App() {
 
   /* ---------------- KEYWORD-BASED MATCHING (Fast) ---------------- */
   const calculateKeywordMatch = (job, resumeData) => {
-    let score = 50; // Base score
+    let score = 50;
     
-    // Match on job requirements if available
     const jobReqs = job.requirements || {};
     const jobSkills = jobReqs.skills || [];
     
-    // Skill matching (40 points possible)
     if (jobSkills.length > 0) {
       const matchedSkills = jobSkills.filter(skill => 
         resumeData.keywords.some(kw => kw.toLowerCase().includes(skill.toLowerCase()))
@@ -105,7 +117,6 @@ export default function App() {
       score += (matchedSkills.length / jobSkills.length) * 40;
     }
     
-    // Title matching (20 points possible)
     const titleLower = job.title.toLowerCase();
     
     if (resumeData.persona === 'pm' && titleLower.includes('product')) score += 20;
@@ -113,7 +124,6 @@ export default function App() {
     else if (resumeData.persona === 'data' && titleLower.includes('data')) score += 20;
     else if (resumeData.keywords.some(kw => titleLower.includes(kw.toLowerCase()))) score += 10;
     
-    // Seniority matching (10 points possible)
     if (resumeData.seniority === 'senior' && (titleLower.includes('senior') || titleLower.includes('lead'))) score += 10;
     else if (resumeData.seniority === 'junior' && (titleLower.includes('junior') || titleLower.includes('entry'))) score += 10;
     else if (resumeData.seniority === 'mid') score += 5;
@@ -124,8 +134,6 @@ export default function App() {
   /* ---------------- AI-POWERED MATCHING (for top jobs only) ---------------- */
   const analyzeJobWithAI = async (job, resumeSummary) => {
     try {
-      console.log("Analyzing job:", job.title);
-      
       const response = await fetch("https://api.anthropic.com/v1/messages", {
         method: "POST",
         headers: {
@@ -167,17 +175,11 @@ Consider:
       });
 
       if (!response.ok) {
-        const errorText = await response.text();
-        console.error("API Error:", response.status, errorText);
         throw new Error(`API returned ${response.status}`);
       }
 
       const data = await response.json();
-      console.log("API Response:", data);
-      
       const text = data.content?.find(c => c.type === "text")?.text || "{}";
-      
-      // Clean the text - remove markdown code blocks if present
       const cleanText = text.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
       const result = JSON.parse(cleanText);
       
@@ -187,7 +189,7 @@ Consider:
         insights: result.insights || ""
       };
     } catch (error) {
-      console.error("AI matching failed for job:", job.title, error);
+      console.error("AI matching failed:", error);
       return {
         score: 50,
         reason: "Unable to analyze",
@@ -237,8 +239,6 @@ Consider:
       keywords: resumeKeywords
     };
 
-    // STEP 1: Quick keyword matching on ALL jobs
-    console.log("⚡ Starting keyword matching on all jobs...");
     const keywordScored = filteredJobs.map(job => ({
       ...job,
       matchScore: calculateKeywordMatch(job, resumeSummary),
@@ -246,27 +246,17 @@ Consider:
       insights: "Based on resume keywords and job requirements"
     }));
 
-    // Sort by keyword score
     keywordScored.sort((a, b) => b.matchScore - a.matchScore);
-    
-    // Show initial results immediately
     setFilteredJobs(keywordScored);
 
-    // STEP 2: AI analysis on top 20 jobs only (saves 95% of API costs)
     const TOP_JOBS_TO_ANALYZE = 20;
     const topJobs = keywordScored.slice(0, TOP_JOBS_TO_ANALYZE);
     const restJobs = keywordScored.slice(TOP_JOBS_TO_ANALYZE);
 
-    console.log(`🤖 AI analyzing top ${topJobs.length} jobs...`);
-
     const aiAnalyzed = [];
     
-    // Analyze jobs in batches to avoid rate limits
     for (let i = 0; i < topJobs.length; i++) {
       const job = topJobs[i];
-      
-      console.log(`[${i + 1}/${topJobs.length}] Analyzing: ${job.title}`);
-      
       const aiResult = await analyzeJobWithAI(job, resumeSummary);
       
       aiAnalyzed.push({
@@ -276,23 +266,18 @@ Consider:
         insights: aiResult.insights
       });
 
-      // Update UI progressively so user sees results coming in
       setFilteredJobs([...aiAnalyzed, ...topJobs.slice(i + 1), ...restJobs]);
       
-      // Rate limit protection - wait between API calls
       if (i < topJobs.length - 1) {
         await new Promise(resolve => setTimeout(resolve, 500));
       }
     }
 
-    // Final sort by score
     const finalJobs = [...aiAnalyzed, ...restJobs];
     finalJobs.sort((a, b) => b.matchScore - a.matchScore);
     
     setFilteredJobs(finalJobs);
     setAnalyzingJobs(false);
-    
-    console.log("✅ Matching complete!");
   };
 
   const clearResume = () => {
@@ -301,12 +286,49 @@ Consider:
     setResumePersona(null);
     setResumeSeniority("mid");
     setResumeMatchEnabled(false);
-    setFilteredJobs(jobs); // Reset to original
+    setFilteredJobs(jobs);
   };
 
-  /* ---------------- APPLY FILTERS ---------------- */
+  /* Save/Apply Job */
+  const toggleSaveJob = (jobId) => {
+    setSavedJobs(prev => 
+      prev.includes(jobId) ? prev.filter(id => id !== jobId) : [...prev, jobId]
+    );
+  };
+
+  const markJobAsApplied = (jobId) => {
+    setAppliedJobs(prev => 
+      prev.includes(jobId) ? prev : [...prev, jobId]
+    );
+  };
+
+  /* Get Display Jobs Based on Section */
+  const getDisplayJobs = () => {
+    switch(activeSection) {
+      case "top-matches":
+        return filteredJobs.filter(j => j.matchScore >= 75);
+      case "saved":
+        return filteredJobs.filter(j => savedJobs.includes(j.id));
+      case "applied":
+        return filteredJobs.filter(j => appliedJobs.includes(j.id));
+      default:
+        return filteredJobs;
+    }
+  };
+
+  const displayJobs = getDisplayJobs();
+
+  /* Get Score Color */
+  const getScoreColor = (score) => {
+    if (score >= 75) return "text-green-400 border-green-400";
+    if (score >= 60) return "text-cyan-400 border-cyan-400";
+    if (score >= 45) return "text-yellow-400 border-yellow-400";
+    return "text-orange-400 border-orange-400";
+  };
+
+  /* Apply Filters */
   React.useEffect(() => {
-    if (resumeMatchEnabled) return; // Don't filter when AI matching is active
+    if (resumeMatchEnabled) return;
 
     let data = [...jobs];
 
@@ -349,228 +371,315 @@ Consider:
   return (
     <div className="min-h-screen bg-gray-950 text-gray-100 flex">
       {/* SIDEBAR */}
-      <div
-        className={`${
-          sidebarOpen ? "w-80" : "w-16"
-        } bg-gray-900 border-r border-gray-800 transition-all`}
-      >
-        <button
-          onClick={() => setSidebarOpen(!sidebarOpen)}
-          className="p-4 text-sky-400"
-        >
-          ☰
-        </button>
+      <div className="w-64 bg-gray-900 border-r border-gray-800 overflow-y-auto">
+        {/* Logo */}
+        <div className="p-6 border-b border-gray-800">
+          <div className="flex items-center gap-2">
+            <div className="w-8 h-8 rounded bg-cyan-400 flex items-center justify-center text-gray-900 font-bold">
+              📦
+            </div>
+            <h1 className="text-xl font-bold">JobFlow</h1>
+          </div>
+        </div>
 
-        {sidebarOpen && (
-          <div className="p-4 space-y-8">
-            {/* RESUME MATCHER */}
-            <div>
-              <h3 className="font-semibold text-sky-400 mb-2">🤖 Smart Resume Matcher</h3>
-              <p className="text-xs text-gray-500 mb-3">Keyword + AI hybrid matching</p>
+        {/* Navigation */}
+        <nav className="p-4 space-y-2">
+          <button
+            onClick={() => setActiveSection("all-jobs")}
+            className={`w-full text-left px-4 py-2 rounded-lg flex items-center gap-2 transition-colors ${
+              activeSection === "all-jobs"
+                ? "bg-cyan-900/30 text-cyan-400"
+                : "text-gray-400 hover:text-gray-300"
+            }`}
+          >
+            📦 All Jobs
+          </button>
 
-              {!resumeText ? (
-                <div>
+          <button
+            onClick={() => setActiveSection("top-matches")}
+            className={`w-full text-left px-4 py-2 rounded-lg flex items-center gap-2 justify-between transition-colors ${
+              activeSection === "top-matches"
+                ? "bg-cyan-900/30 text-cyan-400"
+                : "text-gray-400 hover:text-gray-300"
+            }`}
+          >
+            <span>📈 Top Matches</span>
+            {topMatchesCount > 0 && (
+              <span className="bg-cyan-400 text-gray-900 text-xs font-bold px-2 py-1 rounded-full">
+                {topMatchesCount}
+              </span>
+            )}
+          </button>
+
+          <button
+            onClick={() => setActiveSection("saved")}
+            className={`w-full text-left px-4 py-2 rounded-lg flex items-center gap-2 transition-colors ${
+              activeSection === "saved"
+                ? "bg-cyan-900/30 text-cyan-400"
+                : "text-gray-400 hover:text-gray-300"
+            }`}
+          >
+            🔖 Saved
+          </button>
+
+          <button
+            onClick={() => setActiveSection("applied")}
+            className={`w-full text-left px-4 py-2 rounded-lg flex items-center gap-2 transition-colors ${
+              activeSection === "applied"
+                ? "bg-cyan-900/30 text-cyan-400"
+                : "text-gray-400 hover:text-gray-300"
+            }`}
+          >
+            ⏱️ Applied
+          </button>
+        </nav>
+
+        {/* Quick Filters */}
+        {activeSection === "all-jobs" && (
+          <div className="p-4 border-t border-gray-800">
+            <h3 className="text-xs font-semibold text-gray-500 uppercase mb-3">Quick Filters</h3>
+            <div className="space-y-2">
+              {quickFilters.map((qf) => (
+                <button
+                  key={qf.key}
+                  onClick={() => {
+                    const filtered = jobs.filter(qf.filter);
+                    setFilteredJobs(filtered);
+                  }}
+                  className="w-full text-left px-3 py-2 text-sm text-gray-400 hover:text-gray-300 hover:bg-gray-800 rounded transition-colors"
+                >
+                  {qf.label}
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Resume Matcher */}
+        <div className="p-4 border-t border-gray-800">
+          <div className="bg-cyan-900/20 border border-cyan-900/40 rounded-lg p-4">
+            <h3 className="font-semibold text-cyan-400 mb-2 flex items-center gap-2">
+              ✨ See Your Fit
+            </h3>
+            <p className="text-xs text-gray-400 mb-3">Upload your resume to discover roles</p>
+
+            {!resumeText ? (
+              <div>
+                <label className="block">
                   <input 
                     type="file" 
                     accept=".pdf" 
                     onChange={handleResumeUpload}
-                    className="text-sm text-gray-400"
+                    className="text-xs text-gray-400 cursor-pointer"
                     disabled={uploadingResume}
                   />
-                  {uploadingResume && (
-                    <div className="text-xs text-gray-500 mt-2">Processing PDF...</div>
+                </label>
+                {uploadingResume && (
+                  <div className="text-xs text-gray-500 mt-2">⏳ Processing PDF...</div>
+                )}
+              </div>
+            ) : (
+              <>
+                <div className="flex flex-wrap gap-2 mb-3">
+                  {resumePersona && (
+                    <span className="px-2 py-1 text-xs font-semibold rounded bg-cyan-800/40 text-cyan-300">
+                      {resumePersona.toUpperCase()}
+                    </span>
+                  )}
+                  {resumeSeniority && (
+                    <span className="px-2 py-1 text-xs font-semibold rounded bg-purple-800/40 text-purple-300">
+                      {resumeSeniority.toUpperCase()}
+                    </span>
                   )}
                 </div>
-              ) : (
-                <>
-                  <div className="flex gap-2 mb-2">
-                    {resumePersona && (
-                      <div className="inline-block px-2 py-1 text-xs font-semibold rounded bg-sky-800/40 text-sky-300">
-                        {resumePersona.toUpperCase()}
-                      </div>
-                    )}
-                    {resumeSeniority && (
-                      <div className="inline-block px-2 py-1 text-xs font-semibold rounded bg-purple-800/40 text-purple-300">
-                        {resumeSeniority.toUpperCase()}
-                      </div>
-                    )}
-                  </div>
 
-                  <div className="flex flex-wrap gap-2 mt-2">
-                    {resumeKeywords.slice(0, 8).map((k) => (
-                      <span
-                        key={k}
-                        className="px-2 py-1 bg-sky-900/40 text-sky-300 text-xs rounded"
-                      >
-                        {k}
-                      </span>
-                    ))}
-                  </div>
-
-                  <div className="flex gap-2 mt-3">
-                    <button
-                      onClick={applyResumeMatch}
-                      disabled={analyzingJobs}
-                      className="bg-sky-600 px-3 py-1 rounded text-sm hover:bg-sky-700 disabled:opacity-50 disabled:cursor-not-allowed"
-                    >
-                      {analyzingJobs ? "Analyzing..." : "🚀 Match Jobs"}
-                    </button>
-                    <button
-                      onClick={clearResume}
-                      className="bg-gray-700 px-3 py-1 rounded text-sm hover:bg-gray-600"
-                    >
-                      Clear
-                    </button>
-                  </div>
-
-                  {analyzingJobs && (
-                    <div className="mt-3 text-xs text-gray-400">
-                      ⚡ Keyword matching all jobs...<br/>
-                      🤖 AI analyzing top 20...
-                    </div>
-                  )}
-                </>
-              )}
-            </div>
-
-            {/* FILTERS */}
-            {!resumeMatchEnabled && (
-              <div>
-                <h3 className="font-semibold text-sky-400 mb-2">Filters</h3>
-
-                <input
-                  placeholder="Search title or company"
-                  className="w-full mb-2 p-2 bg-gray-800 rounded text-sm"
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                />
-
-                <input
-                  placeholder="Company"
-                  className="w-full mb-2 p-2 bg-gray-800 rounded text-sm"
-                  value={companyQuery}
-                  onChange={(e) => setCompanyQuery(e.target.value)}
-                />
-
-                <select
-                  className="w-full mb-2 p-2 bg-gray-800 rounded text-sm"
-                  value={selectedSource}
-                  onChange={(e) => setSelectedSource(e.target.value)}
-                >
-                  <option value="all">All Sources</option>
-                  {sources.map((s) => (
-                    <option key={s}>{s}</option>
-                  ))}
-                </select>
-
-                <select
-                  className="w-full mb-2 p-2 bg-gray-800 rounded text-sm"
-                  value={selectedRole}
-                  onChange={(e) => setSelectedRole(e.target.value)}
-                >
-                  <option value="all">All Roles</option>
-                  {roles.map((r) => (
-                    <option key={r}>{r}</option>
-                  ))}
-                </select>
-
-                <select
-                  className="w-full mb-2 p-2 bg-gray-800 rounded text-sm"
-                  value={selectedLocation}
-                  onChange={(e) => setSelectedLocation(e.target.value)}
-                >
-                  <option value="all">All Locations</option>
-                  {locations.map((l) => (
-                    <option key={l}>{l}</option>
-                  ))}
-                </select>
-              </div>
+                <div className="flex gap-2">
+                  <button
+                    onClick={applyResumeMatch}
+                    disabled={analyzingJobs}
+                    className="flex-1 bg-cyan-600 px-3 py-1 rounded text-xs font-semibold hover:bg-cyan-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                  >
+                    {analyzingJobs ? "Analyzing..." : "🚀 Match"}
+                  </button>
+                  <button
+                    onClick={clearResume}
+                    className="flex-1 bg-gray-700 px-3 py-1 rounded text-xs hover:bg-gray-600 transition-colors"
+                  >
+                    Clear
+                  </button>
+                </div>
+              </>
             )}
           </div>
-        )}
+        </div>
       </div>
 
       {/* MAIN CONTENT */}
-      <div className="flex-1 p-6 space-y-4 overflow-y-auto">
-        <div className="flex justify-between items-center">
-          <h1 className="text-3xl font-bold text-sky-400">
-            Job Intelligence Dashboard
-          </h1>
-          {resumeMatchEnabled && (
-            <div className="text-sm text-gray-400">
-              {analyzingJobs ? "Analyzing..." : `${filteredJobs.length} jobs analyzed`}
+      <div className="flex-1 flex flex-col">
+        {/* Header */}
+        <div className="bg-gray-900 border-b border-gray-800 px-6 py-4">
+          <div className="flex justify-between items-center mb-4">
+            <div>
+              <h1 className="text-3xl font-bold text-cyan-400">Job Intelligence</h1>
+              <p className="text-gray-400 text-sm mt-1">
+                {resumeMatchEnabled 
+                  ? `${displayJobs.length} roles matched to your profile` 
+                  : `${displayJobs.length} opportunities available`}
+              </p>
+            </div>
+            {resumeMatchEnabled && (
+              <div className="px-3 py-1 bg-cyan-900/30 border border-cyan-900/50 rounded-lg text-cyan-400 text-sm flex items-center gap-2">
+                ✨ AI Matching Active
+              </div>
+            )}
+          </div>
+
+          {/* Search & Filters */}
+          {!resumeMatchEnabled && (
+            <div className="flex gap-3">
+              <div className="flex-1 relative">
+                <input
+                  placeholder="Search roles, companies..."
+                  className="w-full px-4 py-2 bg-gray-800 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-cyan-400 text-gray-100 placeholder-gray-500"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                />
+                <span className="absolute right-3 top-2.5 text-gray-500">🔍</span>
+              </div>
+
+              <select
+                className="px-4 py-2 bg-gray-800 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-cyan-400 text-gray-100"
+                value={selectedSource}
+                onChange={(e) => setSelectedSource(e.target.value)}
+              >
+                <option value="all">All Companies</option>
+                {sources.map((s) => (
+                  <option key={s}>{s}</option>
+                ))}
+              </select>
+
+              <select
+                className="px-4 py-2 bg-gray-800 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-cyan-400 text-gray-100"
+                value={selectedRole}
+                onChange={(e) => setSelectedRole(e.target.value)}
+              >
+                <option value="all">All Roles</option>
+                {roles.map((r) => (
+                  <option key={r}>{r}</option>
+                ))}
+              </select>
+
+              <select
+                className="px-4 py-2 bg-gray-800 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-cyan-400 text-gray-100"
+                value={selectedLocation}
+                onChange={(e) => setSelectedLocation(e.target.value)}
+              >
+                <option value="all">All Locations</option>
+                {locations.map((l) => (
+                  <option key={l}>{l}</option>
+                ))}
+              </select>
             </div>
           )}
         </div>
 
-        {filteredJobs.length === 0 ? (
-          <div className="text-center text-gray-500 py-10">
-            No jobs found matching your criteria
-          </div>
-        ) : (
-          filteredJobs.map((job) => (
-            <div
-              key={job.id}
-              className="bg-gray-900 border border-gray-800 p-5 rounded-lg hover:border-gray-700 transition-colors"
-            >
-              <div className="flex justify-between">
-                <div className="flex-1">
-                  <h2 className="font-semibold text-lg">{job.title}</h2>
-                  <p className="text-gray-400">{job.company}</p>
+        {/* Jobs List */}
+        <div className="flex-1 overflow-y-auto p-6 space-y-4">
+          {displayJobs.length === 0 ? (
+            <div className="text-center text-gray-500 py-10">
+              <p className="text-lg">No jobs found</p>
+              <p className="text-sm mt-1">Try adjusting your filters or uploading your resume</p>
+            </div>
+          ) : (
+            displayJobs.map((job) => (
+              <div
+                key={job.id}
+                className="bg-gray-900 border border-gray-800 rounded-lg p-5 hover:border-gray-700 transition-colors hover:bg-gray-800/50"
+              >
+                <div className="flex gap-4">
+                  {/* Match Score Circle */}
+                  {resumeMatchEnabled && job.matchScore !== undefined && (
+                    <div className={`flex-shrink-0 w-24 h-24 rounded-full border-4 ${getScoreColor(job.matchScore)} flex items-center justify-center`}>
+                      <div className="text-center">
+                        <div className={`text-2xl font-bold ${getScoreColor(job.matchScore)}`}>
+                          {job.matchScore}
+                        </div>
+                        <div className="text-xs text-gray-400">match</div>
+                      </div>
+                    </div>
+                  )}
 
-                  <div className="flex flex-wrap gap-2 mt-2 text-xs">
-                    <span className="bg-gray-800 px-2 py-1 rounded">
-                      {job.location}
-                    </span>
-                    {job.role && (
-                      <span className="bg-gray-800 px-2 py-1 rounded">
-                        {job.role}
-                      </span>
+                  {/* Job Content */}
+                  <div className="flex-1">
+                    <div className="flex items-start gap-2 mb-2">
+                      <h2 className="text-lg font-semibold">{job.title}</h2>
+                      {!appliedJobs.includes(job.id) && (
+                        <span className="px-2 py-0.5 text-xs font-semibold bg-cyan-900/40 text-cyan-300 rounded">
+                          ✨ New
+                        </span>
+                      )}
+                    </div>
+
+                    <p className="text-gray-400 text-sm mb-3 flex items-center gap-2">
+                      <span>🏢 {job.company}</span>
+                      <span>📍 {job.location}</span>
+                    </p>
+
+                    <div className="flex flex-wrap gap-2 mb-3">
+                      {job.role && (
+                        <span className="text-xs px-2.5 py-1 bg-gray-800 rounded text-gray-300">
+                          {job.role}
+                        </span>
+                      )}
+                      {job.employment_type && (
+                        <span className="text-xs px-2.5 py-1 bg-gray-800 rounded text-gray-300">
+                          {job.employment_type}
+                        </span>
+                      )}
+                      {job.source && (
+                        <span className="text-xs px-2.5 py-1 bg-gray-800 rounded text-gray-300">
+                          {job.source}
+                        </span>
+                      )}
+                    </div>
+
+                    {/* AI Insights */}
+                    {resumeMatchEnabled && job.insights && (
+                      <p className="text-sm text-gray-300 italic">
+                        💡 {job.insights}
+                      </p>
                     )}
-                    <span className="bg-gray-800 px-2 py-1 rounded">
-                      {job.source}
-                    </span>
                   </div>
 
-                  {/* AI Insights */}
-                  {resumeMatchEnabled && job.insights && (
-                    <div className="mt-3 text-sm text-gray-300 italic">
-                      "{job.insights}"
-                    </div>
-                  )}
-                </div>
+                  {/* Action Buttons */}
+                  <div className="flex-shrink-0 flex gap-2">
+                    <button
+                      onClick={() => toggleSaveJob(job.id)}
+                      className={`p-2 rounded transition-colors ${
+                        savedJobs.includes(job.id)
+                          ? "bg-yellow-900/40 text-yellow-400"
+                          : "bg-gray-800 text-gray-400 hover:text-gray-300"
+                      }`}
+                      title="Save job"
+                    >
+                      🔖
+                    </button>
 
-                {/* Match Display */}
-                <div className="text-right ml-4 flex flex-col items-end">
-                  {resumeMatchEnabled && job.matchScore !== undefined && (
-                    <div className="mb-1">
-                      <div className={`font-bold text-2xl ${
-                        job.matchScore >= 75 ? 'text-green-400' :
-                        job.matchScore >= 60 ? 'text-sky-400' :
-                        job.matchScore >= 45 ? 'text-yellow-400' :
-                        'text-orange-400'
-                      }`}>
-                        {job.matchScore}%
-                      </div>
-                      <div className="text-xs text-gray-300 mt-1 max-w-[180px] text-right">
-                        {job.reason || "Match found"}
-                      </div>
-                    </div>
-                  )}
-
-                  <a
-                    href={job.applyLink}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="bg-sky-600 px-4 py-2 rounded hover:bg-sky-700 transition-colors text-sm"
-                  >
-                    Apply →
-                  </a>
+                    <a
+                      href={job.applyLink}
+                      target="_blank"
+                      rel="noreferrer"
+                      onClick={() => markJobAsApplied(job.id)}
+                      className="px-4 py-2 bg-cyan-500 text-gray-900 font-semibold rounded-lg hover:bg-cyan-400 transition-colors flex items-center gap-2"
+                    >
+                      Apply →
+                    </a>
+                  </div>
                 </div>
               </div>
-            </div>
-          ))
-        )}
+            ))
+          )}
+        </div>
       </div>
     </div>
   );
