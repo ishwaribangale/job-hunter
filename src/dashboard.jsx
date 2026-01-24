@@ -63,12 +63,6 @@ export default function App() {
     return filteredJobs.filter(j => j.matchScore >= 75).length;
   }, [filteredJobs]);
 
-  /* Display only first 6 jobs to keep responsive */
-  const displayJobsLimited = React.useMemo(() => {
-    const display = getDisplayJobs();
-    return display.slice(0, 6);
-  }, [filteredJobs, activeSection, savedJobs, appliedJobs]);
-
   /* ---------------- RESUME HELPERS ---------------- */
   const extractKeywords = (text) => {
     const lower = text.toLowerCase();
@@ -310,7 +304,7 @@ Consider:
   };
 
   /* Get Display Jobs Based on Section */
-  function getDisplayJobs() {
+  const getDisplayJobs = () => {
     switch(activeSection) {
       case "top-matches":
         return filteredJobs.filter(j => j.matchScore >= 75);
@@ -321,7 +315,9 @@ Consider:
       default:
         return filteredJobs;
     }
-  }
+  };
+
+  const displayJobs = getDisplayJobs();
 
   /* Get Score Color */
   const getScoreColor = (score) => {
@@ -373,369 +369,51 @@ Consider:
     return <div className="p-10 text-center text-gray-500">Loading jobs…</div>;
   }
 
-  const displayJobs = getDisplayJobs();
-
   return (
-    <div className="min-h-screen bg-gray-950 text-gray-100">
-      {/* DESKTOP LAYOUT */}
-      <div className="hidden lg:flex min-h-screen">
-        {/* SIDEBAR */}
-        <div className="w-64 bg-gray-900 border-r border-gray-800 p-6 space-y-8 overflow-y-auto">
-          {/* Logo */}
-          <div className="flex items-center gap-2">
-            <div className="w-8 h-8 rounded bg-cyan-400 flex items-center justify-center text-gray-900 font-bold text-sm">
-              JF
-            </div>
-            <h1 className="text-lg font-bold">JobFlow</h1>
-          </div>
-
-          {/* Navigation */}
-          <nav className="space-y-2">
-            <button
-              onClick={() => setActiveSection("all-jobs")}
-              className={`w-full text-left px-4 py-2 rounded-lg flex items-center gap-2 transition-colors ${
-                activeSection === "all-jobs"
-                  ? "bg-cyan-900/30 text-cyan-400"
-                  : "text-gray-400 hover:text-gray-300"
-              }`}
-            >
-              📦 All Jobs
-            </button>
-
-            <button
-              onClick={() => setActiveSection("top-matches")}
-              className={`w-full text-left px-4 py-2 rounded-lg flex items-center justify-between transition-colors ${
-                activeSection === "top-matches"
-                  ? "bg-cyan-900/30 text-cyan-400"
-                  : "text-gray-400 hover:text-gray-300"
-              }`}
-            >
-              <span>📈 Top Matches</span>
-              {topMatchesCount > 0 && (
-                <span className="bg-cyan-400 text-gray-900 text-xs font-bold px-2 py-0.5 rounded-full">
-                  {topMatchesCount}
-                </span>
-              )}
-            </button>
-
-            <button
-              onClick={() => setActiveSection("saved")}
-              className={`w-full text-left px-4 py-2 rounded-lg flex items-center gap-2 transition-colors ${
-                activeSection === "saved"
-                  ? "bg-cyan-900/30 text-cyan-400"
-                  : "text-gray-400 hover:text-gray-300"
-              }`}
-            >
-              🔖 Saved
-            </button>
-
-            <button
-              onClick={() => setActiveSection("applied")}
-              className={`w-full text-left px-4 py-2 rounded-lg flex items-center gap-2 transition-colors ${
-                activeSection === "applied"
-                  ? "bg-cyan-900/30 text-cyan-400"
-                  : "text-gray-400 hover:text-gray-300"
-              }`}
-            >
-              ⏱️ Applied
-            </button>
-          </nav>
-
-          {/* Quick Filters */}
-          {activeSection === "all-jobs" && (
-            <div className="border-t border-gray-800 pt-4">
-              <h3 className="text-xs font-semibold text-gray-500 uppercase mb-3">Quick Filters</h3>
-              <div className="space-y-2">
-                {quickFilters.map((qf) => (
-                  <button
-                    key={qf.key}
-                    onClick={() => {
-                      const filtered = jobs.filter(qf.filter);
-                      setFilteredJobs(filtered);
-                    }}
-                    className="w-full text-left px-3 py-2 text-sm text-gray-400 hover:text-gray-300 hover:bg-gray-800 rounded transition-colors"
-                  >
-                    {qf.label}
-                  </button>
-                ))}
+    <div className="min-h-screen bg-gray-950 text-gray-100 flex flex-col md:flex-row">
+      {/* SIDEBAR */}
+      <div className={`${
+        sidebarOpen ? "w-full md:w-64" : "w-16"
+      } bg-gray-900 border-b md:border-b-0 md:border-r border-gray-800 transition-all`}>
+        {/* Sidebar Toggle */}
+        <div className="flex items-center justify-between md:flex-col md:gap-0 p-4">
+          {sidebarOpen && (
+            <div className="flex items-center gap-2">
+              <div className="w-8 h-8 rounded bg-cyan-400 flex items-center justify-center text-gray-900 font-bold text-sm">
+                JF
               </div>
+              <h1 className="text-lg font-bold hidden md:inline">JobFlow</h1>
             </div>
           )}
-
-          {/* Resume Matcher */}
-          <div className="border-t border-gray-800 pt-4">
-            <div className="bg-cyan-900/20 border border-cyan-900/40 rounded-lg p-4">
-              <h3 className="font-semibold text-cyan-400 mb-2 flex items-center gap-2 text-sm">
-                ✨ See Your Fit
-              </h3>
-              <p className="text-xs text-gray-400 mb-3">Upload your resume to discover roles</p>
-
-              {!resumeText ? (
-                <div>
-                  <label className="block cursor-pointer">
-                    <input 
-                      type="file" 
-                      accept=".pdf" 
-                      onChange={handleResumeUpload}
-                      className="text-xs text-gray-400 cursor-pointer"
-                      disabled={uploadingResume}
-                    />
-                  </label>
-                  {uploadingResume && (
-                    <div className="text-xs text-gray-500 mt-2">⏳ Processing PDF...</div>
-                  )}
-                </div>
-              ) : (
-                <>
-                  <div className="flex flex-wrap gap-2 mb-3">
-                    {resumePersona && (
-                      <span className="px-2 py-1 text-xs font-semibold rounded bg-cyan-800/40 text-cyan-300">
-                        {resumePersona.toUpperCase()}
-                      </span>
-                    )}
-                    {resumeSeniority && (
-                      <span className="px-2 py-1 text-xs font-semibold rounded bg-purple-800/40 text-purple-300">
-                        {resumeSeniority.toUpperCase()}
-                      </span>
-                    )}
-                  </div>
-
-                  <div className="flex gap-2">
-                    <button
-                      onClick={applyResumeMatch}
-                      disabled={analyzingJobs}
-                      className="flex-1 bg-cyan-600 px-3 py-1 rounded text-xs font-semibold hover:bg-cyan-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-                    >
-                      {analyzingJobs ? "Analyzing..." : "🚀 Match"}
-                    </button>
-                    <button
-                      onClick={clearResume}
-                      className="flex-1 bg-gray-700 px-3 py-1 rounded text-xs hover:bg-gray-600 transition-colors"
-                    >
-                      Clear
-                    </button>
-                  </div>
-                </>
-              )}
-            </div>
-          </div>
-        </div>
-
-        {/* MAIN CONTENT */}
-        <div className="flex-1 flex flex-col">
-          {/* Header */}
-          <div className="bg-gray-900 border-b border-gray-800 px-8 py-6">
-            <div className="flex justify-between items-start mb-6">
-              <div>
-                <h1 className="text-4xl font-bold text-cyan-400">Job Intelligence</h1>
-                <p className="text-gray-400 text-sm mt-2">
-                  {resumeMatchEnabled 
-                    ? `${displayJobs.length} roles matched to your profile` 
-                    : `${displayJobs.length} opportunities available`}
-                </p>
-              </div>
-              {resumeMatchEnabled && (
-                <div className="px-3 py-1 bg-cyan-900/30 border border-cyan-900/50 rounded-lg text-cyan-400 text-sm flex items-center gap-2">
-                  ✨ AI Matching Active
-                </div>
-              )}
-            </div>
-
-            {/* Search & Filters */}
-            {!resumeMatchEnabled && (
-              <div className="flex gap-3">
-                <div className="flex-1 relative">
-                  <input
-                    placeholder="Search roles, companies..."
-                    className="w-full px-4 py-2 bg-gray-800 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-cyan-400 text-gray-100 placeholder-gray-500"
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                  />
-                  <span className="absolute right-3 top-2.5 text-gray-500">🔍</span>
-                </div>
-
-                <select
-                  className="px-4 py-2 bg-gray-800 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-cyan-400 text-gray-100"
-                  value={selectedSource}
-                  onChange={(e) => setSelectedSource(e.target.value)}
-                >
-                  <option value="all">All Companies</option>
-                  {sources.map((s) => (
-                    <option key={s}>{s}</option>
-                  ))}
-                </select>
-
-                <select
-                  className="px-4 py-2 bg-gray-800 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-cyan-400 text-gray-100"
-                  value={selectedRole}
-                  onChange={(e) => setSelectedRole(e.target.value)}
-                >
-                  <option value="all">All Roles</option>
-                  {roles.map((r) => (
-                    <option key={r}>{r}</option>
-                  ))}
-                </select>
-
-                <select
-                  className="px-4 py-2 bg-gray-800 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-cyan-400 text-gray-100"
-                  value={selectedLocation}
-                  onChange={(e) => setSelectedLocation(e.target.value)}
-                >
-                  <option value="all">All Locations</option>
-                  {locations.map((l) => (
-                    <option key={l}>{l}</option>
-                  ))}
-                </select>
-              </div>
-            )}
-          </div>
-
-          {/* Jobs Grid */}
-          <div className="flex-1 px-8 py-6">
-            {displayJobsLimited.length === 0 ? (
-              <div className="text-center text-gray-500 py-12">
-                <p className="text-lg">No jobs found</p>
-                <p className="text-sm mt-1">Try adjusting your filters or uploading your resume</p>
-              </div>
-            ) : (
-              <div className="grid grid-cols-1 gap-4">
-                {displayJobsLimited.map((job) => {
-                  const scoreColor = resumeMatchEnabled && job.matchScore !== undefined ? getScoreColor(job.matchScore) : {};
-                  
-                  return (
-                    <div
-                      key={job.id}
-                      className="bg-gray-900 border border-gray-800 rounded-lg p-5 hover:border-gray-700 transition-colors hover:bg-gray-800/50"
-                    >
-                      <div className="flex gap-4">
-                        {/* Match Score Circle */}
-                        {resumeMatchEnabled && job.matchScore !== undefined && (
-                          <div className="flex-shrink-0">
-                            <div className={`w-24 h-24 rounded-full border-4 ${scoreColor.border} flex items-center justify-center`}>
-                              <div className="text-center">
-                                <div className={`text-2xl font-bold ${scoreColor.text}`}>
-                                  {job.matchScore}
-                                </div>
-                                <div className="text-xs text-gray-400">match</div>
-                              </div>
-                            </div>
-                          </div>
-                        )}
-
-                        {/* Job Content */}
-                        <div className="flex-1">
-                          <div className="flex items-start gap-2 mb-2">
-                            <h2 className="text-lg font-semibold">{job.title}</h2>
-                            {!appliedJobs.includes(job.id) && (
-                              <span className="px-2 py-0.5 text-xs font-semibold bg-cyan-900/40 text-cyan-300 rounded flex-shrink-0">
-                                ✨ New
-                              </span>
-                            )}
-                          </div>
-
-                          <p className="text-gray-400 text-sm mb-3">
-                            <span>🏢 {job.company}</span> • <span>📍 {job.location}</span>
-                          </p>
-
-                          <div className="flex flex-wrap gap-2 mb-3">
-                            {job.role && (
-                              <span className="text-xs px-2.5 py-1 bg-gray-800 rounded text-gray-300">
-                                {job.role}
-                              </span>
-                            )}
-                            {job.employment_type && (
-                              <span className="text-xs px-2.5 py-1 bg-gray-800 rounded text-gray-300">
-                                {job.employment_type}
-                              </span>
-                            )}
-                            {job.source && (
-                              <span className="text-xs px-2.5 py-1 bg-gray-800 rounded text-gray-300">
-                                {job.source}
-                              </span>
-                            )}
-                          </div>
-
-                          {/* AI Insights */}
-                          {resumeMatchEnabled && job.insights && (
-                            <p className="text-sm text-gray-300 italic">
-                              💡 {job.insights}
-                            </p>
-                          )}
-                        </div>
-
-                        {/* Action Buttons */}
-                        <div className="flex gap-2 flex-shrink-0">
-                          <button
-                            onClick={() => toggleSaveJob(job.id)}
-                            className={`p-2 rounded transition-colors text-lg ${
-                              savedJobs.includes(job.id)
-                                ? "bg-yellow-900/40 text-yellow-400"
-                                : "bg-gray-800 text-gray-400 hover:text-gray-300 hover:bg-gray-700"
-                            }`}
-                            title="Save job"
-                          >
-                            🔖
-                          </button>
-
-                          <a
-                            href={job.applyLink}
-                            target="_blank"
-                            rel="noreferrer"
-                            onClick={() => markJobAsApplied(job.id)}
-                            className="px-4 py-2 bg-cyan-500 text-gray-900 font-semibold rounded-lg hover:bg-cyan-400 transition-colors flex items-center gap-2 whitespace-nowrap"
-                          >
-                            Apply →
-                          </a>
-                        </div>
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            )}
-          </div>
-        </div>
-      </div>
-
-      {/* MOBILE/TABLET LAYOUT */}
-      <div className="lg:hidden">
-        {/* Mobile Header with Navigation */}
-        <div className="bg-gray-900 border-b border-gray-800 px-4 py-4 flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <div className="w-8 h-8 rounded bg-cyan-400 flex items-center justify-center text-gray-900 font-bold text-sm">
-              JF
-            </div>
-            <h1 className="text-xl font-bold text-cyan-400">JobFlow</h1>
-          </div>
           <button
             onClick={() => setSidebarOpen(!sidebarOpen)}
-            className="text-cyan-400 text-2xl"
+            className="p-2 text-cyan-400 md:w-full md:text-left hover:bg-gray-800 rounded"
           >
             {sidebarOpen ? "✕" : "☰"}
           </button>
         </div>
 
-        {/* Mobile Sidebar */}
         {sidebarOpen && (
-          <div className="bg-gray-900 border-b border-gray-800 px-4 py-4 space-y-4">
+          <div className="p-4 space-y-6">
+            {/* Navigation */}
             <nav className="space-y-2">
               <button
-                onClick={() => { setActiveSection("all-jobs"); setSidebarOpen(false); }}
-                className={`w-full text-left px-4 py-2 rounded-lg text-sm transition-colors ${
+                onClick={() => setActiveSection("all-jobs")}
+                className={`w-full text-left px-4 py-2 rounded-lg flex items-center gap-2 transition-colors ${
                   activeSection === "all-jobs"
                     ? "bg-cyan-900/30 text-cyan-400"
-                    : "text-gray-400"
+                    : "text-gray-400 hover:text-gray-300"
                 }`}
               >
                 📦 All Jobs
               </button>
 
               <button
-                onClick={() => { setActiveSection("top-matches"); setSidebarOpen(false); }}
-                className={`w-full text-left px-4 py-2 rounded-lg text-sm transition-colors flex justify-between items-center ${
+                onClick={() => setActiveSection("top-matches")}
+                className={`w-full text-left px-4 py-2 rounded-lg flex items-center justify-between transition-colors ${
                   activeSection === "top-matches"
                     ? "bg-cyan-900/30 text-cyan-400"
-                    : "text-gray-400"
+                    : "text-gray-400 hover:text-gray-300"
                 }`}
               >
                 <span>📈 Top Matches</span>
@@ -747,22 +425,22 @@ Consider:
               </button>
 
               <button
-                onClick={() => { setActiveSection("saved"); setSidebarOpen(false); }}
-                className={`w-full text-left px-4 py-2 rounded-lg text-sm transition-colors ${
+                onClick={() => setActiveSection("saved")}
+                className={`w-full text-left px-4 py-2 rounded-lg flex items-center gap-2 transition-colors ${
                   activeSection === "saved"
                     ? "bg-cyan-900/30 text-cyan-400"
-                    : "text-gray-400"
+                    : "text-gray-400 hover:text-gray-300"
                 }`}
               >
                 🔖 Saved
               </button>
 
               <button
-                onClick={() => { setActiveSection("applied"); setSidebarOpen(false); }}
-                className={`w-full text-left px-4 py-2 rounded-lg text-sm transition-colors ${
+                onClick={() => setActiveSection("applied")}
+                className={`w-full text-left px-4 py-2 rounded-lg flex items-center gap-2 transition-colors ${
                   activeSection === "applied"
                     ? "bg-cyan-900/30 text-cyan-400"
-                    : "text-gray-400"
+                    : "text-gray-400 hover:text-gray-300"
                 }`}
               >
                 ⏱️ Applied
@@ -789,170 +467,242 @@ Consider:
                 </div>
               </div>
             )}
+
+            {/* Resume Matcher */}
+            <div className="border-t border-gray-800 pt-4">
+              <div className="bg-cyan-900/20 border border-cyan-900/40 rounded-lg p-4">
+                <h3 className="font-semibold text-cyan-400 mb-2 flex items-center gap-2 text-sm">
+                  ✨ See Your Fit
+                </h3>
+                <p className="text-xs text-gray-400 mb-3">Upload your resume to discover roles</p>
+
+                {!resumeText ? (
+                  <div>
+                    <label className="block cursor-pointer">
+                      <input 
+                        type="file" 
+                        accept=".pdf" 
+                        onChange={handleResumeUpload}
+                        className="text-xs text-gray-400 cursor-pointer"
+                        disabled={uploadingResume}
+                      />
+                    </label>
+                    {uploadingResume && (
+                      <div className="text-xs text-gray-500 mt-2">⏳ Processing PDF...</div>
+                    )}
+                  </div>
+                ) : (
+                  <>
+                    <div className="flex flex-wrap gap-2 mb-3">
+                      {resumePersona && (
+                        <span className="px-2 py-1 text-xs font-semibold rounded bg-cyan-800/40 text-cyan-300">
+                          {resumePersona.toUpperCase()}
+                        </span>
+                      )}
+                      {resumeSeniority && (
+                        <span className="px-2 py-1 text-xs font-semibold rounded bg-purple-800/40 text-purple-300">
+                          {resumeSeniority.toUpperCase()}
+                        </span>
+                      )}
+                    </div>
+
+                    <div className="flex gap-2">
+                      <button
+                        onClick={applyResumeMatch}
+                        disabled={analyzingJobs}
+                        className="flex-1 bg-cyan-600 px-3 py-1 rounded text-xs font-semibold hover:bg-cyan-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                      >
+                        {analyzingJobs ? "Analyzing..." : "🚀 Match"}
+                      </button>
+                      <button
+                        onClick={clearResume}
+                        className="flex-1 bg-gray-700 px-3 py-1 rounded text-xs hover:bg-gray-600 transition-colors"
+                      >
+                        Clear
+                      </button>
+                    </div>
+                  </>
+                )}
+              </div>
+            </div>
           </div>
         )}
+      </div>
 
-        {/* Mobile Content */}
-        <div className="px-4 py-4 space-y-4">
-          {/* Main Title */}
-          <div className="mb-4">
-            <h2 className="text-2xl font-bold text-cyan-400">Job Intelligence</h2>
-            <p className="text-gray-400 text-xs mt-1">
-              {resumeMatchEnabled 
-                ? `${displayJobs.length} roles matched` 
-                : `${displayJobs.length} opportunities`}
-            </p>
+      {/* MAIN CONTENT */}
+      <div className="flex-1 flex flex-col w-full">
+        {/* Header */}
+        <div className="bg-gray-900 border-b border-gray-800 px-4 md:px-6 py-4 md:py-6">
+          <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-4">
+            <div>
+              <h1 className="text-2xl md:text-4xl font-bold text-cyan-400">Job Intelligence</h1>
+              <p className="text-gray-400 text-sm mt-1">
+                {resumeMatchEnabled 
+                  ? `${displayJobs.length} roles matched to your profile` 
+                  : `${displayJobs.length} opportunities available`}
+              </p>
+            </div>
             {resumeMatchEnabled && (
-              <div className="text-xs text-cyan-400 mt-2 flex items-center gap-1">
+              <div className="px-3 py-1 bg-cyan-900/30 border border-cyan-900/50 rounded-lg text-cyan-400 text-sm flex items-center gap-2">
                 ✨ AI Matching Active
               </div>
             )}
           </div>
 
-          {/* Resume Matcher Card */}
-          <div className="bg-cyan-900/20 border border-cyan-900/40 rounded-lg p-4">
-            <h3 className="font-semibold text-cyan-400 mb-2 text-sm">✨ See Your Fit</h3>
-
-            {!resumeText ? (
-              <label className="block cursor-pointer">
-                <input 
-                  type="file" 
-                  accept=".pdf" 
-                  onChange={handleResumeUpload}
-                  className="text-xs text-gray-400"
-                  disabled={uploadingResume}
-                />
-                {uploadingResume && <div className="text-xs text-gray-500 mt-2">Processing...</div>}
-              </label>
-            ) : (
-              <>
-                <div className="flex flex-wrap gap-2 mb-3">
-                  {resumePersona && (
-                    <span className="px-2 py-1 text-xs font-semibold rounded bg-cyan-800/40 text-cyan-300">
-                      {resumePersona.toUpperCase()}
-                    </span>
-                  )}
-                  {resumeSeniority && (
-                    <span className="px-2 py-1 text-xs font-semibold rounded bg-purple-800/40 text-purple-300">
-                      {resumeSeniority.toUpperCase()}
-                    </span>
-                  )}
-                </div>
-
-                <div className="flex gap-2">
-                  <button
-                    onClick={applyResumeMatch}
-                    disabled={analyzingJobs}
-                    className="flex-1 bg-cyan-600 px-3 py-2 rounded text-xs font-semibold hover:bg-cyan-700 disabled:opacity-50"
-                  >
-                    {analyzingJobs ? "Analyzing..." : "🚀 Match"}
-                  </button>
-                  <button
-                    onClick={clearResume}
-                    className="flex-1 bg-gray-700 px-3 py-2 rounded text-xs hover:bg-gray-600"
-                  >
-                    Clear
-                  </button>
-                </div>
-              </>
-            )}
-          </div>
-
-          {/* Search Bar */}
+          {/* Search & Filters */}
           {!resumeMatchEnabled && (
-            <div className="relative">
-              <input
-                placeholder="Search roles..."
-                className="w-full px-4 py-2 bg-gray-800 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-cyan-400"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-              />
-              <span className="absolute right-3 top-2.5 text-gray-500">🔍</span>
+            <div className="flex flex-col md:flex-row gap-2 md:gap-3">
+              <div className="flex-1 relative">
+                <input
+                  placeholder="Search roles, companies..."
+                  className="w-full px-4 py-2 bg-gray-800 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-cyan-400 text-gray-100 placeholder-gray-500"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                />
+                <span className="absolute right-3 top-2.5 text-gray-500">🔍</span>
+              </div>
+
+              <select
+                className="px-4 py-2 bg-gray-800 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-cyan-400 text-gray-100"
+                value={selectedSource}
+                onChange={(e) => setSelectedSource(e.target.value)}
+              >
+                <option value="all">All Companies</option>
+                {sources.map((s) => (
+                  <option key={s}>{s}</option>
+                ))}
+              </select>
+
+              <select
+                className="px-4 py-2 bg-gray-800 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-cyan-400 text-gray-100"
+                value={selectedRole}
+                onChange={(e) => setSelectedRole(e.target.value)}
+              >
+                <option value="all">All Roles</option>
+                {roles.map((r) => (
+                  <option key={r}>{r}</option>
+                ))}
+              </select>
+
+              <select
+                className="px-4 py-2 bg-gray-800 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-cyan-400 text-gray-100"
+                value={selectedLocation}
+                onChange={(e) => setSelectedLocation(e.target.value)}
+              >
+                <option value="all">All Locations</option>
+                {locations.map((l) => (
+                  <option key={l}>{l}</option>
+                ))}
+              </select>
             </div>
           )}
+        </div>
 
-          {/* Jobs List */}
-          {displayJobsLimited.length === 0 ? (
-            <div className="text-center text-gray-500 py-8">
-              <p className="text-base">No jobs found</p>
+        {/* Jobs List */}
+        <div className="flex-1 overflow-y-auto p-4 md:p-6 space-y-4">
+          {displayJobs.length === 0 ? (
+            <div className="text-center text-gray-500 py-10">
+              <p className="text-lg">No jobs found</p>
+              <p className="text-sm mt-1">Try adjusting your filters or uploading your resume</p>
             </div>
           ) : (
-            <div className="space-y-3">
-              {displayJobsLimited.map((job) => {
-                const scoreColor = resumeMatchEnabled && job.matchScore !== undefined ? getScoreColor(job.matchScore) : {};
-                
-                return (
-                  <div
-                    key={job.id}
-                    className="bg-gray-900 border border-gray-800 rounded-lg p-4 hover:border-gray-700 transition-colors"
-                  >
-                    <div className="space-y-3">
-                      {/* Match Score + Title */}
-                      <div className="flex gap-3 items-start">
-                        {resumeMatchEnabled && job.matchScore !== undefined && (
-                          <div className={`w-16 h-16 rounded-full border-4 ${scoreColor.border} flex items-center justify-center flex-shrink-0`}>
-                            <div className="text-center">
-                              <div className={`text-lg font-bold ${scoreColor.text}`}>
-                                {job.matchScore}
-                              </div>
-                              <div className="text-xs text-gray-400">%</div>
+            displayJobs.map((job) => {
+              const scoreColor = resumeMatchEnabled && job.matchScore !== undefined ? getScoreColor(job.matchScore) : {};
+              
+              return (
+                <div
+                  key={job.id}
+                  className="bg-gray-900 border border-gray-800 rounded-lg p-4 md:p-5 hover:border-gray-700 transition-colors hover:bg-gray-800/50"
+                >
+                  <div className="flex flex-col md:flex-row gap-4">
+                    {/* Match Score Circle */}
+                    {resumeMatchEnabled && job.matchScore !== undefined && (
+                      <div className="flex-shrink-0 flex justify-center md:justify-start">
+                        <div className={`w-20 h-20 md:w-24 md:h-24 rounded-full border-4 ${scoreColor.border} flex items-center justify-center flex-shrink-0`}>
+                          <div className="text-center">
+                            <div className={`text-xl md:text-2xl font-bold ${scoreColor.text}`}>
+                              {job.matchScore}
                             </div>
+                            <div className="text-xs text-gray-400">match</div>
                           </div>
-                        )}
-
-                        <div className="flex-1">
-                          <div className="flex items-start gap-2">
-                            <h3 className="font-semibold text-sm">{job.title}</h3>
-                            {!appliedJobs.includes(job.id) && (
-                              <span className="text-xs px-1.5 py-0.5 bg-cyan-900/40 text-cyan-300 rounded flex-shrink-0">
-                                ✨
-                              </span>
-                            )}
-                          </div>
-                          <p className="text-gray-400 text-xs mt-1">{job.company}</p>
                         </div>
                       </div>
+                    )}
 
-                      {/* Location & Tags */}
-                      <div className="flex flex-wrap gap-2">
-                        <span className="text-xs px-2 py-1 bg-gray-800 rounded text-gray-300">
-                          📍 {job.location}
-                        </span>
-                        {job.role && (
-                          <span className="text-xs px-2 py-1 bg-gray-800 rounded text-gray-300">
-                            {job.role}
+                    {/* Job Content */}
+                    <div className="flex-1 min-w-0">
+                      <div className="flex flex-col md:flex-row md:items-start md:gap-2 mb-2">
+                        <h2 className="text-lg md:text-xl font-semibold break-words">{job.title}</h2>
+                        {!appliedJobs.includes(job.id) && (
+                          <span className="w-fit px-2 py-0.5 text-xs font-semibold bg-cyan-900/40 text-cyan-300 rounded mt-1 md:mt-0">
+                            ✨ New
                           </span>
                         )}
                       </div>
 
-                      {/* Action Buttons */}
-                      <div className="flex gap-2 pt-2">
-                        <button
-                          onClick={() => toggleSaveJob(job.id)}
-                          className={`flex-1 py-2 rounded text-sm font-semibold transition-colors ${
-                            savedJobs.includes(job.id)
-                              ? "bg-yellow-900/40 text-yellow-400"
-                              : "bg-gray-800 text-gray-400"
-                          }`}
-                        >
-                          🔖 Save
-                        </button>
+                      <p className="text-gray-400 text-xs md:text-sm mb-3 flex flex-col md:flex-row md:gap-4 gap-1">
+                        <span className="flex items-center gap-1">
+                          <span>🏢</span> {job.company}
+                        </span>
+                        <span className="flex items-center gap-1">
+                          <span>📍</span> {job.location}
+                        </span>
+                      </p>
 
-                        <a
-                          href={job.applyLink}
-                          target="_blank"
-                          rel="noreferrer"
-                          onClick={() => markJobAsApplied(job.id)}
-                          className="flex-1 py-2 bg-cyan-500 text-gray-900 font-semibold rounded text-sm hover:bg-cyan-400 transition-colors text-center"
-                        >
-                          Apply
-                        </a>
+                      <div className="flex flex-wrap gap-2 mb-3">
+                        {job.role && (
+                          <span className="text-xs px-2.5 py-1 bg-gray-800 rounded text-gray-300">
+                            {job.role}
+                          </span>
+                        )}
+                        {job.employment_type && (
+                          <span className="text-xs px-2.5 py-1 bg-gray-800 rounded text-gray-300">
+                            {job.employment_type}
+                          </span>
+                        )}
+                        {job.source && (
+                          <span className="text-xs px-2.5 py-1 bg-gray-800 rounded text-gray-300">
+                            {job.source}
+                          </span>
+                        )}
                       </div>
+
+                      {/* AI Insights */}
+                      {resumeMatchEnabled && job.insights && (
+                        <p className="text-xs md:text-sm text-gray-300 italic">
+                          💡 {job.insights}
+                        </p>
+                      )}
+                    </div>
+
+                    {/* Action Buttons */}
+                    <div className="flex flex-row md:flex-col gap-2 flex-shrink-0 justify-end">
+                      <button
+                        onClick={() => toggleSaveJob(job.id)}
+                        className={`p-2 rounded transition-colors text-lg ${
+                          savedJobs.includes(job.id)
+                            ? "bg-yellow-900/40 text-yellow-400"
+                            : "bg-gray-800 text-gray-400 hover:text-gray-300 hover:bg-gray-700"
+                        }`}
+                        title="Save job"
+                      >
+                        🔖
+                      </button>
+
+                      <a
+                        href={job.applyLink}
+                        target="_blank"
+                        rel="noreferrer"
+                        onClick={() => markJobAsApplied(job.id)}
+                        className="px-4 py-2 bg-cyan-500 text-gray-900 font-semibold rounded-lg hover:bg-cyan-400 transition-colors flex items-center gap-2 whitespace-nowrap text-sm md:text-base"
+                      >
+                        Apply →
+                      </a>
                     </div>
                   </div>
-                );
-              })}
-            </div>
+                </div>
+              );
+            })
           )}
         </div>
       </div>
