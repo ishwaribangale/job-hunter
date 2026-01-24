@@ -176,9 +176,10 @@ class RequirementsExtractor:
 # ===================================================================
 # JOB SCRAPER (your existing code continues below)
 # ===================================================================
+   
 
 class JobScraper:
-    def __init__(self):
+     def __init__(self):
         self.jobs = []
         self.seen = set()
         self.stats = {}
@@ -190,18 +191,9 @@ class JobScraper:
         if link in self.req_cache:
             return self.req_cache[link]
 
-reqs = self.req_extractor.extract_from_url(link)
-self.req_cache[link] = reqs
-return reqs
-
-
-    # ... rest of your existing JobScraper code ...
-class JobScraper:
-    def __init__(self):
-        self.jobs = []
-        self.seen = set()
-        self.stats = {}
-        self.req_extractor = RequirementsExtractor()
+        reqs = self.req_extractor.extract_from_url(link)
+        self.req_cache[link] = reqs
+        return reqs
 
     def now(self):
         return datetime.utcnow().isoformat()
