@@ -14,6 +14,7 @@ from bs4 import BeautifulSoup
 from config import HEADERS, TIMEOUT, TOP_COMPANIES, CAREER_PAGES, ASHBY_COMPANIES
 from roles import infer_role
 from scoring import score_job
+from requirements_extractor import RequirementsExtractor
 
 SCRAPE_MODE = "VOLUME"  # VOLUME | INTELLIGENCE
 
