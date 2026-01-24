@@ -1,111 +1,123 @@
-import React from "react";
-import { ChevronDown, Menu, X, Star, MapPin, Briefcase, Check } from "lucide-react";
+import React, { useState, useEffect, useMemo } from "react";
 
 export default function App() {
-  const [jobs, setJobs] = React.useState([]);
-  const [filteredJobs, setFilteredJobs] = React.useState([]);
-  const [loading, setLoading] = React.useState(true);
+  const [jobs, setJobs] = useState([]);
+  const [filteredJobs, setFilteredJobs] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
-  const [searchQuery, setSearchQuery] = React.useState("");
-  const [selectedCompany, setSelectedCompany] = React.useState("all");
-  const [selectedRole, setSelectedRole] = React.useState("all");
-  const [selectedLocation, setSelectedLocation] = React.useState("all");
+  const [searchQuery, setSearchQuery] = useState("");
+  const [selectedCompany, setSelectedCompany] = useState("all");
+  const [selectedRole, setSelectedRole] = useState("all");
+  const [selectedLocation, setSelectedLocation] = useState("all");
 
-  const [resumeText, setResumeText] = React.useState("");
-  const [resumeKeywords, setResumeKeywords] = React.useState([]);
-  const [resumePersona, setResumePersona] = React.useState(null);
-  const [resumeSeniority, setResumeSeniority] = React.useState("mid");
-  const [resumeMatchEnabled, setResumeMatchEnabled] = React.useState(false);
-  const [uploadingResume, setUploadingResume] = React.useState(false);
-  const [analyzingJobs, setAnalyzingJobs] = React.useState(false);
+  const [resumeText, setResumeText] = useState("");
+  const [resumeKeywords, setResumeKeywords] = useState([]);
+  const [resumePersona, setResumePersona] = useState(null);
+  const [resumeSeniority, setResumeSeniority] = useState("mid");
+  const [resumeMatchEnabled, setResumeMatchEnabled] = useState(false);
+  const [uploadingResume, setUploadingResume] = useState(false);
+  const [analyzingJobs, setAnalyzingJobs] = useState(false);
 
-  const [sidebarOpen, setSidebarOpen] = React.useState(true);
-  const [savedJobs, setSavedJobs] = React.useState(new Set());
+  const [sidebarOpen, setSidebarOpen] = useState(true);
+  const [savedJobs, setSavedJobs] = useState(new Set());
 
-  /* Mock Jobs Data */
-  React.useEffect(() => {
-    const mockJobs = [
-      {
-        id: 1,
-        title: "Product Manager (ex-founder or ex-product engineer)",
-        company: "PostHog",
-        location: "Remote (US/EU)",
-        role: "Product",
-        type: "Full-time",
-        level: "Senior",
-        matchScore: 92,
-        reason: "Exceptional fit",
-        insights: "Your PM background aligns perfectly with PostHog's culture",
-        new: true
-      },
-      {
-        id: 2,
-        title: "Software Engineer — Warehouse Pipelines",
-        company: "PostHog",
-        location: "Remote",
-        role: "Engineering",
-        type: "Full-time",
-        level: "Mid",
-        matchScore: 87,
-        reason: "Strong match",
-        insights: "Backend experience matches their pipeline infrastructure needs",
-        new: true
-      },
-      {
-        id: 3,
-        title: "AI Product Engineer",
-        company: "PostHog",
-        location: "San Francisco, CA",
-        role: "Engineering",
-        type: "Full-time",
-        level: "Senior",
-        matchScore: 78,
-        reason: "Good fit",
-        insights: "AI/ML skills are valuable for PostHog's platform expansion",
-        new: true
-      },
-      {
-        id: 4,
-        title: "Senior Full Stack Engineer",
-        company: "Anthropic",
-        location: "San Francisco, CA",
-        role: "Engineering",
-        type: "Full-time",
-        level: "Senior",
-        matchScore: 85,
-        reason: "Excellent match",
-        insights: "Your experience with scalable systems matches their needs",
-        new: false
-      },
-      {
-        id: 5,
-        title: "Product Strategy Lead",
-        company: "Stripe",
-        location: "Remote",
-        role: "Product",
-        type: "Full-time",
-        level: "Senior",
-        matchScore: 81,
-        reason: "Strong alignment",
-        insights: "Product leadership experience valued at scale",
-        new: false
-      }
-    ];
+  // Mock data
+  const mockJobs = [
+    {
+      id: 1,
+      title: "Product Manager (ex-founder or ex-product engineer)",
+      company: "PostHog",
+      location: "Remote (US/EU)",
+      role: "Product",
+      type: "Full-time",
+      level: "Senior",
+      matchScore: 92,
+      reason: "Exceptional fit",
+      insights: "Your PM background aligns perfectly with PostHog's culture",
+      new: true,
+      applyLink: "#"
+    },
+    {
+      id: 2,
+      title: "Software Engineer — Warehouse Pipelines",
+      company: "PostHog",
+      location: "Remote",
+      role: "Engineering",
+      type: "Full-time",
+      level: "Mid",
+      matchScore: 87,
+      reason: "Strong match",
+      insights: "Backend experience matches their pipeline infrastructure needs",
+      new: true,
+      applyLink: "#"
+    },
+    {
+      id: 3,
+      title: "AI Product Engineer",
+      company: "PostHog",
+      location: "San Francisco, CA",
+      role: "Engineering",
+      type: "Full-time",
+      level: "Senior",
+      matchScore: 78,
+      reason: "Good fit",
+      insights: "AI/ML skills are valuable for PostHog's platform expansion",
+      new: true,
+      applyLink: "#"
+    },
+    {
+      id: 4,
+      title: "Senior Full Stack Engineer",
+      company: "Anthropic",
+      location: "San Francisco, CA",
+      role: "Engineering",
+      type: "Full-time",
+      level: "Senior",
+      matchScore: 85,
+      reason: "Excellent match",
+      insights: "Your experience with scalable systems matches their needs",
+      new: false,
+      applyLink: "#"
+    },
+    {
+      id: 5,
+      title: "Product Strategy Lead",
+      company: "Stripe",
+      location: "Remote",
+      role: "Product",
+      type: "Full-time",
+      level: "Senior",
+      matchScore: 81,
+      reason: "Strong alignment",
+      insights: "Product leadership experience valued at scale",
+      new: false,
+      applyLink: "#"
+    }
+  ];
 
-    setJobs(mockJobs);
-    setFilteredJobs(mockJobs);
-    setLoading(false);
+  useEffect(() => {
+    try {
+      setJobs(mockJobs);
+      setFilteredJobs(mockJobs);
+      setLoading(false);
+    } catch (err) {
+      setError("Failed to load jobs");
+      setLoading(false);
+    }
   }, []);
 
-  const companies = React.useMemo(
+  const companies = useMemo(
     () => [...new Set(jobs.map(j => j.company).filter(Boolean))],
     [jobs]
   );
-  const roles = React.useMemo(
+
+  const roles = useMemo(
     () => [...new Set(jobs.map(j => j.role).filter(Boolean))],
     [jobs]
   );
-  const locations = React.useMemo(
+
+  const locations = useMemo(
     () => [...new Set(jobs.map(j => j.location).filter(Boolean))],
     [jobs]
   );
@@ -116,28 +128,12 @@ export default function App() {
 
     setUploadingResume(true);
     try {
-      if (file.type === "application/pdf" && window.pdfjsLib) {
-        const buffer = await file.arrayBuffer();
-        const pdf = await window.pdfjsLib.getDocument({ data: buffer }).promise;
-        let text = "";
-
-        for (let i = 1; i <= pdf.numPages; i++) {
-          const page = await pdf.getPage(i);
-          const content = await page.getTextContent();
-          text += content.items.map(i => i.str).join(" ");
-        }
-
-        setResumeText(text);
-        const keywords = text.toLowerCase().match(/\b[a-z+]+\b/g) || [];
-        setResumeKeywords([...new Set(keywords.slice(0, 15))]);
-        setResumePersona(text.includes("product") ? "PM" : "Engineer");
-        setResumeSeniority(text.includes("senior") ? "senior" : "mid");
-      } else {
-        setResumeText("Resume uploaded");
-        setResumeKeywords(["react", "typescript", "nodejs", "aws", "sql"]);
-        setResumePersona("Engineer");
-        setResumeSeniority("mid");
-      }
+      setResumeText("Resume uploaded");
+      setResumeKeywords(["react", "typescript", "nodejs", "aws", "sql", "python", "javascript"]);
+      setResumePersona("Engineer");
+      setResumeSeniority("mid");
+    } catch (err) {
+      console.error("Error uploading resume:", err);
     } finally {
       setUploadingResume(false);
     }
@@ -158,7 +154,7 @@ export default function App() {
       scored.sort((a, b) => b.matchScore - a.matchScore);
       setFilteredJobs(scored);
       setAnalyzingJobs(false);
-    }, 1000);
+    }, 1500);
   };
 
   const clearResume = () => {
@@ -170,7 +166,7 @@ export default function App() {
     setFilteredJobs(jobs);
   };
 
-  React.useEffect(() => {
+  useEffect(() => {
     if (resumeMatchEnabled) return;
 
     let data = [...jobs];
@@ -219,6 +215,14 @@ export default function App() {
     );
   }
 
+  if (error) {
+    return (
+      <div className="flex items-center justify-center h-screen bg-gray-950">
+        <p className="text-red-400">{error}</p>
+      </div>
+    );
+  }
+
   return (
     <div className="flex min-h-screen bg-gray-950 text-gray-100">
       {/* SIDEBAR */}
@@ -227,9 +231,9 @@ export default function App() {
         <div className="p-4 border-b border-gray-800">
           <button
             onClick={() => setSidebarOpen(!sidebarOpen)}
-            className="p-2 hover:bg-gray-800 rounded-lg transition-colors"
+            className="p-2 hover:bg-gray-800 rounded-lg transition-colors text-cyan-400"
           >
-            {sidebarOpen ? <X size={20} className="text-cyan-400" /> : <Menu size={20} className="text-cyan-400" />}
+            {sidebarOpen ? "✕" : "☰"}
           </button>
         </div>
 
@@ -237,7 +241,7 @@ export default function App() {
           <div className="flex-1 overflow-y-auto p-4 space-y-6">
             {/* Logo */}
             <div className="flex items-center gap-3 px-2">
-              <div className="w-10 h-10 bg-cyan-400 rounded-lg flex items-center justify-center font-bold text-gray-950">
+              <div className="w-10 h-10 bg-cyan-400 rounded-lg flex items-center justify-center font-bold text-gray-950 text-lg">
                 🏢
               </div>
               <span className="font-bold text-lg text-white">JobFlow</span>
@@ -246,20 +250,20 @@ export default function App() {
             {/* Navigation */}
             <div className="space-y-2">
               <div className="flex items-center gap-3 px-3 py-2 bg-cyan-500/15 rounded-lg text-cyan-400 font-medium">
-                <Briefcase size={18} />
+                <span>🏢</span>
                 <span>All Jobs</span>
               </div>
               <div className="flex items-center gap-3 px-3 py-2 hover:bg-gray-800 rounded-lg text-gray-400 cursor-pointer transition-colors">
-                <Star size={18} />
+                <span>⭐</span>
                 <span>Top Matches</span>
                 <span className="ml-auto bg-cyan-400 text-gray-950 text-xs font-bold px-2 py-1 rounded-full">12</span>
               </div>
               <div className="flex items-center gap-3 px-3 py-2 hover:bg-gray-800 rounded-lg text-gray-400 cursor-pointer transition-colors">
-                <Check size={18} />
+                <span>✓</span>
                 <span>Saved</span>
               </div>
               <div className="flex items-center gap-3 px-3 py-2 hover:bg-gray-800 rounded-lg text-gray-400 cursor-pointer transition-colors">
-                <Clock size={18} />
+                <span>⏱</span>
                 <span>Applied</span>
               </div>
             </div>
@@ -273,15 +277,15 @@ export default function App() {
                 <label className="block">
                   <input
                     type="file"
-                    accept=".pdf"
+                    accept=".pdf,.doc,.docx"
                     onChange={handleResumeUpload}
-                    className="block w-full text-sm text-gray-400 cursor-pointer"
+                    className="block w-full text-sm text-gray-400 cursor-pointer file:cursor-pointer"
                     disabled={uploadingResume}
                   />
                   {uploadingResume && <p className="text-xs text-gray-500 mt-2">Processing…</p>}
                 </label>
               ) : (
-                <>
+                <div>
                   <div className="flex gap-2 mb-3">
                     {resumePersona && (
                       <span className="px-2 py-1 bg-cyan-900/40 text-cyan-300 text-xs font-bold rounded">
@@ -307,7 +311,7 @@ export default function App() {
                     <button
                       onClick={applyResumeMatch}
                       disabled={analyzingJobs}
-                      className="flex-1 bg-cyan-500 hover:bg-cyan-600 disabled:opacity-50 text-gray-950 font-bold py-2 px-3 rounded text-sm transition-colors"
+                      className="flex-1 bg-cyan-500 hover:bg-cyan-600 disabled:opacity-50 text-gray-950 font-bold py-2 px-3 rounded text-sm transition-colors disabled:cursor-not-allowed"
                     >
                       {analyzingJobs ? "Analyzing…" : "🚀 Match"}
                     </button>
@@ -322,7 +326,7 @@ export default function App() {
                   {analyzingJobs && (
                     <p className="text-xs text-gray-400 mt-3">⚡ Analyzing jobs…</p>
                   )}
-                </>
+                </div>
               )}
             </div>
 
@@ -389,36 +393,42 @@ export default function App() {
               <select
                 value={selectedCompany}
                 onChange={(e) => setSelectedCompany(e.target.value)}
-                className="bg-gray-900 border border-cyan-500/30 rounded-lg px-4 py-2 text-sm text-cyan-400 font-medium focus:outline-none focus:border-cyan-400 appearance-none pr-8 cursor-pointer transition-colors hover:border-cyan-500/50"
+                className="bg-gray-900 border border-cyan-500/30 rounded-lg px-4 py-2 text-sm text-cyan-400 font-medium focus:outline-none appearance-none pr-8 cursor-pointer transition-colors hover:border-cyan-500/50"
               >
                 <option value="all">All Companies</option>
-                {companies.map(c => <option key={c} value={c}>{c}</option>)}
+                {companies.map(c => (
+                  <option key={c} value={c}>{c}</option>
+                ))}
               </select>
-              <ChevronDown size={16} className="absolute right-2 top-2.5 text-cyan-400 pointer-events-none" />
+              <span className="absolute right-2 top-2.5 text-cyan-400 pointer-events-none">▼</span>
             </div>
 
             <div className="relative">
               <select
                 value={selectedRole}
                 onChange={(e) => setSelectedRole(e.target.value)}
-                className="bg-gray-900 border border-cyan-500/30 rounded-lg px-4 py-2 text-sm text-cyan-400 font-medium focus:outline-none focus:border-cyan-400 appearance-none pr-8 cursor-pointer transition-colors hover:border-cyan-500/50"
+                className="bg-gray-900 border border-cyan-500/30 rounded-lg px-4 py-2 text-sm text-cyan-400 font-medium focus:outline-none appearance-none pr-8 cursor-pointer transition-colors hover:border-cyan-500/50"
               >
                 <option value="all">All Roles</option>
-                {roles.map(r => <option key={r} value={r}>{r}</option>)}
+                {roles.map(r => (
+                  <option key={r} value={r}>{r}</option>
+                ))}
               </select>
-              <ChevronDown size={16} className="absolute right-2 top-2.5 text-cyan-400 pointer-events-none" />
+              <span className="absolute right-2 top-2.5 text-cyan-400 pointer-events-none">▼</span>
             </div>
 
             <div className="relative">
               <select
                 value={selectedLocation}
                 onChange={(e) => setSelectedLocation(e.target.value)}
-                className="bg-gray-900 border border-cyan-500/30 rounded-lg px-4 py-2 text-sm text-cyan-400 font-medium focus:outline-none focus:border-cyan-400 appearance-none pr-8 cursor-pointer transition-colors hover:border-cyan-500/50"
+                className="bg-gray-900 border border-cyan-500/30 rounded-lg px-4 py-2 text-sm text-cyan-400 font-medium focus:outline-none appearance-none pr-8 cursor-pointer transition-colors hover:border-cyan-500/50"
               >
                 <option value="all">All Locations</option>
-                {locations.map(l => <option key={l} value={l}>{l}</option>)}
+                {locations.map(l => (
+                  <option key={l} value={l}>{l}</option>
+                ))}
               </select>
-              <ChevronDown size={16} className="absolute right-2 top-2.5 text-cyan-400 pointer-events-none" />
+              <span className="absolute right-2 top-2.5 text-cyan-400 pointer-events-none">▼</span>
             </div>
           </div>
         </div>
@@ -426,10 +436,8 @@ export default function App() {
         {/* Jobs List */}
         <div className="flex-1 overflow-y-auto p-6 space-y-4">
           {filteredJobs.length === 0 ? (
-            <div className="flex items-center justify-center h-full text-center">
-              <div>
-                <p className="text-gray-500 text-lg">No jobs found matching your criteria</p>
-              </div>
+            <div className="flex items-center justify-center h-full">
+              <p className="text-gray-500 text-lg">No jobs found matching your criteria</p>
             </div>
           ) : (
             filteredJobs.map(job => (
@@ -470,7 +478,7 @@ export default function App() {
                         {job.title}
                       </h2>
                       {job.new && (
-                        <span className="px-2 py-1 bg-cyan-500/20 text-cyan-400 text-xs font-bold rounded">
+                        <span className="px-2 py-1 bg-cyan-500/20 text-cyan-400 text-xs font-bold rounded whitespace-nowrap">
                           ✨ New
                         </span>
                       )}
@@ -480,7 +488,7 @@ export default function App() {
 
                     <div className="flex flex-wrap gap-3 mb-3 text-sm text-gray-400">
                       <div className="flex items-center gap-1">
-                        <Briefcase size={16} />
+                        <span>📍</span>
                         {job.location}
                       </div>
                       <span>•</span>
@@ -508,10 +516,13 @@ export default function App() {
                     >
                       ⭐
                     </button>
-                    <button className="px-4 py-2 bg-cyan-500 hover:bg-cyan-600 text-gray-950 font-bold rounded-lg transition-colors flex items-center gap-2">
+                    <a
+                      href={job.applyLink}
+                      className="px-4 py-2 bg-cyan-500 hover:bg-cyan-600 text-gray-950 font-bold rounded-lg transition-colors flex items-center gap-2"
+                    >
                       Apply
                       <span>→</span>
-                    </button>
+                    </a>
                   </div>
                 </div>
               </div>
@@ -520,14 +531,5 @@ export default function App() {
         </div>
       </div>
     </div>
-  );
-}
-
-function Clock(props) {
-  return (
-    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}>
-      <circle cx="12" cy="12" r="10"></circle>
-      <polyline points="12 6 12 12 16 14"></polyline>
-    </svg>
   );
 }
