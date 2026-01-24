@@ -1,514 +1,99 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>JobFlow - Job Intelligence</title>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>JobFlow - Job Intelligence Dashboard</title>
+    
+    <!-- ✅ Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+      tailwind.config = {
+        theme: {
+          extend: {
+            colors: {
+              brand: {
+                dark: "#0b0f19",
+                navy: "#0f172a",
+                sky: "#38bdf8"
+              }
+            },
+            backgroundColor: {
+              "gray-850": "#111827"
+            }
+          }
+        }
+      };
+    </script>
+
+    <!-- ✅ PDF.js (for resume parsing) -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+    <script>
+      if (window.pdfjsLib) {
+        window.pdfjsLib.GlobalWorkerOptions.workerSrc =
+          "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js";
+      }
+    </script>
+
+    <!-- ✅ Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
 
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
-            background: #0a0e27;
-            color: #e0e0e0;
-            height: 100vh;
-            overflow: hidden;
-        }
+      body {
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
+          'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
+          sans-serif;
+        -webkit-font-smoothing: antialiased;
+        -moz-osx-font-smoothing: grayscale;
+      }
 
-        .container {
-            display: flex;
-            height: 100vh;
-        }
+      /* Scrollbar Styling */
+      ::-webkit-scrollbar {
+        width: 8px;
+      }
 
-        /* SIDEBAR */
-        .sidebar {
-            width: 250px;
-            background: #0f1629;
-            border-right: 1px solid #1a2332;
-            padding: 24px 16px;
-            overflow-y: auto;
-            display: flex;
-            flex-direction: column;
-        }
+      ::-webkit-scrollbar-track {
+        background: transparent;
+      }
 
-        .logo {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            margin-bottom: 32px;
-        }
+      ::-webkit-scrollbar-thumb {
+        background: #374151;
+        border-radius: 4px;
+      }
 
-        .logo-icon {
-            width: 40px;
-            height: 40px;
-            background: #00d9ff;
-            border-radius: 8px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-weight: bold;
-            font-size: 20px;
-        }
+      ::-webkit-scrollbar-thumb:hover {
+        background: #4b5563;
+      }
 
-        .logo-text {
-            font-size: 20px;
-            font-weight: 600;
-            color: #fff;
-        }
+      /* Smooth transitions */
+      button, select, input {
+        transition: all 0.3s ease;
+      }
 
-        .nav-section {
-            display: flex;
-            flex-direction: column;
-            gap: 8px;
-            margin-bottom: 24px;
-        }
+      .job-card-hover {
+        transition: all 0.3s ease;
+      }
 
-        .nav-item {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            padding: 12px 12px;
-            border-radius: 8px;
-            cursor: pointer;
-            color: #8892b0;
-            transition: all 0.3s ease;
-            position: relative;
-        }
-
-        .nav-item:hover {
-            background: rgba(0, 217, 255, 0.1);
-            color: #00d9ff;
-        }
-
-        .nav-item.active {
-            background: rgba(0, 217, 255, 0.15);
-            color: #00d9ff;
-        }
-
-        .nav-item-label {
-            flex: 1;
-            font-size: 14px;
-            font-weight: 500;
-        }
-
-        .badge {
-            background: #00d9ff;
-            color: #0f1629;
-            padding: 2px 8px;
-            border-radius: 12px;
-            font-size: 12px;
-            font-weight: 600;
-        }
-
-        .quick-filters {
-            margin-top: 32px;
-            padding-top: 24px;
-            border-top: 1px solid #1a2332;
-        }
-
-        .section-title {
-            font-size: 12px;
-            font-weight: 600;
-            text-transform: uppercase;
-            color: #5a6b7f;
-            margin-bottom: 12px;
-            letter-spacing: 0.5px;
-        }
-
-        .filter-item {
-            padding: 10px 12px;
-            border-radius: 6px;
-            cursor: pointer;
-            font-size: 13px;
-            color: #8892b0;
-            transition: all 0.3s ease;
-        }
-
-        .filter-item:hover {
-            background: rgba(0, 217, 255, 0.1);
-            color: #00d9ff;
-        }
-
-        .see-fit-button {
-            margin-top: auto;
-            padding: 16px;
-            background: rgba(0, 217, 255, 0.1);
-            border: 1px solid rgba(0, 217, 255, 0.3);
-            border-radius: 8px;
-            cursor: pointer;
-            text-align: center;
-            transition: all 0.3s ease;
-        }
-
-        .see-fit-button:hover {
-            background: rgba(0, 217, 255, 0.2);
-            border-color: rgba(0, 217, 255, 0.5);
-        }
-
-        .see-fit-icon {
-            font-size: 24px;
-            margin-bottom: 8px;
-        }
-
-        .see-fit-text {
-            font-size: 13px;
-            font-weight: 600;
-            color: #fff;
-            margin-bottom: 6px;
-        }
-
-        .see-fit-desc {
-            font-size: 11px;
-            color: #5a6b7f;
-        }
-
-        /* MAIN CONTENT */
-        .main-content {
-            flex: 1;
-            display: flex;
-            flex-direction: column;
-            padding: 32px;
-            overflow-y: auto;
-        }
-
-        .header {
-            margin-bottom: 32px;
-        }
-
-        .header-top {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 8px;
-        }
-
-        .header-title {
-            font-size: 32px;
-            font-weight: 700;
-            color: #fff;
-        }
-
-        .ai-badge {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            padding: 8px 16px;
-            background: rgba(0, 217, 255, 0.1);
-            border: 1px solid rgba(0, 217, 255, 0.3);
-            border-radius: 20px;
-            font-size: 13px;
-            color: #00d9ff;
-            font-weight: 500;
-        }
-
-        .header-subtitle {
-            color: #8892b0;
-            font-size: 16px;
-        }
-
-        .filters {
-            display: flex;
-            gap: 12px;
-            margin-bottom: 32px;
-        }
-
-        .search-bar {
-            flex: 1;
-            max-width: 500px;
-            background: rgba(255, 255, 255, 0.05);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            border-radius: 8px;
-            padding: 12px 16px;
-            font-size: 14px;
-            color: #e0e0e0;
-            display: flex;
-            align-items: center;
-            gap: 12px;
-        }
-
-        .search-bar::placeholder {
-            color: #5a6b7f;
-        }
-
-        .search-bar input {
-            flex: 1;
-            background: none;
-            border: none;
-            outline: none;
-            color: #e0e0e0;
-            font-size: 14px;
-        }
-
-        .search-bar input::placeholder {
-            color: #5a6b7f;
-        }
-
-        .filter-btn {
-            padding: 10px 16px;
-            background: rgba(255, 255, 255, 0.05);
-            border: 1px solid rgba(0, 217, 255, 0.3);
-            border-radius: 8px;
-            color: #00d9ff;
-            cursor: pointer;
-            font-size: 13px;
-            font-weight: 500;
-            transition: all 0.3s ease;
-            display: flex;
-            align-items: center;
-            gap: 6px;
-        }
-
-        .filter-btn:hover {
-            background: rgba(0, 217, 255, 0.15);
-            border-color: rgba(0, 217, 255, 0.5);
-        }
-
-        /* JOB CARDS */
-        .jobs-list {
-            display: flex;
-            flex-direction: column;
-            gap: 16px;
-        }
-
-        .job-card {
-            background: rgba(255, 255, 255, 0.03);
-            border: 1px solid rgba(255, 255, 255, 0.08);
-            border-radius: 12px;
-            padding: 24px;
-            display: flex;
-            align-items: center;
-            gap: 24px;
-            cursor: pointer;
-            transition: all 0.3s ease;
-        }
-
-        .job-card:hover {
-            background: rgba(255, 255, 255, 0.06);
-            border-color: rgba(0, 217, 255, 0.3);
-        }
-
-        .match-score {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            width: 100px;
-            height: 100px;
-            border-radius: 50%;
-            border: 3px solid #00d9ff;
-            font-size: 32px;
-            font-weight: 700;
-            color: #00d9ff;
-            flex-shrink: 0;
-        }
-
-        .job-info {
-            flex: 1;
-        }
-
-        .job-header {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            margin-bottom: 8px;
-        }
-
-        .job-title {
-            font-size: 18px;
-            font-weight: 600;
-            color: #fff;
-        }
-
-        .new-badge {
-            background: rgba(0, 217, 255, 0.2);
-            color: #00d9ff;
-            padding: 4px 8px;
-            border-radius: 4px;
-            font-size: 11px;
-            font-weight: 600;
-        }
-
-        .job-meta {
-            display: flex;
-            gap: 16px;
-            margin-bottom: 12px;
-            font-size: 13px;
-            color: #8892b0;
-        }
-
-        .meta-item {
-            display: flex;
-            align-items: center;
-            gap: 6px;
-        }
-
-        .job-tags {
-            display: flex;
-            gap: 8px;
-        }
-
-        .tag {
-            background: rgba(0, 217, 255, 0.1);
-            color: #00d9ff;
-            padding: 4px 12px;
-            border-radius: 6px;
-            font-size: 12px;
-            font-weight: 500;
-        }
-
-        .apply-btn {
-            padding: 12px 32px;
-            background: #00d9ff;
-            color: #0f1629;
-            border: none;
-            border-radius: 8px;
-            font-size: 14px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            flex-shrink: 0;
-        }
-
-        .apply-btn:hover {
-            background: #00b8cc;
-            transform: translateY(-2px);
-        }
+      .job-card-hover:hover {
+        transform: translateY(-2px);
+      }
     </style>
-</head>
-<body>
-    <div class="container">
-        <!-- SIDEBAR -->
-        <aside class="sidebar">
-            <div class="logo">
-                <div class="logo-icon">🏢</div>
-                <div class="logo-text">JobFlow</div>
-            </div>
-
-            <div class="nav-section">
-                <div class="nav-item active">
-                    <span>🏢</span>
-                    <div class="nav-item-label">All Jobs</div>
-                </div>
-                <div class="nav-item">
-                    <span>📈</span>
-                    <div class="nav-item-label">Top Matches</div>
-                    <div class="badge">12</div>
-                </div>
-                <div class="nav-item">
-                    <span>🔖</span>
-                    <div class="nav-item-label">Saved</div>
-                </div>
-                <div class="nav-item">
-                    <span>⏱</span>
-                    <div class="nav-item-label">Applied</div>
-                </div>
-            </div>
-
-            <div class="quick-filters">
-                <div class="section-title">Quick Filters</div>
-                <div class="filter-item">Remote Only</div>
-                <div class="filter-item">Full-time</div>
-                <div class="filter-item">Engineering</div>
-            </div>
-
-            <div class="see-fit-button">
-                <div class="see-fit-icon">✨</div>
-                <div class="see-fit-text">See Your Fit</div>
-                <div class="see-fit-desc">Upload your resume to discover roles</div>
-            </div>
-        </aside>
-
-        <!-- MAIN CONTENT -->
-        <main class="main-content">
-            <div class="header">
-                <div class="header-top">
-                    <h1 class="header-title">Job Intelligence</h1>
-                    <div class="ai-badge">✨ AI Matching Active</div>
-                </div>
-                <p class="header-subtitle">6 roles matched to your profile</p>
-            </div>
-
-            <div class="filters">
-                <div class="search-bar">
-                    <span>🔍</span>
-                    <input type="text" placeholder="Search roles, companies...">
-                </div>
-                <button class="filter-btn">All Companies ▼</button>
-                <button class="filter-btn">All Roles ▼</button>
-                <button class="filter-btn">All Locations ▼</button>
-            </div>
-
-            <div class="jobs-list">
-                <!-- Job Card 1 -->
-                <div class="job-card">
-                    <div class="match-score">92</div>
-                    <div class="job-info">
-                        <div class="job-header">
-                            <div class="job-title">Product Manager (ex-founder or ex-product engineer)</div>
-                            <span class="new-badge">✨ New</span>
-                        </div>
-                        <div class="job-meta">
-                            <div class="meta-item">🏢 PostHog</div>
-                            <div class="meta-item">📍 Remote (US/EU)</div>
-                        </div>
-                        <div class="job-tags">
-                            <div class="tag">Product</div>
-                            <div class="tag">Full-time</div>
-                            <div class="tag">Senior</div>
-                        </div>
-                    </div>
-                    <button class="apply-btn">Apply →</button>
-                </div>
-
-                <!-- Job Card 2 -->
-                <div class="job-card">
-                    <div class="match-score">87</div>
-                    <div class="job-info">
-                        <div class="job-header">
-                            <div class="job-title">Software Engineer — Warehouse Pipelines</div>
-                            <span class="new-badge">✨ New</span>
-                        </div>
-                        <div class="job-meta">
-                            <div class="meta-item">🏢 PostHog</div>
-                            <div class="meta-item">📍 Remote</div>
-                        </div>
-                        <div class="job-tags">
-                            <div class="tag">Engineering</div>
-                            <div class="tag">Full-time</div>
-                            <div class="tag">Backend</div>
-                        </div>
-                    </div>
-                    <button class="apply-btn">Apply →</button>
-                </div>
-
-                <!-- Job Card 3 -->
-                <div class="job-card">
-                    <div class="match-score">78</div>
-                    <div class="job-info">
-                        <div class="job-header">
-                            <div class="job-title">AI Product Engineer</div>
-                            <span class="new-badge">✨ New</span>
-                        </div>
-                        <div class="job-meta">
-                            <div class="meta-item">🏢 PostHog</div>
-                            <div class="meta-item">📍 San Francisco, CA</div>
-                        </div>
-                        <div class="job-tags">
-                            <div class="tag">AI/ML</div>
-                            <div class="tag">Full-time</div>
-                            <div class="tag">Engineering</div>
-                        </div>
-                    </div>
-                    <button class="apply-btn">Apply →</button>
-                </div>
-            </div>
-        </main>
-    </div>
-</body>
+  </head>
+  <body class="bg-gray-950">
+    <div id="root"></div>
+    
+    <!-- React Root Mount -->
+    <script type="module">
+      // This will mount the React app
+      // For development with Vite, use: import('./src/main.jsx').then(m => m.default())
+      // For production, your bundler will handle this
+      console.log("JobFlow Dashboard Ready");
+    </script>
+  </body>
 </html>
