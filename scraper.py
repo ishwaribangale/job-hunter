@@ -24,6 +24,7 @@ class JobScraper:
         self.jobs = []
         self.seen = set()
         self.stats = {}
+        self.req_extractor = RequirementsExtractor()
 
     def now(self):
         return datetime.utcnow().isoformat()
