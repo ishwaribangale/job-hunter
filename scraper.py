@@ -203,6 +203,14 @@ class JobScraper:
         normalized_link = link.rstrip('/').split('?')[0]
         if normalized_link in self.seen:
             return
+            
+        if EXTRACT_REQUIREMENTS:
+        job["requirements"] = self.fetch_requirements(job)
+        else:
+        job["requirements"] = job.get(
+            "requirements",
+            self.req_extractor._empty_requirements()
+        )
 
         job["role"] = infer_role(job.get("title"))
         job["score"] = score_job(job)
