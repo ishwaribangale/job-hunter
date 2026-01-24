@@ -203,7 +203,7 @@ class JobScraper:
         job["fetchedAt"] = self.now()
     
         # ONLY fetch requirements for first 50 jobs (for testing)
-        if EXTRACT_REQUIREMENTS and len(self.jobs) < 50:
+        if EXTRACT_REQUIREMENTS:
             print(f"  [{len(self.jobs)+1}/50] Fetching requirements...")
             job["requirements"] = self.fetch_requirements(job)
         else:
