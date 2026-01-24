@@ -22,32 +22,62 @@ export default function App() {
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [savedJobs, setSavedJobs] = useState(new Set());
 
-  // Fetch jobs from your API
-  useEffect(() => {
-    const fetchJobs = async () => {
-      try {
-        // Replace this URL with your actual jobs API endpoint
-        const response = await fetch("/api/jobs"); // or your jobs.json URL
-        
-        if (!response.ok) {
-          throw new Error("Failed to fetch jobs");
-        }
-        
-        const data = await response.json();
-        setJobs(data);
-        setFilteredJobs(data);
-        setLoading(false);
-      } catch (err) {
-        console.error("Error fetching jobs:", err);
-        // Fallback to empty state if API fails
-        setJobs([]);
-        setFilteredJobs([]);
-        setLoading(false);
-        setError("Failed to load jobs. Please try again later.");
-      }
-    };
+  // Generate sample job data (3000+)
+  const generateJobs = () => {
+    const companies = ["Google", "Microsoft", "Apple", "Amazon", "Meta", "Tesla", "Netflix", "Airbnb", "Uber", "Stripe", "Shopify", "Slack", "Figma", "Notion", "Discord", "Twitch", "LinkedIn", "Twitter", "Pinterest", "Dropbox"];
+    const roles = ["Engineering", "Product", "Design", "Marketing", "Sales", "Data", "DevOps", "QA", "HR"];
+    const locations = ["San Francisco, CA", "New York, NY", "London, UK", "Berlin, Germany", "Tokyo, Japan", "Singapore", "Toronto, Canada", "Austin, TX", "Seattle, WA", "Remote"];
+    const types = ["Full-time", "Part-time", "Contract"];
+    const levels = ["Junior", "Mid", "Senior", "Lead", "Manager"];
+    const jobTitles = [
+      "Software Engineer",
+      "Senior Developer",
+      "Product Manager",
+      "Data Scientist",
+      "DevOps Engineer",
+      "UX Designer",
+      "Full Stack Engineer",
+      "Backend Engineer",
+      "Frontend Engineer",
+      "ML Engineer",
+      "QA Engineer",
+      "Solutions Architect",
+      "Technical Lead",
+      "Engineering Manager",
+      "Product Designer"
+    ];
 
-    fetchJobs();
+    const jobs = [];
+    for (let i = 1; i <= 3000; i++) {
+      jobs.push({
+        id: i,
+        title: `${jobTitles[Math.floor(Math.random() * jobTitles.length)]} - ${Math.random() > 0.5 ? "Senior" : "Mid"} Level`,
+        company: companies[Math.floor(Math.random() * companies.length)],
+        location: locations[Math.floor(Math.random() * locations.length)],
+        role: roles[Math.floor(Math.random() * roles.length)],
+        type: types[Math.floor(Math.random() * types.length)],
+        level: levels[Math.floor(Math.random() * levels.length)],
+        matchScore: Math.floor(Math.random() * 40) + 60,
+        reason: ["Great fit", "Strong match", "Good alignment", "Excellent opportunity"][Math.floor(Math.random() * 4)],
+        insights: "Experience matches the role requirements perfectly.",
+        new: Math.random() > 0.7,
+        applyLink: "#"
+      });
+    }
+    return jobs;
+  };
+
+  useEffect(() => {
+    try {
+      const jobsData = generateJobs();
+      setJobs(jobsData);
+      setFilteredJobs(jobsData);
+      setLoading(false);
+    } catch (err) {
+      console.error("Error loading jobs:", err);
+      setError("Failed to load jobs");
+      setLoading(false);
+    }
   }, []);
 
   const companies = useMemo(
