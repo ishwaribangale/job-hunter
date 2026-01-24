@@ -207,6 +207,7 @@ class JobScraper:
         job["role"] = infer_role(job.get("title"))
         job["score"] = score_job(job)
         job["fetchedAt"] = self.now()
+        job["requirements"] = self.fetch_requirements(job)
 
         self.seen.add(normalized_link)
         self.jobs.append(job)
