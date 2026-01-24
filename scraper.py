@@ -179,14 +179,13 @@ class RequirementsExtractor:
    
 
 class JobScraper:
-     def __init__(self):
+    def __init__(self):
         self.jobs = []
         self.seen = set()
         self.stats = {}
-        self.req_extractor = RequirementsExtractor()  # NOW THIS WILL WORK
-        # in __init__
-        
-        self.req_cache = {}
+        self.req_extractor = RequirementsExtractor()
+        self.req_cache = {}  # cache per run
+
         link = job.get("applyLink")
         if link in self.req_cache:
             return self.req_cache[link]
@@ -202,28 +201,28 @@ class JobScraper:
         link = job.get("applyLink")
         if not link:
             return
-
+    
         normalized_link = link.rstrip('/').split('?')[0]
         if normalized_link in self.seen:
             return
-            
-            if EXTRACT_REQUIREMENTS:
-                job["requirements"] = self.fetch_requirements(job)
-            else:
-                job["requirements"] = job.get(
-                    "requirements",
-                    self.req_extractor._empty_requirements()
-                )
-
+    
         job["role"] = infer_role(job.get("title"))
         job["score"] = score_job(job)
         job["fetchedAt"] = self.now()
-        job["requirements"] = self.fetch_requirements(job)
-
+    
+        if EXTRACT_REQUIREMENTS:
+            job["requirements"] = self.fetch_requirements(job)
+        else:
+            job["requirements"] = job.get(
+                "requirements",
+                self.req_extractor._empty_requirements()
+            )
+    
         self.seen.add(normalized_link)
         self.jobs.append(job)
-        src = job["source"]
-        self.stats[src] = self.stats.get(src, 0) + 1
+    
+        src = job.get("source", "unknown")
+        self.stats[src] = self.stats.get(src, 0) + 1     
 
     def scrape_remotive(self):
         print("\n[Remotive]")
