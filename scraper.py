@@ -185,6 +185,31 @@ class JobScraper:
         self.seen = set()
         self.stats = {}
         self.req_extractor = RequirementsExtractor()
+        self.existing_jobs = {}  # NEW: Store existing jobs by ID
+        self.requirements_fetched = 0  # NEW: Counter for tracking
+        self.requirements_reused = 0   # NEW: Counter for tracking
+        
+        # NEW: Load existing jobs at startup
+        self._load_existing_jobs()
+    
+    def _load_existing_jobs(self):
+        """Load existing jobs from jobs.json to avoid re-fetching requirements"""
+        jobs_file = "data/jobs.json"
+        
+        if os.path.exists(jobs_file):
+            try:
+                with open(jobs_file, "r", encoding="utf-8") as f:
+                    existing = json.load(f)
+                    
+                # Store jobs by ID for quick lookup
+                for job in existing:
+                    job_id = job.get("id")
+                    if job_id and job.get("requirements"):
+                        self.existing_jobs[job_id] = job.get("requirements")
+                
+                print(f"\n✓ Loaded {len(self.existing_jobs)} existing jobs with requirements")
+            except Exception as e:
+                print(f"\n⚠ Could not load existing jobs: {e}")
 
     def now(self):
         return datetime.utcnow().isoformat()
@@ -202,10 +227,23 @@ class JobScraper:
         job["score"] = score_job(job)
         job["fetchedAt"] = self.now()
     
-        # ONLY fetch requirements for first 50 jobs (for testing)
+        # SMART REQUIREMENTS HANDLING
         if EXTRACT_REQUIREMENTS:
-            print(f"  [{len(self.jobs)+1}/50] Fetching requirements...")
-            job["requirements"] = self.fetch_requirements(job)
+            job_id = job.get("id")
+            
+            # Check if we already have requirements for this job
+            if job_id and job_id in self.existing_jobs:
+                # REUSE existing requirements
+                job["requirements"] = self.existing_jobs[job_id]
+                self.requirements_reused += 1
+                if self.requirements_reused <= 5:  # Only show first 5 to avoid spam
+                    print(f"  ✓ Reusing requirements for: {job['title'][:50]}")
+            else:
+                # FETCH new requirements
+                print(f"  🔍 [{self.requirements_fetched + 1}] Fetching NEW requirements...")
+                print(f"    {job['title'][:60]}...")
+                job["requirements"] = self.fetch_requirements(job)
+                self.requirements_fetched += 1
         else:
             job["requirements"] = self.req_extractor._empty_requirements()
     
@@ -1202,6 +1240,13 @@ class JobScraper:
             print(f"  {k}: {v}")
 
         print(f"\n✓ TOTAL JOBS: {len(self.jobs)}")
+    
+        # NEW: Show requirements summary
+        if EXTRACT_REQUIREMENTS:
+            print(f"\n[REQUIREMENTS SUMMARY]")
+            print(f"  ✓ Reused existing: {self.requirements_reused}")
+            print(f"  🔍 Fetched new: {self.requirements_fetched}")
+            print(f"  ⚡ Time saved: ~{self.requirements_reused * 0.5:.1f} seconds")
 
     def save(self):
         os.makedirs("data", exist_ok=True)
