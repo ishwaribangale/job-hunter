@@ -69,8 +69,8 @@ export default function App() {
 
     const PERSONAS = {
       pm: ["product manager", "product management", "roadmap", "stakeholder", "user stories", "requirements", "prds", "backlog", "prioritization", "go-to-market", "g2m", "metrics", "kpis", "experiments", "a/b testing", "customer discovery", "product strategy", "growth", "analytics", "sql", "jira", "confluence", "figma"],
-      engineer: ["javascript", "react", "node", "typescript", "python", "java", "sql", "docker", "kubernetes", "aws", "backend", "frontend", "fullstack", "api", "microservices", "system design", "devops", "software engineer", "developer"],
-      data: ["data analysis", "machine learning", "ai", "statistics", "pandas", "numpy", "sql", "etl", "dashboard", "modeling", "data scientist", "analyst"]
+      engineer: ["javascript", "react", "node", "nodejs", "node.js", "typescript", "python", "java", "golang", "go", "rust", "sql", "docker", "kubernetes", "k8s", "aws", "backend", "frontend", "fullstack", "full-stack", "api", "rest", "graphql", "microservices", "system design", "devops", "software engineer", "developer", "coding", "programming"],
+      data: ["data analysis", "machine learning", "ml", "ai", "artificial intelligence", "statistics", "pandas", "numpy", "sql", "etl", "dashboard", "modeling", "data scientist", "analyst", "python", "r", "tableau", "powerbi"]
     };
 
     const SENIORITY_KEYWORDS = {
@@ -105,33 +105,83 @@ export default function App() {
   };
 
   /* ---------------- KEYWORD-BASED MATCHING (Fast) ---------------- */
-  const calculateKeywordMatch = (job, resumeData) => {
-    let score = 50;
-    
-    const jobReqs = job.requirements || {};
-    const jobSkills = jobReqs.skills || [];
-    
-    if (jobSkills.length > 0) {
-      const matchedSkills = jobSkills.filter(skill => 
-        resumeData.keywords.some(kw => kw.toLowerCase().includes(skill.toLowerCase()))
-      );
-      score += (matchedSkills.length / jobSkills.length) * 40;
-    }
-    
-    const titleLower = job.title.toLowerCase();
-    
-    if (resumeData.persona === 'pm' && titleLower.includes('product')) score += 20;
-    else if (resumeData.persona === 'engineer' && (titleLower.includes('engineer') || titleLower.includes('developer'))) score += 20;
-    else if (resumeData.persona === 'data' && titleLower.includes('data')) score += 20;
-    else if (resumeData.keywords.some(kw => titleLower.includes(kw.toLowerCase()))) score += 10;
-    
-    if (resumeData.seniority === 'senior' && (titleLower.includes('senior') || titleLower.includes('lead'))) score += 10;
-    else if (resumeData.seniority === 'junior' && (titleLower.includes('junior') || titleLower.includes('entry'))) score += 10;
-    else if (resumeData.seniority === 'mid') score += 5;
-    
-    return Math.min(100, Math.max(0, Math.round(score)));
-  };
+    const calculateKeywordMatch = (job, resumeData) => {
+        - let score = 50;
+        + let score = 20;
+        
+        const jobReqs = job.requirements || {};
+        const jobSkills = jobReqs.skills || [];
+        const jobKeywords = jobReqs.keywords || [];
+        
+        // IMPROVED: Bidirectional matching with better normalization
+        if (jobSkills.length > 0) {
+          const normalizedJobSkills = jobSkills.map(s => s.toLowerCase().trim());
+          const normalizedResumeKeywords = resumeData.keywords.map(k => k.toLowerCase().trim());
+          
+          const matchedSkills = normalizedJobSkills.filter(jobSkill => 
+            normalizedResumeKeywords.some(resumeKw => 
+              // Check both directions: resume contains job skill OR job skill contains resume keyword
+              resumeKw.includes(jobSkill) || jobSkill.includes(resumeKw) ||
+              // Also check if they're very similar (for things like "nodejs" vs "node.js")
+              resumeKw.replace(/[.\s-]/g, '') === jobSkill.replace(/[.\s-]/g, '')
+            )
+          );
+          
+          // Give more weight if there are matches
+          const skillMatchRate = matchedSkills.length / jobSkills.length;
+          score += skillMatchRate * 40;
+        }
+        
+        // IMPROVED: Also check job keywords from requirements
+        if (jobKeywords.length > 0) {
+          const keywordMatches = jobKeywords.filter(jk => 
+            resumeData.keywords.some(rk => 
+              rk.toLowerCase().includes(jk.toLowerCase()) || 
+              jk.toLowerCase().includes(rk.toLowerCase())
+            )
+          );
+          
+          if (keywordMatches.length > 0) {
+            score += Math.min(10, keywordMatches.length * 2);
+          }
+        }
 
+        const jobExperience = jobReqs.experience_years || 0;
+
+        if (jobExperience > 0) {
+          if (resumeData.seniority === "senior" && jobExperience >= 7) score += 10;
+          else if (resumeData.seniority === "mid" && jobExperience <= 6) score += 5;
+          else if (resumeData.seniority === "junior" && jobExperience <= 2) score += 5;
+          else score -= 10; // mismatch penalty
+        }
+
+        const titleLower = job.title.toLowerCase();
+        
+        if (resumeData.persona === 'pm' && titleLower.includes('product')) score += 20;
+        else if (resumeData.persona === 'engineer' && (titleLower.includes('engineer') || titleLower.includes('developer'))) score += 20;
+        else if (resumeData.persona === 'data' && titleLower.includes('data')) score += 20;
+        else if (resumeData.keywords.some(kw => titleLower.includes(kw.toLowerCase()))) score += 10;
+        
+        if (resumeData.seniority === 'senior' && (titleLower.includes('senior') || titleLower.includes('lead'))) score += 10;
+        else if (resumeData.seniority === 'junior' && (titleLower.includes('junior') || titleLower.includes('entry'))) score += 10;
+        else if (resumeData.seniority === 'mid') score += 5;
+
+        debugMatch(job, resumeData, score); // Add this line
+        return Math.min(100, Math.max(0, Math.round(score)));
+  
+      };
+    const debugMatch = (job, resumeData, score) => {
+        if (score > 70) {
+          console.log(`HIGH MATCH (${score}):`, {
+            job: job.title,
+            jobSkills: job.requirements?.skills || [],
+            resumeKeywords: resumeData.keywords,
+            matched: (job.requirements?.skills || []).filter(skill => 
+              resumeData.keywords.some(kw => kw.toLowerCase().includes(skill.toLowerCase()))
+            )
+          });
+        }
+      };
   /* ---------------- AI-POWERED MATCHING (for top jobs only) ---------------- */
   const analyzeJobWithAI = async (job, resumeSummary) => {
     try {
