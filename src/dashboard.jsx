@@ -115,8 +115,14 @@ export default function Dashboard() {
   const toggleSaveJob = id =>
     setSavedJobs(prev => prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id]);
 
-  const markJobAsApplied = id =>
+  const markJobAsApplied = (id, applyLink) => {
+    // Open the job link in a new tab
+    if (applyLink) {
+      window.open(applyLink, '_blank', 'noopener,noreferrer');
+    }
+    // Mark as applied
     setAppliedJobs(prev => prev.includes(id) ? prev : [...prev, id]);
+  };
 
   if (loading) {
     return <div className="p-10 text-center text-gray-500">Loading jobs…</div>;
@@ -427,7 +433,7 @@ function JobCard({ job, saved, applied, onSave, onApply, resumeMatchEnabled }) {
         </button>
         <button
           disabled={applied}
-          onClick={() => onApply(job.id)}
+          onClick={() => onApply(job.id, job.applyLink)}
           className={`px-4 py-2 rounded font-semibold transition-colors ${
             applied ? "bg-gray-700 text-gray-500 cursor-not-allowed" : "bg-indigo-500 text-gray-900 hover:bg-indigo-400"
           }`}
