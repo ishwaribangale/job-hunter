@@ -81,6 +81,90 @@ CAREER_PAGES = [
     {"name": "1Password", "url": "https://1password.com/careers"},
     {"name": "Wise", "url": "https://www.wise.jobs"},
 ]
+    # --------------------
+    # NEW COMPANIES - ENTERPRISE & CORE SAAS
+    # --------------------
+    {"name": "Anunta Technology", "url": "https://anunta.com/about-us/careers"},
+    {"name": "Freshworks", "url": "https://freshworks.com/company/careers"},
+    {"name": "Perfios", "url": "https://perfios.com/careers"},
+    {"name": "MoEngage", "url": "https://moengage.com/careers"},
+    {"name": "WebEngage", "url": "https://webengage.com/careers"},
+    {"name": "Kapture CX", "url": "https://kapture.cx/careers"},
+    {"name": "SpotDraft", "url": "https://spotdraft.com/careers"},
+    {"name": "Signzy", "url": "https://signzy.com/careers"},
+    {"name": "iMocha", "url": "https://imocha.io/careers"},
+
+    # --------------------
+    # AI & DEVELOPER TOOLS
+    # --------------------
+    {"name": "Detect Technologies", "url": "https://detecttechnologies.com/current-openings"},
+    {"name": "Proctor AI", "url": "https://proctorai.io/careers"},
+    {"name": "Scribble Data", "url": "https://scribbledata.io/careers"},
+    {"name": "Postudio", "url": "https://postud.io"},
+
+    # --------------------
+    # CONSTRUCTION & LOGISTICS SAAS
+    # --------------------
+    {"name": "BuildNext", "url": "https://careers.buildnext.in"},
+    {"name": "Fleetx", "url": "https://fleetx.io/careers"},
+    {"name": "CargoFL", "url": "https://cargoflow.ai/careers"},
+
+    # --------------------
+    # FINTECH & FINANCE SAAS
+    # --------------------
+    {"name": "Khatabook", "url": "https://khatabook.com/careers"},
+    {"name": "Dhan", "url": "https://recruitcareers.zappyhire.com/en/dhan"},
+    {"name": "Swipe", "url": "https://swipe.fyi/careers"},
+    {"name": "Spendflo", "url": "https://spendflo.com/careers"},
+
+    # --------------------
+    # HR TECH & PRODUCTIVITY
+    # --------------------
+    {"name": "SquadStack", "url": "https://squadstack.com/careers"},
+    {"name": "Smartstaff", "url": "https://smartstaff.co.in/careers"},
+    {"name": "Huddleup.ai", "url": "https://huddleup.ai/careers"},
+
+    # --------------------
+    # OTHER SPECIALIZED SAAS
+    # --------------------
+    {"name": "Novatr", "url": "https://novatr.com/career"},
+    {"name": "Docsumo", "url": "https://docsumo.com/careers"},
+    {"name": "Zuddl", "url": "https://zuddl.com/careers"},
+    {"name": "SplashLearn", "url": "https://splashlearn.com/careers"},
+    {"name": "VAMA App", "url": "https://vama.app/careers"},
+    {"name": "Topmate", "url": "https://topmate.io/careers"},
+]
+THIRD_PARTY_PLATFORMS = {
+    "instahyre": [
+        {"name": "Fibr AI", "url": "https://instahyre.com/jobs-at-fibr-ai"},
+        {"name": "Pintel.ai", "url": "https://instahyre.com/jobs-at-pintel"},
+        {"name": "Powerplay", "url": "https://instahyre.com/jobs-at-powerplay"},
+        {"name": "Clickpost", "url": "https://instahyre.com/jobs-at-clickpost"},
+        {"name": "Klaar", "url": "https://instahyre.com/jobs-at-klaar"},
+        {"name": "Practically", "url": "https://instahyre.com/jobs-at-practically"},
+        {"name": "Oditly", "url": "https://instahyre.com/jobs-at-oditly"},
+    ],
+    "wellfound": [
+        {"name": "Drizz", "url": "https://wellfound.com/company/drizz"},
+        {"name": "Converj", "url": "https://wellfound.com/company/converj"},
+    ],
+    "uplers": [
+        {"name": "Perfios", "url": "https://perfios.com/careers"},
+        {"name": "Alchemyst AI", "url": "https://uplers.com/company/alchemyst-ai"},
+        {"name": "ShelfPay", "url": "https://uplers.com/company/shelfpay"},
+        {"name": "PyjamaHR", "url": "https://uplers.com/company/pyjamahr"},
+    ],
+    "builtin": [
+        {"name": "Biva AI", "url": "https://builtin.com/company/biva"},
+    ],
+    "expertia": [
+        {"name": "DesignX", "url": "https://expertia.ai/designx-digital"},
+    ],
+    "cutshort": [
+        {"name": "DoSelect", "url": "https://cutshort.io/company/doselect"},
+    ],
+}
+
 
 # ===================================================================
 # ASHBY_COMPANIES - Only companies with working Ashby API
