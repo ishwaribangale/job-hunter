@@ -1,7 +1,6 @@
 # config.py
 # ----------------------------------
-# Global Config - CLEANED & OPTIMIZED
-# Only companies with reliable, job-level URLs
+# Global Config - EXPANDED WITH NEW COMPANIES
 # ----------------------------------
 
 HEADERS = {
@@ -15,8 +14,7 @@ HEADERS = {
 TIMEOUT = 12
 
 # ===================================================================
-# TOP_COMPANIES - Only Greenhouse companies with VERIFIED working slugs
-# All 404 companies removed, no duplicates
+# TOP_COMPANIES - Greenhouse/Lever companies with VERIFIED slugs
 # ===================================================================
 TOP_COMPANIES = [
     # --------------------
@@ -32,7 +30,6 @@ TOP_COMPANIES = [
     {"name": "Slice", "ats": "greenhouse", "slug": "slice"},
     {"name": "Groww", "ats": "greenhouse", "slug": "groww"},
     {"name": "Pitchbookdata", "ats": "greenhouse", "slug": "pitchbookdata"},
-    
 
     # --------------------
     # GREENHOUSE - GLOBAL TECH COMPANIES (Working)
@@ -52,26 +49,14 @@ TOP_COMPANIES = [
     {"name": "Mercury", "ats": "greenhouse", "slug": "mercury"},
 ]
 
-CAREER_PAGES = []
-ASHBY_COMPANIES = []
-
-
-COMPANIES = [
-    {"name":"Pixlogix Infotech", "ats":"unknown", "source":"Indeed/LinkedIn"},
-    {"name":"CloudOne Digital", "ats":"unknown"},
-    {"name":"Freemius", "ats":"unknown"},
-    {"name":"Awesome Motive", "ats":"unknown"},
-    {"name":"Liquid Web", "ats":"unknown"},
-    {"name":"Wipro", "ats":"unknown"},
-    {"name":"Accenture", "ats":"unknown"},
-    {"name":"Groww", "ats":"unknown"},
-]
 # ===================================================================
-# CAREER_PAGES - Only working companies with auto-detectable ATS
-# Removed: BYJU'S (6 jobs), Nykaa (errors), PolicyBazaar (timeout), 
-#          Snyk (1 job), Confluent (0 jobs)
+# CAREER_PAGES - Auto-detect ATS from career pages
+# This is where most of your NEW companies should go!
 # ===================================================================
 CAREER_PAGES = [
+    # --------------------
+    # EXISTING WORKING PAGES
+    # --------------------
     {"name": "Figma", "url": "https://www.figma.com/careers"},
     {"name": "Notion", "url": "https://www.notion.so/careers"},
     {"name": "Linear", "url": "https://linear.app/careers"},
@@ -80,7 +65,7 @@ CAREER_PAGES = [
     {"name": "Supabase", "url": "https://supabase.com/careers"},
     {"name": "1Password", "url": "https://1password.com/careers"},
     {"name": "Wise", "url": "https://www.wise.jobs"},
-]
+
     # --------------------
     # NEW COMPANIES - ENTERPRISE & CORE SAAS
     # --------------------
@@ -134,6 +119,11 @@ CAREER_PAGES = [
     {"name": "VAMA App", "url": "https://vama.app/careers"},
     {"name": "Topmate", "url": "https://topmate.io/careers"},
 ]
+
+# ===================================================================
+# THIRD_PARTY_PLATFORMS - Companies listed on job boards
+# These require different scraping (Instahyre, Wellfound, Uplers, etc.)
+# ===================================================================
 THIRD_PARTY_PLATFORMS = {
     "instahyre": [
         {"name": "Fibr AI", "url": "https://instahyre.com/jobs-at-fibr-ai"},
@@ -165,11 +155,8 @@ THIRD_PARTY_PLATFORMS = {
     ],
 }
 
-
 # ===================================================================
-# ASHBY_COMPANIES - Only companies with working Ashby API
-# Removed: Cursor (in previous list, moved to CAREER_PAGES if needed)
-# Note: Vercel returned 0 jobs but keeping for now
+# ASHBY_COMPANIES - Companies using Ashby ATS
 # ===================================================================
 ASHBY_COMPANIES = [
     {"name": "Zapier", "ats": "ashby", "slug": "zapier"},
@@ -190,32 +177,32 @@ ASHBY_COMPANIES = [
     {"name": "AcaiTravel", "ats": "ashby", "slug": "acai"},
     {"name": "AltimateAI", "ats": "ashby", "slug": "altimate"},
     {"name": "ParetoAI", "ats": "ashby", "slug": "pareto-ai"},
-    {"name": "Upflow", "ats": "ashby", "slug": "upflow"},        
+    {"name": "Upflow", "ats": "ashby", "slug": "upflow"},
     {"name": "Articul8", "ats": "ashby", "slug": "articul8"},
-    {"name": "Axion", "ats": "ashby", "slug": "axion"}, 
+    {"name": "Axion", "ats": "ashby", "slug": "axion"},
     {"name": "Axelera AI", "ats": "ashby", "slug": "axelera"},
     {"name": "Poshmark", "ats": "ashby", "slug": "poshmark"},
     {"name": "SigNoz", "ats": "ashby", "slug": "SigNoz"},
     {"name": "Plane Software, Inc.", "ats": "ashby", "slug": "plane"},
     {"name": "Kraken", "ats": "ashby", "slug": "kraken.com"},
-    {"name": "Deel", "ats": "ashby", "slug": "deel"},                   
-    {"name": "ElevenLabs", "ats": "ashby", "slug": "elevenlabs"},        
-    {"name": "Aspora", "ats": "ashby", "slug": "Aspora"},               
-    {"name": "SearchStax", "ats": "ashby", "slug": "searchstax"},       
-    {"name": "Almabase", "ats": "ashby", "slug": "Almabase"},            
-    {"name": "Credo.AI", "ats": "ashby", "slug": "credo.ai"},           
-    {"name": "Real", "ats": "ashby", "slug": "real"},                   
-    {"name": "Zania", "ats": "ashby", "slug": "zania"},                  
+    {"name": "Deel", "ats": "ashby", "slug": "deel"},
+    {"name": "ElevenLabs", "ats": "ashby", "slug": "elevenlabs"},
+    {"name": "Aspora", "ats": "ashby", "slug": "Aspora"},
+    {"name": "SearchStax", "ats": "ashby", "slug": "searchstax"},
+    {"name": "Almabase", "ats": "ashby", "slug": "Almabase"},
+    {"name": "Credo.AI", "ats": "ashby", "slug": "credo.ai"},
+    {"name": "Real", "ats": "ashby", "slug": "real"},
+    {"name": "Zania", "ats": "ashby", "slug": "zania"},
     {"name": "Fourier", "ats": "ashby", "slug": "fourier"},
-    {"name": "Fermi AI", "ats": "ashby", "slug": "Fermi AI"},                   
-    {"name": "Decagon", "ats": "ashby", "slug": "decagon"},                     
-    {"name": "Lovable", "ats": "ashby", "slug": "lovable"},                 
-    {"name": "Assembled", "ats": "ashby", "slug": "assembledhq"},            
-    {"name": "Sierra", "ats": "ashby", "slug": "Sierra"},                      
-    {"name": "Turnkey", "ats": "ashby", "slug": "turnkey"},                    
-    {"name": "Campfire", "ats": "ashby", "slug": "campfire"},                  
-    {"name": "LI.FI", "ats": "ashby", "slug": "li.fi"},                         
-    {"name": "Clarity", "ats": "ashby", "slug": "clarity"},                     
+    {"name": "Fermi AI", "ats": "ashby", "slug": "Fermi AI"},
+    {"name": "Decagon", "ats": "ashby", "slug": "decagon"},
+    {"name": "Lovable", "ats": "ashby", "slug": "lovable"},
+    {"name": "Assembled", "ats": "ashby", "slug": "assembledhq"},
+    {"name": "Sierra", "ats": "ashby", "slug": "Sierra"},
+    {"name": "Turnkey", "ats": "ashby", "slug": "turnkey"},
+    {"name": "Campfire", "ats": "ashby", "slug": "campfire"},
+    {"name": "LI.FI", "ats": "ashby", "slug": "li.fi"},
+    {"name": "Clarity", "ats": "ashby", "slug": "clarity"},
     {"name": "Lindy", "ats": "ashby", "slug": "lindy"},
     {"name": "Kit", "ats": "ashby", "slug": "kit"},
     {"name": "ZeroRisk", "ats": "ashby", "slug": "zerorisk"},
@@ -247,5 +234,18 @@ ASHBY_COMPANIES = [
     {"name": "Gamma", "ats": "ashby", "slug": "gamma"},
     {"name": "Help Scout", "ats": "ashby", "slug": "helpscout"},
     {"name": "Sanity", "ats": "ashby", "slug": "sanity"},
+]
 
+# ===================================================================
+# LEGACY - Keep for backward compatibility
+# ===================================================================
+COMPANIES = [
+    {"name": "Pixlogix Infotech", "ats": "unknown", "source": "Indeed/LinkedIn"},
+    {"name": "CloudOne Digital", "ats": "unknown"},
+    {"name": "Freemius", "ats": "unknown"},
+    {"name": "Awesome Motive", "ats": "unknown"},
+    {"name": "Liquid Web", "ats": "unknown"},
+    {"name": "Wipro", "ats": "unknown"},
+    {"name": "Accenture", "ats": "unknown"},
+    {"name": "Groww", "ats": "unknown"},
 ]
