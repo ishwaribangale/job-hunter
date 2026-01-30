@@ -205,29 +205,72 @@ export default function Dashboard() {
   };
 
   const handleResumeUpload = (event) => {
-    const file = event.target.files[0];
-    if (!file) return;
-    
+  const file = event.target.files[0];
+  if (!file) return;
+  
+  const fileType = file.type;
+  
+  // Handle PDF files
+  if (fileType === 'application/pdf' || file.name.endsWith('.pdf')) {
+    // Using pdf.js library (works in browser)
+    const reader = new FileReader();
+    reader.onload = async (e) => {
+      try {
+        // Load PDF.js library dynamically
+        const pdfjsLib = window['pdfjs-dist/build/pdf'];
+        pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+        
+        const typedArray = new Uint8Array(e.target.result);
+        const pdf = await pdfjsLib.getDocument(typedArray).promise;
+        
+        let fullText = '';
+        
+        // Extract text from all pages
+        for (let i = 1; i <= pdf.numPages; i++) {
+          const page = await pdf.getPage(i);
+          const textContent = await page.getTextContent();
+          const pageText = textContent.items.map(item => item.str).join(' ');
+          fullText += pageText + ' ';
+        }
+        
+        setResumeText(fullText);
+        
+        // Extract keywords
+        const words = fullText.match(/\b[A-Z][a-z]+\b|\b[A-Z]{2,}\b/g) || [];
+        const techTerms = fullText.match(/\b(python|javascript|react|java|aws|docker|kubernetes|sql|mongodb|node|typescript|vue|angular|django|flask|spring|express|postgres|redis|git|agile|scrum|api|rest|graphql|ci\/cd|devops|machine learning|ml|ai|data science|analytics|tableau|power bi|excel|powerpoint)\b/gi) || [];
+        
+        const allKeywords = [...new Set([...words, ...techTerms])];
+        setResumeKeywords(allKeywords);
+        setResumeMatchEnabled(true);
+        setActiveSection("all");
+      } catch (error) {
+        alert('Error reading PDF. Please try a different file or convert to TXT.');
+        console.error('PDF parsing error:', error);
+      }
+    };
+    reader.readAsArrayBuffer(file);
+  } 
+  // Handle TXT files
+  else if (fileType === 'text/plain' || file.name.endsWith('.txt')) {
     const reader = new FileReader();
     reader.onload = (e) => {
       const text = e.target.result;
       setResumeText(text);
       
-      // Extract keywords (simple approach - extract capitalized words and tech terms)
+      // Extract keywords
       const words = text.match(/\b[A-Z][a-z]+\b|\b[A-Z]{2,}\b/g) || [];
-      const techTerms = text.match(/\b(python|javascript|react|java|aws|docker|kubernetes|sql|mongodb|node|typescript|vue|angular)\b/gi) || [];
+      const techTerms = text.match(/\b(python|javascript|react|java|aws|docker|kubernetes|sql|mongodb|node|typescript|vue|angular|django|flask|spring|express|postgres|redis|git|agile|scrum|api|rest|graphql|ci\/cd|devops|machine learning|ml|ai|data science|analytics|tableau|power bi|excel|powerpoint)\b/gi) || [];
       
       const allKeywords = [...new Set([...words, ...techTerms])];
       setResumeKeywords(allKeywords);
       setResumeMatchEnabled(true);
-      setActiveSection("all"); // Show all jobs with match scores
+      setActiveSection("all");
     };
     reader.readAsText(file);
-  };
-
-  if (loading) {
-    return <div className="p-10 text-center text-gray-500">Loading jobs…</div>;
+  } else {
+    alert('Please upload a PDF or TXT file');
   }
+};
 
   return (
     <div className="min-h-screen bg-[#0b0f19] text-gray-100 flex">
@@ -530,13 +573,13 @@ function ResumeMatchScreen({ onMatch, onFileUpload }) {
 
       <input 
         type="file" 
-        accept=".txt" 
+        accept=".pdf,.txt" 
         onChange={onFileUpload}
         className="mb-4 text-gray-300" 
       />
-      
+            
       <p className="text-xs text-gray-500 mt-2">
-        Tip: Save your resume as .txt for best results
+        Tip: Save your resume as .txt or pdf for best results
       </p>
     </div>
   );
