@@ -234,6 +234,26 @@ ASHBY_COMPANIES = [
     {"name": "Gamma", "ats": "ashby", "slug": "gamma"},
     {"name": "Help Scout", "ats": "ashby", "slug": "helpscout"},
     {"name": "Sanity", "ats": "ashby", "slug": "sanity"},
+    {"name": "Firstbase", "ats": "ashby", "slug": "firstbase"},
+    {"name": "AMPER", "ats": "ashby", "slug": "amperelectric"},
+    {"name": "Unbox Robotics", "ats": "ashby", "slug": "unboxrobotics"},
+    {"name": "Sui", "ats": "ashby", "slug": "sui"},
+    {"name": "Sahara", "ats": "ashby", "slug": "sahara"},
+    {"name": "Teraflow", "ats": "ashby", "slug": "teraflow"},
+    {"name": "marketfeed", "ats": "ashby", "slug": "marketfeed"},
+    {"name": "VOIZ", "ats": "ashby", "slug": "voiz"},
+    {"name": "Airbound", "ats": "ashby", "slug": "airbound"},
+    {"name": "PATH", "ats": "ashby", "slug": "path"},
+    {"name": "Ivy", "ats": "ashby", "slug": "ivy"},
+    {"name": "CRED", "ats": "ashby", "slug": "cred"},
+    {"name": "Stealth Startup", "ats": "ashby", "slug": "stealth"},
+    {"name": "Super.com", "ats": "ashby", "slug": "super.com"},
+    {"name": "Fin", "ats": "ashby", "slug": "fin"},  # remote product
+    {"name": "Protege", "ats": "ashby", "slug": "protege"},
+    {"name": "Winona", "ats": "ashby", "slug": "winona"},
+    {"name": "Jellyfish", "ats": "ashby", "slug": "jellyfish"}, 
+    {"name": "Clerk", "ats": "ashby", "slug": "clerk"},        
+    {"name": "Super.com", "ats": "ashby", "slug": "super.com"},
 ]
 
 # ===================================================================
