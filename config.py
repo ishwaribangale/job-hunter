@@ -63,6 +63,11 @@ CAREER_PAGES = [
     {"name": "Kapture CX", "url": "https://kapture.cx/careers"},
     {"name": "SpotDraft", "url": "https://spotdraft.com/careers"},
     {"name": "iMocha", "url": "https://imocha.io/careers"},
+    {"name": "Zoho", "url": "https://careers.zohocorp.com/jobs/careers"},
+    {"name": "Chargebee", "url": "https://www.chargebee.com/careers/"},
+    {"name": "BrowserStack", "url": "https://www.browserstack.com/careers"},
+    {"name": "Whatfix", "url": "https://whatfix.com/careers/"},
+
 ]
 
 # ===================================================================
