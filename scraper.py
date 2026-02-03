@@ -19,7 +19,8 @@ from scoring import score_job
 from company_registry import get_companies
 
 SCRAPE_MODE = "VOLUME"
-EXTRACT_REQUIREMENTS = True  # SET THIS TO TRUE
+EXTRACT_REQUIREMENTS = True  # Reuse existing requirements
+REQUIREMENTS_REUSE_ONLY = True  # Do not fetch new requirements for new jobs
 
 # scraper.py
 # ----------------------------------
@@ -189,6 +190,7 @@ class JobScraper:
         self.existing_jobs = {}  # NEW: Store existing jobs by ID
         self.requirements_fetched = 0  # NEW: Counter for tracking
         self.requirements_reused = 0   # NEW: Counter for tracking
+        self.requirements_skipped = 0  # NEW: Counter for tracking
         
         # NEW: Load existing jobs at startup
         self._load_existing_jobs()
@@ -240,11 +242,16 @@ class JobScraper:
                 if self.requirements_reused <= 5:  # Only show first 5 to avoid spam
                     print(f"  ✓ Reusing requirements for: {job['title'][:50]}")
             else:
-                # FETCH new requirements
-                print(f"  🔍 [{self.requirements_fetched + 1}] Fetching NEW requirements...")
-                print(f"    {job['title'][:60]}...")
-                job["requirements"] = self.fetch_requirements(job)
-                self.requirements_fetched += 1
+                if REQUIREMENTS_REUSE_ONLY:
+                    # Skip fetching new requirements for new jobs
+                    job["requirements"] = self.req_extractor._empty_requirements()
+                    self.requirements_skipped += 1
+                else:
+                    # FETCH new requirements
+                    print(f"  🔍 [{self.requirements_fetched + 1}] Fetching NEW requirements...")
+                    print(f"    {job['title'][:60]}...")
+                    job["requirements"] = self.fetch_requirements(job)
+                    self.requirements_fetched += 1
         else:
             job["requirements"] = self.req_extractor._empty_requirements()
     
@@ -1316,6 +1323,8 @@ class JobScraper:
             print(f"\n[REQUIREMENTS SUMMARY]")
             print(f"  ✓ Reused existing: {self.requirements_reused}")
             print(f"  🔍 Fetched new: {self.requirements_fetched}")
+            if REQUIREMENTS_REUSE_ONLY:
+                print(f"  ⏭ Skipped new: {self.requirements_skipped}")
             print(f"  ⚡ Time saved: ~{self.requirements_reused * 0.5:.1f} seconds")
 
     def save(self):
