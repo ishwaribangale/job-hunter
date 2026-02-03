@@ -601,6 +601,10 @@ class JobScraper:
                 (r'boards?\.greenhouse\.io/(?:embed/job_board\?for=)?([^/?&]+)', "greenhouse"),
                 (r'jobs?\.lever\.co/([^/?&]+)', "lever"),
                 (r'(?:jobs\.)?ashbyhq\.com/([^/?&]+)', "ashby"),
+                (r'careers\.smartrecruiters\.com/([^/?&]+)', "smartrecruiters"),
+                (r'jobs\.smartrecruiters\.com/([^/?&]+)', "smartrecruiters"),
+                (r'apply\.workable\.com/([^/?&]+)', "workable"),
+                (r'careers\.kula\.ai/([^/?&]+)', "kula"),
                 (r'myworkdayjobs\.com/([^/?&]+)', "workday"),
             ]
             
@@ -614,6 +618,10 @@ class JobScraper:
                 (r'boards?\.greenhouse\.io/(?:embed/job_board\?for=)?([^"\'&<>]+)', "greenhouse"),
                 (r'jobs?\.lever\.co/([^"\'&/<>]+)', "lever"),
                 (r'jobs\.ashbyhq\.com/([^"\'&/<>]+)', "ashby"),
+                (r'careers\.smartrecruiters\.com/([^"\'&/<>]+)', "smartrecruiters"),
+                (r'jobs\.smartrecruiters\.com/([^"\'&/<>]+)', "smartrecruiters"),
+                (r'apply\.workable\.com/([^"\'&/<>]+)', "workable"),
+                (r'careers\.kula\.ai/([^"\'&/<>]+)', "kula"),
             ]
             
             for pattern, ats_name in content_checks:
@@ -974,6 +982,341 @@ class JobScraper:
                 print(f"  ❌ Error: {e}")
 
     # ===================================================================
+    # CUSTOM & ADDITIONAL ATS SCRAPERS
+    # ===================================================================
+
+    def scrape_smartrecruiters(self, company_name, slug):
+        """SmartRecruiters scraper using public API"""
+        api_url = f"https://api.smartrecruiters.com/v1/companies/{slug}/postings"
+        headers = {**HEADERS, "Accept": "application/json"}
+
+        try:
+            r = requests.get(api_url, headers=headers, timeout=10)
+            if r.status_code != 200:
+                print(f"  ⚠ SmartRecruiters HTTP {r.status_code}")
+                return
+
+            data = r.json()
+            jobs = data.get("content", []) if isinstance(data, dict) else []
+            print(f"  ✓ SmartRecruiters: {len(jobs)} jobs")
+
+            for j in jobs:
+                job_id = j.get("id")
+                title = j.get("name") or j.get("title", "")
+                location = j.get("location", {}).get("city", "Various")
+                apply_url = j.get("applyUrl") or j.get("ref", "")
+
+                if not job_id or not title:
+                    continue
+
+                self.add({
+                    "id": f"sr_{slug}_{job_id}",
+                    "title": title,
+                    "company": company_name,
+                    "location": location or "Various",
+                    "source": f"{company_name} (SmartRecruiters)",
+                    "applyLink": apply_url,
+                    "postedDate": self.now(),
+                })
+        except Exception as e:
+            print(f"  ❌ SmartRecruiters: {e}")
+
+    def scrape_workable(self, company_name, slug):
+        """Workable scraper using public job board JSON"""
+        api_url = f"https://apply.workable.com/{slug}/api/v1/jobs"
+        headers = {**HEADERS, "Accept": "application/json"}
+
+        try:
+            r = requests.get(api_url, headers=headers, timeout=10)
+            if r.status_code != 200:
+                print(f"  ⚠ Workable HTTP {r.status_code}")
+                return
+
+            data = r.json()
+            jobs = data.get("results", []) if isinstance(data, dict) else []
+            print(f"  ✓ Workable: {len(jobs)} jobs")
+
+            for j in jobs:
+                job_id = j.get("shortcode") or j.get("id")
+                title = j.get("title", "")
+                location = (j.get("location") or {}).get("city") or j.get("location", "")
+                apply_url = j.get("application_url") or j.get("url")
+
+                if not job_id or not title:
+                    continue
+
+                self.add({
+                    "id": f"workable_{slug}_{job_id}",
+                    "title": title,
+                    "company": company_name,
+                    "location": location or "Various",
+                    "source": f"{company_name} (Workable)",
+                    "applyLink": apply_url,
+                    "postedDate": self.now(),
+                })
+        except Exception as e:
+            print(f"  ❌ Workable: {e}")
+
+    def scrape_kula(self, company_name, slug):
+        """Kula careers page scraper"""
+        url = f"https://careers.kula.ai/{slug}"
+        headers = {**HEADERS, "Accept": "text/html"}
+
+        try:
+            r = requests.get(url, headers=headers, timeout=10)
+            if r.status_code != 200:
+                print(f"  ⚠ Kula HTTP {r.status_code}")
+                return
+
+            soup = BeautifulSoup(r.text, "html.parser")
+            links = []
+
+            for a in soup.find_all("a", href=True):
+                href = a.get("href", "")
+                if "kula.ai" in href or href.startswith("/"):
+                    if any(x in href for x in ["/job", "/jobs", "/positions"]):
+                        links.append(a)
+
+            seen = set()
+            valid = []
+            for a in links:
+                href = a.get("href", "")
+                if not href or href in seen:
+                    continue
+                seen.add(href)
+
+                title = a.get_text(strip=True)
+                if not title or len(title) < 3:
+                    parent = a.find_parent()
+                    if parent:
+                        h = parent.find(["h2", "h3", "h4", "span"])
+                        if h:
+                            title = h.get_text(strip=True)
+                if not title or len(title) < 3:
+                    continue
+
+                full_url = href if href.startswith("http") else f"https://careers.kula.ai{href}"
+                valid.append((title, full_url))
+
+            print(f"  ✓ Kula: {len(valid)} jobs")
+            for title, full_url in valid:
+                self.add({
+                    "id": f"kula_{slug}_{hash(full_url)}",
+                    "title": title,
+                    "company": company_name,
+                    "location": "Various",
+                    "source": f"{company_name} (Kula)",
+                    "applyLink": full_url,
+                    "postedDate": self.now(),
+                })
+        except Exception as e:
+            print(f"  ❌ Kula: {e}")
+
+    def scrape_brainstormforce(self, company_name, url):
+        """Brainstorm Force custom scraper"""
+        headers = {**HEADERS, "Accept": "text/html"}
+        base = "https://brainstormforce.com"
+
+        try:
+            r = requests.get(url, headers=headers, timeout=10)
+            if r.status_code != 200:
+                print(f"  ⚠ Brainstorm Force HTTP {r.status_code}")
+                return
+
+            soup = BeautifulSoup(r.text, "html.parser")
+            valid = []
+            seen = set()
+
+            for a in soup.find_all("a", href=True):
+                href = a.get("href", "")
+                if "/join/" not in href:
+                    continue
+                if "make-your-own-job-profile" in href:
+                    continue
+                if href.endswith("/join/"):
+                    continue
+
+                full_url = href if href.startswith("http") else base + href
+                if full_url in seen:
+                    continue
+                seen.add(full_url)
+
+                title = a.get_text(strip=True)
+                if not title or len(title) < 3:
+                    parent = a.find_parent()
+                    if parent:
+                        h = parent.find(["h2", "h3", "h4", "span"])
+                        if h:
+                            title = h.get_text(strip=True)
+                if not title or len(title) < 3:
+                    continue
+
+                valid.append((title, full_url))
+
+            print(f"  ✓ Brainstorm Force: {len(valid)} jobs")
+            for title, full_url in valid:
+                self.add({
+                    "id": f"brainstormforce_{hash(full_url)}",
+                    "title": title,
+                    "company": company_name,
+                    "location": "Remote",
+                    "source": f"{company_name}",
+                    "applyLink": full_url,
+                    "postedDate": self.now(),
+                })
+        except Exception as e:
+            print(f"  ❌ Brainstorm Force: {e}")
+
+    def scrape_rtcamp(self, company_name, url):
+        """rtCamp custom scraper"""
+        headers = {**HEADERS, "Accept": "text/html"}
+
+        try:
+            r = requests.get(url, headers=headers, timeout=10)
+            if r.status_code != 200:
+                print(f"  ⚠ rtCamp HTTP {r.status_code}")
+                return
+
+            soup = BeautifulSoup(r.text, "html.parser")
+            valid = []
+            seen = set()
+
+            for a in soup.find_all("a", href=True):
+                href = a.get("href", "")
+                if "/job/" not in href:
+                    continue
+                full_url = href if href.startswith("http") else f"https://careers.rtcamp.com{href}"
+                if full_url in seen:
+                    continue
+                seen.add(full_url)
+
+                title = a.get_text(strip=True)
+                if not title or len(title) < 3:
+                    parent = a.find_parent()
+                    if parent:
+                        h = parent.find(["h2", "h3", "h4", "span"])
+                        if h:
+                            title = h.get_text(strip=True)
+                if not title or len(title) < 3:
+                    continue
+
+                valid.append((title, full_url))
+
+            print(f"  ✓ rtCamp: {len(valid)} jobs")
+            for title, full_url in valid:
+                self.add({
+                    "id": f"rtcamp_{hash(full_url)}",
+                    "title": title,
+                    "company": company_name,
+                    "location": "Remote",
+                    "source": f"{company_name}",
+                    "applyLink": full_url,
+                    "postedDate": self.now(),
+                })
+        except Exception as e:
+            print(f"  ❌ rtCamp: {e}")
+
+    def scrape_wpmudev(self, company_name, url):
+        """WPMU DEV custom scraper"""
+        headers = {**HEADERS, "Accept": "text/html"}
+
+        try:
+            r = requests.get(url, headers=headers, timeout=10)
+            if r.status_code != 200:
+                print(f"  ⚠ WPMU DEV HTTP {r.status_code}")
+                return
+
+            soup = BeautifulSoup(r.text, "html.parser")
+            valid = []
+            seen = set()
+
+            for a in soup.find_all("a", href=True):
+                href = a.get("href", "")
+                if "/careers/" not in href and "/career/" not in href:
+                    continue
+                if href.rstrip("/").endswith("/careers") or href.rstrip("/").endswith("/career"):
+                    continue
+
+                full_url = href if href.startswith("http") else f"https://wpmudev.com{href}"
+                if full_url in seen:
+                    continue
+                seen.add(full_url)
+
+                title = a.get_text(strip=True)
+                if not title or len(title) < 3:
+                    parent = a.find_parent()
+                    if parent:
+                        h = parent.find(["h2", "h3", "h4", "span"])
+                        if h:
+                            title = h.get_text(strip=True)
+                if not title or len(title) < 3:
+                    continue
+
+                valid.append((title, full_url))
+
+            print(f"  ✓ WPMU DEV: {len(valid)} jobs")
+            for title, full_url in valid:
+                self.add({
+                    "id": f"wpmudev_{hash(full_url)}",
+                    "title": title,
+                    "company": company_name,
+                    "location": "Remote",
+                    "source": f"{company_name}",
+                    "applyLink": full_url,
+                    "postedDate": self.now(),
+                })
+        except Exception as e:
+            print(f"  ❌ WPMU DEV: {e}")
+
+    def scrape_navana(self, company_name, url):
+        """Navana Tech custom scraper (Notion/Apply links)"""
+        headers = {**HEADERS, "Accept": "text/html"}
+        allow_hosts = ("notion.so", "notion.site", "forms.gle", "docs.google.com/forms",
+                       "tally.so", "typeform.com")
+
+        try:
+            r = requests.get(url, headers=headers, timeout=10)
+            if r.status_code != 200:
+                print(f"  ⚠ Navana HTTP {r.status_code}")
+                return
+
+            soup = BeautifulSoup(r.text, "html.parser")
+            valid = []
+            seen = set()
+
+            for a in soup.find_all("a", href=True):
+                href = a.get("href", "")
+                if not href:
+                    continue
+                if not any(h in href for h in allow_hosts):
+                    continue
+
+                full_url = href
+                if full_url in seen:
+                    continue
+                seen.add(full_url)
+
+                title = a.get_text(strip=True) or "Apply"
+                if not title or len(title) < 3:
+                    title = "Apply"
+
+                valid.append((title, full_url))
+
+            print(f"  ✓ Navana: {len(valid)} apply links")
+            for title, full_url in valid:
+                self.add({
+                    "id": f"navana_{hash(full_url)}",
+                    "title": title,
+                    "company": company_name,
+                    "location": "Remote",
+                    "source": f"{company_name}",
+                    "applyLink": full_url,
+                    "postedDate": self.now(),
+                })
+        except Exception as e:
+            print(f"  ❌ Navana: {e}")
+
+    # ===================================================================
     # MAIN COMPANY SCRAPERS
     # ===================================================================
 
@@ -1031,6 +1374,12 @@ class JobScraper:
                     self.scrape_lever(name, slug)
                 elif ats_type == "ashby" and slug:
                     self.scrape_ashby(name, slug)
+                elif ats_type == "smartrecruiters" and slug:
+                    self.scrape_smartrecruiters(name, slug)
+                elif ats_type == "workable" and slug:
+                    self.scrape_workable(name, slug)
+                elif ats_type == "kula" and slug:
+                    self.scrape_kula(name, slug)
                 elif ats_type == "workday":
                     print("  ⚠ Workday requires JS - skipped")
                 else:
@@ -1070,6 +1419,20 @@ class JobScraper:
                     self.scrape_lever(name, slug)
                 elif ats == "ashby" and slug:
                     self.scrape_ashby(name, slug)
+                elif ats == "smartrecruiters" and slug:
+                    self.scrape_smartrecruiters(name, slug)
+                elif ats == "workable" and slug:
+                    self.scrape_workable(name, slug)
+                elif ats == "kula" and slug:
+                    self.scrape_kula(name, slug)
+                elif ats == "brainstormforce" and url:
+                    self.scrape_brainstormforce(name, url)
+                elif ats == "rtcamp" and url:
+                    self.scrape_rtcamp(name, url)
+                elif ats == "wpmudev" and url:
+                    self.scrape_wpmudev(name, url)
+                elif ats == "navana" and url:
+                    self.scrape_navana(name, url)
                 elif ats:
                     print(f"  ⚠ ATS '{ats}' not supported or missing slug; using auto-detect")
                     if url:
@@ -1080,6 +1443,12 @@ class JobScraper:
                             self.scrape_lever(name, detected_slug)
                         elif ats_type == "ashby" and detected_slug:
                             self.scrape_ashby(name, detected_slug)
+                        elif ats_type == "smartrecruiters" and detected_slug:
+                            self.scrape_smartrecruiters(name, detected_slug)
+                        elif ats_type == "workable" and detected_slug:
+                            self.scrape_workable(name, detected_slug)
+                        elif ats_type == "kula" and detected_slug:
+                            self.scrape_kula(name, detected_slug)
                         elif ats_type == "workday":
                             print("  ⚠ Workday requires JS - skipped")
                         else:
@@ -1096,6 +1465,12 @@ class JobScraper:
                             self.scrape_lever(name, detected_slug)
                         elif ats_type == "ashby" and detected_slug:
                             self.scrape_ashby(name, detected_slug)
+                        elif ats_type == "smartrecruiters" and detected_slug:
+                            self.scrape_smartrecruiters(name, detected_slug)
+                        elif ats_type == "workable" and detected_slug:
+                            self.scrape_workable(name, detected_slug)
+                        elif ats_type == "kula" and detected_slug:
+                            self.scrape_kula(name, detected_slug)
                         elif ats_type == "workday":
                             print("  ⚠ Workday requires JS - skipped")
                         else:
