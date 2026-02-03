@@ -16,6 +16,7 @@ from bs4 import BeautifulSoup
 from config import HEADERS, TIMEOUT, TOP_COMPANIES, CAREER_PAGES, ASHBY_COMPANIES
 from roles import infer_role
 from scoring import score_job
+from company_registry import get_companies
 
 SCRAPE_MODE = "VOLUME"
 EXTRACT_REQUIREMENTS = True  # SET THIS TO TRUE
@@ -1034,6 +1035,71 @@ class JobScraper:
             except Exception as e:
                 print(f"  ❌ Failed: {e}")
     # ===================================================================
+    # COMPANY REGISTRY (CONFIG-DRIVEN)
+    # ===================================================================
+
+    def scrape_companies(self, companies):
+        """Scrape companies from registry with ATS routing + auto-detection."""
+        if not companies:
+            return
+
+        print("\n[Company Registry - ATS Routing + Auto-Detection]")
+        print(f"Companies: {len(companies)}")
+
+        for company in companies:
+            name = company.get("name", "Unknown")
+            url = company.get("career_url", "")
+            ats = (company.get("ats") or "").lower()
+            slug = company.get("slug", "")
+
+            print(f"\n[{name}]")
+            if url:
+                print(f"  URL: {url}")
+
+            try:
+                if ats == "greenhouse" and slug:
+                    self.scrape_greenhouse(name, slug)
+                elif ats == "lever" and slug:
+                    self.scrape_lever(name, slug)
+                elif ats == "ashby" and slug:
+                    self.scrape_ashby(name, slug)
+                elif ats:
+                    print(f"  ⚠ ATS '{ats}' not supported or missing slug; using auto-detect")
+                    if url:
+                        ats_type, detected_slug, final_url = self.detect_ats_system(url)
+                        if ats_type == "greenhouse" and detected_slug:
+                            self.scrape_greenhouse(name, detected_slug)
+                        elif ats_type == "lever" and detected_slug:
+                            self.scrape_lever(name, detected_slug)
+                        elif ats_type == "ashby" and detected_slug:
+                            self.scrape_ashby(name, detected_slug)
+                        elif ats_type == "workday":
+                            print("  ⚠ Workday requires JS - skipped")
+                        else:
+                            self.scrape_generic(name, final_url)
+                    else:
+                        print("  ⚠ Missing career_url; skipped")
+                else:
+                    if url:
+                        ats_type, detected_slug, final_url = self.detect_ats_system(url)
+                        print(f"  Detected: {ats_type}" + (f" | Slug: {detected_slug}" if detected_slug else ""))
+                        if ats_type == "greenhouse" and detected_slug:
+                            self.scrape_greenhouse(name, detected_slug)
+                        elif ats_type == "lever" and detected_slug:
+                            self.scrape_lever(name, detected_slug)
+                        elif ats_type == "ashby" and detected_slug:
+                            self.scrape_ashby(name, detected_slug)
+                        elif ats_type == "workday":
+                            print("  ⚠ Workday requires JS - skipped")
+                        else:
+                            self.scrape_generic(name, final_url)
+                    else:
+                        print("  ⚠ Missing career_url; skipped")
+
+                time.sleep(0.4)
+            except Exception as e:
+                print(f"  ❌ Failed: {e}")
+    # ===================================================================
     # MAIN COMPANY SCRAPERS
     # ===================================================================
 
@@ -1231,9 +1297,13 @@ class JobScraper:
             self.scrape_yc()
             self.scrape_internshala()
 
-            self.scrape_ats()
-            self.scrape_career_pages()
-            self.scrape_ashby_companies()
+            companies = get_companies()
+            if companies:
+                self.scrape_companies(companies)
+            else:
+                self.scrape_ats()
+                self.scrape_career_pages()
+                self.scrape_ashby_companies()
 
         print("\n[SOURCE SUMMARY]")
         for k, v in sorted(self.stats.items()):
