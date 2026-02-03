@@ -703,6 +703,16 @@ class JobScraper:
                     jobs.append((title, url, location or "Various"))
         return jobs
 
+    def _url_has_jobposting(self, url: str) -> bool:
+        try:
+            r = requests.get(url, headers=HEADERS, timeout=10)
+            if r.status_code != 200:
+                return False
+            soup = BeautifulSoup(r.text, "html.parser")
+            return len(self._extract_jobposting_jsonld(soup)) > 0
+        except Exception:
+            return False
+
     def _find_job_urls_in_sitemap(self, base_url: str, limit: int = 50):
         sitemap_urls = []
         parsed = urlparse(base_url)
@@ -1669,11 +1679,11 @@ class JobScraper:
             # Try sitemap lookup
             sitemap_urls = self._find_job_urls_in_sitemap(url)
             if sitemap_urls:
-                print(f"  ✓ Sitemap: {len(sitemap_urls)} jobs")
+                print(f"  ✓ Sitemap: {len(sitemap_urls)} urls (validating JobPosting...)")
                 for href in sitemap_urls:
-                    title = self._title_from_url(href)
-                    if not title:
-                        title = "Job Opening"
+                    if not self._url_has_jobposting(href):
+                        continue
+                    title = self._title_from_url(href) or "Job Opening"
                     self.add({
                         "id": f"sitemap_{company_name}_{hash(href)}",
                         "title": title,
@@ -1683,7 +1693,8 @@ class JobScraper:
                         "applyLink": href,
                         "postedDate": self.now(),
                     })
-                return
+                if self.stats.get(company_name, 0) > 0:
+                    return
     
             # If no jobs found, try Playwright for JS-rendered content
             print(f"  ⚠ No jobs via requests, trying Playwright...")
@@ -1723,11 +1734,13 @@ class JobScraper:
                     
                     browser.close()
                     
-                    print(f"  ✓ Generic (Playwright): {len(valid_jobs_pw)} jobs")
+                    print(f"  ✓ Generic (Playwright): {len(valid_jobs_pw)} urls (validating JobPosting...)")
                     
                     for href, title in valid_jobs_pw:
                         full_url = href if href.startswith("http") else url.rstrip("/") + href
-                        
+                        if not self._url_has_jobposting(full_url):
+                            continue
+
                         self.add({
                             "id": f"generic_{company_name}_{hash(href)}",
                             "title": title,
