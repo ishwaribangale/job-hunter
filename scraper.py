@@ -187,6 +187,7 @@ class JobScraper:
         self.jobs = []
         self.seen = set()
         self.stats = {}
+        self.company_results = {}
         self.req_extractor = RequirementsExtractor()
         self.existing_jobs = {}  # NEW: Store existing jobs by ID
         self.requirements_fetched = 0  # NEW: Counter for tracking
@@ -240,8 +241,6 @@ class JobScraper:
                 # REUSE existing requirements
                 job["requirements"] = self.existing_jobs[job_id]
                 self.requirements_reused += 1
-                if self.requirements_reused <= 5:  # Only show first 5 to avoid spam
-                    print(f"  ✓ Reusing requirements for: {job['title'][:50]}")
             else:
                 if REQUIREMENTS_REUSE_ONLY:
                     # Skip fetching new requirements for new jobs
@@ -1573,6 +1572,8 @@ class JobScraper:
             url = company.get("career_url", "")
             ats = (company.get("ats") or "").lower()
             slug = company.get("slug", "")
+            start_count = len(self.jobs)
+            error = None
 
             print(f"\n[{name}]")
             if url:
@@ -1648,7 +1649,16 @@ class JobScraper:
 
                 time.sleep(0.4)
             except Exception as e:
+                error = str(e)
                 print(f"  ❌ Failed: {e}")
+
+            end_count = len(self.jobs)
+            found = max(0, end_count - start_count)
+            self.company_results[name] = {
+                "found": found,
+                "error": error,
+            }
+            print(f"  ✅ Summary: {found} jobs" + (f" | Error: {error}" if error else ""))
     # ===================================================================
     # MAIN COMPANY SCRAPERS
     # ===================================================================
@@ -1882,6 +1892,7 @@ class JobScraper:
 
             companies = get_companies()
             if companies:
+                self.registry_companies = companies
                 self.scrape_companies(companies)
             else:
                 self.scrape_ats()
@@ -1902,6 +1913,14 @@ class JobScraper:
             if REQUIREMENTS_REUSE_ONLY:
                 print(f"  ⏭ Skipped new: {self.requirements_skipped}")
             print(f"  ⚡ Time saved: ~{self.requirements_reused * 0.5:.1f} seconds")
+
+        # Company summary report (registry only)
+        if getattr(self, "registry_companies", None):
+            zero_job = [n for n, r in self.company_results.items() if r.get("found", 0) == 0]
+            if zero_job:
+                print(f"\n[0-JOB COMPANIES]")
+                for name in zero_job:
+                    print(f"  - {name}")
 
     def save(self):
         os.makedirs("data", exist_ok=True)

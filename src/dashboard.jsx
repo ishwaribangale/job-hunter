@@ -6,10 +6,11 @@ export default function Dashboard() {
   const [loading, setLoading] = React.useState(true);
 
   const [searchQuery, setSearchQuery] = React.useState("");
-  const [selectedSource, setSelectedSource] = React.useState("all");
   const [selectedRole, setSelectedRole] = React.useState("all");
-  const [selectedLocation, setSelectedLocation] = React.useState("all");
   const [selectedEmploymentType, setSelectedEmploymentType] = React.useState("all");
+  const [sourceQuery, setSourceQuery] = React.useState("");
+  const [companyQuery, setCompanyQuery] = React.useState("");
+  const [locationQuery, setLocationQuery] = React.useState("");
 
   const [activeSection, setActiveSection] = React.useState("all");
   const [resumeMatchEnabled, setResumeMatchEnabled] = React.useState(false);
@@ -38,10 +39,22 @@ export default function Dashboard() {
   }, []);
 
   /* ---------------- FILTER VALUES ---------------- */
-  const sources = [...new Set(jobs.map(j => j?.source).filter(Boolean))];
+  const sources = [...new Set(jobs.map(j => j?.source).filter(Boolean))].sort();
   const roles = [...new Set(jobs.map(j => j?.role).filter(Boolean))];
-  const locations = [...new Set(jobs.map(j => j?.location).filter(Boolean))];
+  const locations = [...new Set(jobs.map(j => j?.location).filter(Boolean))].sort();
   const employmentTypes = [...new Set(jobs.map(j => j?.employment_type).filter(Boolean))];
+  const companies = [...new Set(jobs.map(j => j?.company).filter(Boolean))].sort();
+  const topCompanies = React.useMemo(() => {
+    const counts = {};
+    jobs.forEach(j => {
+      if (!j.company) return;
+      counts[j.company] = (counts[j.company] || 0) + 1;
+    });
+    return Object.entries(counts)
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, 10)
+      .map(([name]) => name);
+  }, [jobs]);
 
   /* ---------------- QUICK FILTERS ---------------- */
   const quickFilters = [
@@ -49,10 +62,11 @@ export default function Dashboard() {
       label: "Remote Only",
       action: () => {
         setSearchQuery("");
-        setSelectedSource("all");
         setSelectedRole("all");
-        setSelectedLocation("all");
         setSelectedEmploymentType("all");
+        setSourceQuery("");
+        setCompanyQuery("");
+        setLocationQuery("");
         setFilteredJobs(jobs.filter(j => j.location?.toLowerCase().includes("remote")));
       }
     },
@@ -60,10 +74,11 @@ export default function Dashboard() {
       label: "Full-time",
       action: () => {
         setSearchQuery("");
-        setSelectedSource("all");
         setSelectedRole("all");
-        setSelectedLocation("all");
         setSelectedEmploymentType("all");
+        setSourceQuery("");
+        setCompanyQuery("");
+        setLocationQuery("");
         setFilteredJobs(jobs.filter(j => j.employment_type === "Full-time"));
       }
     },
@@ -71,10 +86,11 @@ export default function Dashboard() {
       label: "Engineering",
       action: () => {
         setSearchQuery("");
-        setSelectedSource("all");
         setSelectedRole("all");
-        setSelectedLocation("all");
         setSelectedEmploymentType("all");
+        setSourceQuery("");
+        setCompanyQuery("");
+        setLocationQuery("");
         setFilteredJobs(jobs.filter(j => j.role === "Engineering"));
       }
     },
@@ -82,10 +98,11 @@ export default function Dashboard() {
       label: "Reset Filters",
       action: () => {
         setSearchQuery("");
-        setSelectedSource("all");
         setSelectedRole("all");
-        setSelectedLocation("all");
         setSelectedEmploymentType("all");
+        setSourceQuery("");
+        setCompanyQuery("");
+        setLocationQuery("");
         setFilteredJobs(jobs);
       }
     }
@@ -103,16 +120,20 @@ export default function Dashboard() {
       );
     }
 
-    if (selectedSource !== "all") {
-      data = data.filter(j => j.source === selectedSource);
+    if (sourceQuery) {
+      data = data.filter(j => j.source?.toLowerCase().includes(sourceQuery.toLowerCase()));
+    }
+
+    if (companyQuery) {
+      data = data.filter(j => j.company?.toLowerCase().includes(companyQuery.toLowerCase()));
     }
 
     if (selectedRole !== "all") {
       data = data.filter(j => j.role === selectedRole);
     }
 
-    if (selectedLocation !== "all") {
-      data = data.filter(j => j.location === selectedLocation);
+    if (locationQuery) {
+      data = data.filter(j => j.location?.toLowerCase().includes(locationQuery.toLowerCase()));
     }
 
     if (selectedEmploymentType !== "all") {
@@ -129,7 +150,7 @@ export default function Dashboard() {
 
     setFilteredJobs(data);
     setCurrentPage(1); // Reset to page 1 when filters change
-  }, [jobs, searchQuery, selectedSource, selectedRole, selectedLocation, selectedEmploymentType, resumeMatchEnabled, resumeKeywords]);
+  }, [jobs, searchQuery, sourceQuery, companyQuery, selectedRole, locationQuery, selectedEmploymentType, resumeMatchEnabled, resumeKeywords]);
 
   /* ---------------- SECTION FILTER ---------------- */
   const displayJobs = React.useMemo(() => {
@@ -142,12 +163,25 @@ export default function Dashboard() {
   /* ---------------- SORT JOBS ---------------- */
   const sortedJobs = React.useMemo(() => {
     const data = [...displayJobs];
+    const locationPriority = (loc) => {
+      const l = (loc || "").toLowerCase();
+      if (l.includes("remote")) return 2;
+      if (l.includes("hybrid")) return 1;
+      return 0;
+    };
     
     switch(sortBy) {
       case "matchScore":
         return data.sort((a, b) => (b.matchScore || 0) - (a.matchScore || 0));
       case "date":
         return data.sort((a, b) => new Date(b.postedDate || b.fetchedAt) - new Date(a.postedDate || a.fetchedAt));
+      case "remote":
+        return data.sort((a, b) => {
+          const pa = locationPriority(a.location);
+          const pb = locationPriority(b.location);
+          if (pb !== pa) return pb - pa;
+          return (b.score || 0) - (a.score || 0);
+        });
       case "score":
       default:
         return data.sort((a, b) => (b.score || 0) - (a.score || 0));
@@ -181,6 +215,14 @@ export default function Dashboard() {
     
     const score = Math.round((matches.length / jobKeywords.length) * 100);
     return Math.min(score, 100);
+  };
+
+  const locationPill = (location) => {
+    const loc = (location || "").toLowerCase();
+    if (loc.includes("remote")) return "Remote";
+    if (loc.includes("hybrid")) return "Hybrid";
+    if (loc.includes("india")) return "India";
+    return "";
   };
 
   const markJobAsApplied = (id, applyLink) => {
@@ -356,17 +398,21 @@ export default function Dashboard() {
                 />
               </div>
 
-              {/* Source Filter */}
-              <select
-                value={selectedSource}
-                onChange={e => setSelectedSource(e.target.value)}
-                className="bg-gray-900 border border-gray-800 rounded px-4 py-2 text-sm focus:outline-none focus:border-indigo-500 cursor-pointer transition-colors"
-              >
-                <option value="all">All Sources</option>
-                {sources.map(source => (
-                  <option key={source} value={source}>{source}</option>
-                ))}
-              </select>
+              {/* Source Filter (searchable) */}
+              <div>
+                <input
+                  list="source-options"
+                  placeholder="Filter by source..."
+                  value={sourceQuery}
+                  onChange={e => setSourceQuery(e.target.value)}
+                  className="w-full bg-gray-900 border border-gray-800 rounded px-4 py-2 text-sm focus:outline-none focus:border-indigo-500 transition-colors"
+                />
+                <datalist id="source-options">
+                  {sources.map(source => (
+                    <option key={source} value={source} />
+                  ))}
+                </datalist>
+              </div>
 
               {/* Role Filter */}
               <select
@@ -380,17 +426,21 @@ export default function Dashboard() {
                 ))}
               </select>
 
-              {/* Location Filter */}
-              <select
-                value={selectedLocation}
-                onChange={e => setSelectedLocation(e.target.value)}
-                className="bg-gray-900 border border-gray-800 rounded px-4 py-2 text-sm focus:outline-none focus:border-indigo-500 cursor-pointer transition-colors"
-              >
-                <option value="all">All Locations</option>
-                {locations.map(location => (
-                  <option key={location} value={location}>{location}</option>
-                ))}
-              </select>
+              {/* Location Filter (searchable) */}
+              <div>
+                <input
+                  list="location-options"
+                  placeholder="Filter by location..."
+                  value={locationQuery}
+                  onChange={e => setLocationQuery(e.target.value)}
+                  className="w-full bg-gray-900 border border-gray-800 rounded px-4 py-2 text-sm focus:outline-none focus:border-indigo-500 transition-colors"
+                />
+                <datalist id="location-options">
+                  {locations.map(location => (
+                    <option key={location} value={location} />
+                  ))}
+                </datalist>
+              </div>
 
               {/* Employment Type Filter */}
               <select
@@ -406,20 +456,50 @@ export default function Dashboard() {
             </div>
 
             {/* Second Row - Sort */}
-            <div className="mt-4">
+            <div className="mt-4 flex flex-wrap gap-3 items-center">
               <select
                 value={sortBy}
                 onChange={e => setSortBy(e.target.value)}
                 className="bg-gray-900 border border-gray-800 rounded px-4 py-2 text-sm focus:outline-none focus:border-indigo-500 cursor-pointer transition-colors"
               >
                 <option value="score">Sort by: Score</option>
-                <option value="date">Sort by: Date</option>
+                <option value="date">Sort by: Newest</option>
+                <option value="remote">Sort by: Remote First</option>
                 {resumeMatchEnabled && <option value="matchScore">Sort by: Match %</option>}
               </select>
+              <input
+                list="company-options"
+                placeholder="Filter by company..."
+                value={companyQuery}
+                onChange={e => setCompanyQuery(e.target.value)}
+                className="bg-gray-900 border border-gray-800 rounded px-4 py-2 text-sm focus:outline-none focus:border-indigo-500 transition-colors w-full md:w-72"
+              />
+              <datalist id="company-options">
+                {companies.map(company => (
+                  <option key={company} value={company} />
+                ))}
+              </datalist>
+            </div>
+
+            {/* Company quick chips */}
+            <div className="mt-3 flex flex-wrap gap-2">
+              {topCompanies.map(name => (
+                <button
+                  key={name}
+                  onClick={() => setCompanyQuery(name)}
+                  className={`px-3 py-1 rounded-full text-xs border transition-colors ${
+                    companyQuery === name
+                      ? "bg-indigo-500 text-gray-900 border-indigo-400"
+                      : "bg-gray-900 text-gray-300 border-gray-700 hover:border-indigo-500"
+                  }`}
+                >
+                  {name}
+                </button>
+              ))}
             </div>
 
             {/* Active Filters Display */}
-            {(searchQuery || selectedSource !== "all" || selectedRole !== "all" || selectedLocation !== "all" || selectedEmploymentType !== "all") && (
+            {(searchQuery || sourceQuery || companyQuery || selectedRole !== "all" || locationQuery || selectedEmploymentType !== "all") && (
               <div className="mt-4 flex flex-wrap gap-2 items-center">
                 <span className="text-xs text-gray-500">Active filters:</span>
                 {searchQuery && (
@@ -427,9 +507,14 @@ export default function Dashboard() {
                     Search: "{searchQuery}"
                   </span>
                 )}
-                {selectedSource !== "all" && (
+                {sourceQuery && (
                   <span className="text-xs bg-indigo-900/30 text-indigo-300 px-2 py-1 rounded">
-                    Source: {selectedSource}
+                    Source: {sourceQuery}
+                  </span>
+                )}
+                {companyQuery && (
+                  <span className="text-xs bg-indigo-900/30 text-indigo-300 px-2 py-1 rounded">
+                    Company: {companyQuery}
                   </span>
                 )}
                 {selectedRole !== "all" && (
@@ -437,9 +522,9 @@ export default function Dashboard() {
                     Role: {selectedRole}
                   </span>
                 )}
-                {selectedLocation !== "all" && (
+                {locationQuery && (
                   <span className="text-xs bg-indigo-900/30 text-indigo-300 px-2 py-1 rounded">
-                    Location: {selectedLocation}
+                    Location: {locationQuery}
                   </span>
                 )}
                 {selectedEmploymentType !== "all" && (
@@ -479,10 +564,11 @@ export default function Dashboard() {
                   <button
                     onClick={() => {
                       setSearchQuery("");
-                      setSelectedSource("all");
                       setSelectedRole("all");
-                      setSelectedLocation("all");
                       setSelectedEmploymentType("all");
+                      setSourceQuery("");
+                      setCompanyQuery("");
+                      setLocationQuery("");
                     }}
                     className="text-indigo-400 hover:text-indigo-300 underline"
                   >
@@ -587,6 +673,14 @@ function ResumeMatchScreen({ onMatch, onFileUpload }) {
 
 function JobCard({ job, saved, applied, onSave, onApply, resumeMatchEnabled, appliedDetails, onUpdateNotes, onToggleDetails, isExpanded }) {
   const [notes, setNotes] = React.useState(appliedDetails?.notes || "");
+  const pill = (() => {
+    const loc = (job.location || "").toLowerCase();
+    if (loc.includes("remote")) return "Remote";
+    if (loc.includes("hybrid")) return "Hybrid";
+    if (loc.includes("india")) return "India";
+    return "";
+  })();
+  const initial = (job.company || "?").trim().charAt(0).toUpperCase();
   
   return (
     <div className="bg-gray-900 border border-gray-800 rounded-lg p-5 hover:border-gray-700 transition-colors">
@@ -598,6 +692,20 @@ function JobCard({ job, saved, applied, onSave, onApply, resumeMatchEnabled, app
         )}
 
         <div className="flex-1">
+          <div className="flex items-center gap-3 mb-2">
+            <div className="w-9 h-9 rounded-full bg-indigo-900/40 border border-indigo-800 text-indigo-300 flex items-center justify-center text-sm font-semibold">
+              {initial}
+            </div>
+            <div className="flex flex-wrap items-center gap-2">
+              <span className="text-xs bg-gray-800 text-gray-300 px-2 py-1 rounded">{job.company}</span>
+              {job.source && (
+                <span className="text-xs bg-gray-800/60 text-gray-400 px-2 py-1 rounded">{job.source}</span>
+              )}
+              {pill && (
+                <span className="text-xs bg-emerald-900/30 text-emerald-300 px-2 py-1 rounded">{pill}</span>
+              )}
+            </div>
+          </div>
           <div className="flex items-center gap-2 mb-1">
             <h3 className="text-xl font-semibold">{job.title}</h3>
             {!applied && (
@@ -641,7 +749,7 @@ function JobCard({ job, saved, applied, onSave, onApply, resumeMatchEnabled, app
             disabled={applied}
             onClick={() => onApply(job.id, job.applyLink)}
             className={`px-4 py-2 rounded font-semibold transition-colors ${
-              applied ? "bg-gray-700 text-gray-500 cursor-not-allowed" : "bg-indigo-500 text-gray-900 hover:bg-indigo-400"
+              applied ? "bg-gray-700 text-gray-500 cursor-not-allowed" : "bg-indigo-500 text-gray-900 hover:bg-indigo-400 shadow-md shadow-indigo-900/30"
             }`}
           >
             {applied ? "Applied ✓" : "Apply →"}
