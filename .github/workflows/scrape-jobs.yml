@@ -69,8 +69,7 @@ jobs:
           
           git add data/
           git diff --quiet && git diff --staged --quiet || git commit -m "🤖 Auto-update: Jobs at $(date -u +"%Y-%m-%d %H:%M UTC")"
-          
-          git pull --rebase origin main
+        
           git push
       
       - name: 📊 Generate Summary
