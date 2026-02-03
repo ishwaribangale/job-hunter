@@ -599,7 +599,8 @@
   {
     "name": "BrowserStack",
     "country": "IN",
-    "career_url": "https://www.browserstack.com/careers"
+    "career_url": "https://browserstack.wd3.myworkdayjobs.com/External",
+    "ats": "workday"
   },
   {
     "name": "Zoho",
@@ -624,12 +625,16 @@
   {
     "name": "CleverTap",
     "country": "IN",
-    "career_url": "https://clevertap.com"
+    "career_url": "https://jobs.lever.co/clevertap",
+    "ats": "lever",
+    "slug": "clevertap"
   },
   {
     "name": "Whatfix",
     "country": "IN",
-    "career_url": "https://whatfix.com/careers/"
+    "career_url": "https://jobs.lever.co/whatfix",
+    "ats": "lever",
+    "slug": "whatfix"
   },
   {
     "name": "Rocketium",

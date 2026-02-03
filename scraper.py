@@ -1173,6 +1173,9 @@ class JobScraper:
                 if "kula.ai" in href or href.startswith("/"):
                     if any(x in href for x in ["/job", "/jobs", "/positions"]):
                         links.append(a)
+                    # Kula job detail pages often look like /<slug>/<id>
+                    if re.search(r"/\\d+/?$", href):
+                        links.append(a)
 
             seen = set()
             valid = []
@@ -1271,10 +1274,23 @@ class JobScraper:
         try:
             r = requests.get(url, headers=headers, timeout=10)
             if r.status_code != 200:
-                print(f"  ⚠ rtCamp HTTP {r.status_code}")
-                return
+                print(f"  ⚠ rtCamp HTTP {r.status_code}, trying Playwright...")
+                try:
+                    from playwright.sync_api import sync_playwright
+                    with sync_playwright() as p:
+                        browser = p.chromium.launch(headless=True, args=["--no-sandbox"])
+                        page = browser.new_page()
+                        page.goto(url, wait_until="domcontentloaded", timeout=30000)
+                        page.wait_for_timeout(2000)
+                        content = page.content()
+                        browser.close()
+                    soup = BeautifulSoup(content, "html.parser")
+                except Exception as e:
+                    print(f"  ⚠ rtCamp Playwright failed: {e}")
+                    return
+            else:
+                soup = BeautifulSoup(r.text, "html.parser")
 
-            soup = BeautifulSoup(r.text, "html.parser")
             valid = []
             seen = set()
 
@@ -1312,6 +1328,59 @@ class JobScraper:
                 })
         except Exception as e:
             print(f"  ❌ rtCamp: {e}")
+
+    def scrape_workday(self, company_name, career_url):
+        """Workday scraper using public CXS endpoint"""
+        try:
+            parsed = urlparse(career_url)
+            host = parsed.netloc
+            path_parts = [p for p in parsed.path.split("/") if p]
+            site = path_parts[0] if path_parts else "External"
+            tenant = host.split(".")[0]
+
+            api_url = f"https://{host}/wday/cxs/{tenant}/{site}/jobs"
+            headers = {**HEADERS, "Accept": "application/json"}
+
+            offset = 0
+            limit = 50
+            total = None
+
+            while True:
+                params = {"offset": offset, "limit": limit}
+                r = requests.get(api_url, headers=headers, params=params, timeout=12)
+                if r.status_code != 200:
+                    print(f"  ⚠ Workday HTTP {r.status_code}")
+                    return
+
+                data = r.json()
+                jobs = data.get("jobPostings", []) if isinstance(data, dict) else []
+                if total is None:
+                    total = data.get("total", len(jobs))
+
+                for j in jobs:
+                    title = j.get("title", "")
+                    location = j.get("locationsText", "Various")
+                    ext_path = j.get("externalPath") or j.get("jobPath") or ""
+                    if not title:
+                        continue
+                    apply_url = f"https://{host}{ext_path}" if ext_path.startswith("/") else career_url
+
+                    job_id = j.get("bulletFields", [{}])[0].get("id") or j.get("id") or hash(apply_url)
+                    self.add({
+                        "id": f"workday_{tenant}_{job_id}",
+                        "title": title,
+                        "company": company_name,
+                        "location": location or "Various",
+                        "source": f"{company_name} (Workday)",
+                        "applyLink": apply_url,
+                        "postedDate": self.now(),
+                    })
+
+                offset += limit
+                if total is not None and offset >= total:
+                    break
+        except Exception as e:
+            print(f"  ❌ Workday: {e}")
 
     def scrape_wpmudev(self, company_name, url):
         """WPMU DEV custom scraper"""
@@ -1522,6 +1591,8 @@ class JobScraper:
                     self.scrape_workable(name, slug)
                 elif ats == "kula" and slug:
                     self.scrape_kula(name, slug)
+                elif ats == "workday" and url:
+                    self.scrape_workday(name, url)
                 elif ats == "brainstormforce" and url:
                     self.scrape_brainstormforce(name, url)
                 elif ats == "rtcamp" and url:
@@ -1547,7 +1618,7 @@ class JobScraper:
                         elif ats_type == "kula" and detected_slug:
                             self.scrape_kula(name, detected_slug)
                         elif ats_type == "workday":
-                            print("  ⚠ Workday requires JS - skipped")
+                            self.scrape_workday(name, final_url)
                         else:
                             self.scrape_generic(name, final_url)
                     else:
@@ -1569,7 +1640,7 @@ class JobScraper:
                         elif ats_type == "kula" and detected_slug:
                             self.scrape_kula(name, detected_slug)
                         elif ats_type == "workday":
-                            print("  ⚠ Workday requires JS - skipped")
+                            self.scrape_workday(name, final_url)
                         else:
                             self.scrape_generic(name, final_url)
                     else:
