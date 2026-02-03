@@ -1,105 +1,499 @@
 [
-  {"name":"PhonePe","country":"IN","career_url":"https://boards.greenhouse.io/phonepe","ats":"greenhouse","slug":"phonepe"},
-  {"name":"PayPay India","country":"IN","career_url":"https://boards.greenhouse.io/paypay","ats":"greenhouse","slug":"paypay"},
-  {"name":"RevX","country":"IN","career_url":"https://boards.greenhouse.io/revx","ats":"greenhouse","slug":"revx"},
-  {"name":"Zinnia","country":"GLOBAL","career_url":"https://boards.greenhouse.io/zinnia","ats":"greenhouse","slug":"zinnia"},
-  {"name":"Netradyne","country":"GLOBAL","career_url":"https://boards.greenhouse.io/netradyne","ats":"greenhouse","slug":"netradyne"},
-  {"name":"Samsara","country":"GLOBAL","career_url":"https://boards.greenhouse.io/samsara","ats":"greenhouse","slug":"samsara"},
-  {"name":"Razorpay","country":"IN","career_url":"https://boards.greenhouse.io/razorpaysoftwareprivatelimited","ats":"greenhouse","slug":"razorpaysoftwareprivatelimited"},
-  {"name":"Slice","country":"IN","career_url":"https://boards.greenhouse.io/slice","ats":"greenhouse","slug":"slice"},
-  {"name":"Groww","country":"IN","career_url":"https://boards.greenhouse.io/groww","ats":"greenhouse","slug":"groww"},
-  {"name":"Pitchbookdata","country":"GLOBAL","career_url":"https://boards.greenhouse.io/pitchbookdata","ats":"greenhouse","slug":"pitchbookdata"},
-  {"name":"Anthropic","country":"GLOBAL","career_url":"https://boards.greenhouse.io/anthropic","ats":"greenhouse","slug":"anthropic"},
-  {"name":"OneTrust","country":"GLOBAL","career_url":"https://boards.greenhouse.io/onetrust","ats":"greenhouse","slug":"onetrust"},
-  {"name":"Airbnb","country":"GLOBAL","career_url":"https://boards.greenhouse.io/airbnb","ats":"greenhouse","slug":"airbnb"},
-  {"name":"Dropbox","country":"GLOBAL","career_url":"https://boards.greenhouse.io/dropbox","ats":"greenhouse","slug":"dropbox"},
-  {"name":"Stripe","country":"GLOBAL","career_url":"https://stripe.com/jobs","ats":"greenhouse","slug":"stripe"},
-  {"name":"Lyft","country":"GLOBAL","career_url":"https://boards.greenhouse.io/lyft","ats":"greenhouse","slug":"lyft"},
-  {"name":"Betterment","country":"GLOBAL","career_url":"https://boards.greenhouse.io/betterment","ats":"greenhouse","slug":"betterment"},
-  {"name":"Instacart","country":"GLOBAL","career_url":"https://boards.greenhouse.io/instacart","ats":"greenhouse","slug":"instacart"},
-  {"name":"GoDaddy","country":"GLOBAL","career_url":"https://boards.greenhouse.io/godaddy","ats":"greenhouse","slug":"godaddy"},
-  {"name":"Webflow","country":"GLOBAL","career_url":"https://boards.greenhouse.io/webflow","ats":"greenhouse","slug":"webflow"},
-  {"name":"Netlify","country":"GLOBAL","career_url":"https://boards.greenhouse.io/netlify","ats":"greenhouse","slug":"netlify"},
-  {"name":"Postman","country":"GLOBAL","career_url":"https://lnkd.in/gYUCnEvN","ats":"greenhouse","slug":"postman"},
-  {"name":"Mercury","country":"GLOBAL","career_url":"https://boards.greenhouse.io/mercury","ats":"greenhouse","slug":"mercury"},
-
-  {"name":"Figma","country":"GLOBAL","career_url":"https://www.figma.com/careers"},
-  {"name":"Vercel","country":"GLOBAL","career_url":"https://vercel.com/careers"},
-  {"name":"Render","country":"GLOBAL","career_url":"https://render.com/careers"},
-  {"name":"1Password","country":"GLOBAL","career_url":"https://1password.com/careers"},
-  {"name":"Wise","country":"GLOBAL","career_url":"https://www.wise.jobs"},
-
-  {"name":"Spotify","country":"GLOBAL","career_url":"https://lnkd.in/gd6ywwF8"},
-  {"name":"Docker, Inc","country":"GLOBAL","career_url":"https://lnkd.in/g9VUBgYj"},
-  {"name":"GitLab","country":"GLOBAL","career_url":"https://lnkd.in/g8bfzKJT"},
-  {"name":"DigitalOcean","country":"GLOBAL","career_url":"https://lnkd.in/gw99G8fm"},
-  {"name":"Atlassian","country":"GLOBAL","career_url":"https://lnkd.in/guNhDCrx"},
-  {"name":"Upwork","country":"GLOBAL","career_url":"https://lnkd.in/gF-SGRX3"},
-  {"name":"Canonical","country":"GLOBAL","career_url":"https://lnkd.in/gn7A9XGz"},
-  {"name":"Shopify","country":"GLOBAL","career_url":"https://lnkd.in/gxMXcWU6"},
-  {"name":"Upsun (formerly Platform.sh)","country":"GLOBAL","career_url":"https://lnkd.in/g5cQEFZW"},
-  {"name":"DuckDuckGo","country":"GLOBAL","career_url":"https://duckduckgo.com"},
-  {"name":"Uplers","country":"IN","career_url":"https://www.uplers.com"},
-
-  {"name":"Anunta Technology","country":"IN","career_url":"https://anunta.com/about-us/careers"},
-  {"name":"Freshworks","country":"IN","career_url":"https://freshworks.com/company/careers"},
-  {"name":"Perfios","country":"IN","career_url":"https://perfios.com/careers"},
-  {"name":"MoEngage","country":"IN","career_url":"https://moengage.com/careers"},
-  {"name":"WebEngage","country":"IN","career_url":"https://webengage.com/careers"},
-  {"name":"Kapture CX","country":"IN","career_url":"https://kapture.cx/careers"},
-  {"name":"SpotDraft","country":"IN","career_url":"https://spotdraft.com/careers"},
-  {"name":"iMocha","country":"IN","career_url":"https://imocha.io/careers"},
-  {"name":"Zoho","country":"IN","career_url":"https://careers.zohocorp.com/jobs/careers"},
-  {"name":"Chargebee","country":"IN","career_url":"https://www.chargebee.com/careers/"},
-  {"name":"BrowserStack","country":"IN","career_url":"https://www.browserstack.com/careers"},
-  {"name":"Whatfix","country":"IN","career_url":"https://whatfix.com/careers/"},
-
-  {"name":"Zapier","country":"GLOBAL","career_url":"https://jobs.ashbyhq.com/zapier","ats":"ashby","slug":"zapier"},
-  {"name":"Ramp","country":"GLOBAL","career_url":"https://jobs.ashbyhq.com/ramp","ats":"ashby","slug":"ramp"},
-  {"name":"Notion","country":"GLOBAL","career_url":"https://jobs.ashbyhq.com/notion","ats":"ashby","slug":"notion"},
-  {"name":"Linear","country":"GLOBAL","career_url":"https://jobs.ashbyhq.com/linear","ats":"ashby","slug":"linear"},
-  {"name":"Supabase","country":"GLOBAL","career_url":"https://jobs.ashbyhq.com/supabase","ats":"ashby","slug":"supabase"},
-  {"name":"Vanta","country":"GLOBAL","career_url":"https://jobs.ashbyhq.com/vanta","ats":"ashby","slug":"vanta"},
-  {"name":"Watershed","country":"GLOBAL","career_url":"https://jobs.ashbyhq.com/watershed","ats":"ashby","slug":"watershed"},
-  {"name":"gigaml","country":"GLOBAL","career_url":"https://jobs.ashbyhq.com/gigaml","ats":"ashby","slug":"gigaml"},
-  {"name":"Cartesia","country":"GLOBAL","career_url":"https://jobs.ashbyhq.com/cartesia","ats":"ashby","slug":"cartesia"},
-  {"name":"Ema","country":"GLOBAL","career_url":"https://jobs.ashbyhq.com/ema","ats":"ashby","slug":"ema"},
-  {"name":"Granica","country":"GLOBAL","career_url":"https://jobs.ashbyhq.com/granica","ats":"ashby","slug":"granica"},
-  {"name":"Commure","country":"GLOBAL","career_url":"https://jobs.ashbyhq.com/commure","ats":"ashby","slug":"commure"},
-  {"name":"Mercor","country":"GLOBAL","career_url":"https://jobs.ashbyhq.com/mercor","ats":"ashby","slug":"mercor"},
-  {"name":"JuniperSquare","country":"GLOBAL","career_url":"https://jobs.ashbyhq.com/junipersquare","ats":"ashby","slug":"junipersquare"},
-  {"name":"AcaiTravel","country":"GLOBAL","career_url":"https://jobs.ashbyhq.com/acai","ats":"ashby","slug":"acai"},
-  {"name":"AltimateAI","country":"GLOBAL","career_url":"https://jobs.ashbyhq.com/altimate","ats":"ashby","slug":"altimate"},
-  {"name":"Upflow","country":"GLOBAL","career_url":"https://jobs.ashbyhq.com/upflow","ats":"ashby","slug":"upflow"},
-  {"name":"Articul8","country":"GLOBAL","career_url":"https://jobs.ashbyhq.com/articul8","ats":"ashby","slug":"articul8"},
-  {"name":"Axion","country":"GLOBAL","career_url":"https://jobs.ashbyhq.com/axion","ats":"ashby","slug":"axion"},
-  {"name":"Axelera AI","country":"GLOBAL","career_url":"https://jobs.ashbyhq.com/axelera","ats":"ashby","slug":"axelera"},
-  {"name":"Poshmark","country":"GLOBAL","career_url":"https://jobs.ashbyhq.com/poshmark","ats":"ashby","slug":"poshmark"},
-  {"name":"SigNoz","country":"GLOBAL","career_url":"https://jobs.ashbyhq.com/signoz","ats":"ashby","slug":"signoz"},
-  {"name":"Plane Software, Inc.","country":"GLOBAL","career_url":"https://jobs.ashbyhq.com/plane","ats":"ashby","slug":"plane"},
-  {"name":"Kraken","country":"GLOBAL","career_url":"https://jobs.ashbyhq.com/kraken.com","ats":"ashby","slug":"kraken.com"},
-  {"name":"Deel","country":"GLOBAL","career_url":"https://jobs.ashbyhq.com/deel","ats":"ashby","slug":"deel"},
-  {"name":"ElevenLabs","country":"GLOBAL","career_url":"https://jobs.ashbyhq.com/elevenlabs","ats":"ashby","slug":"elevenlabs"},
-  {"name":"Decagon","country":"GLOBAL","career_url":"https://jobs.ashbyhq.com/decagon","ats":"ashby","slug":"decagon"},
-  {"name":"Lovable","country":"GLOBAL","career_url":"https://jobs.ashbyhq.com/lovable","ats":"ashby","slug":"lovable"},
-  {"name":"Assembled","country":"GLOBAL","career_url":"https://jobs.ashbyhq.com/assembledhq","ats":"ashby","slug":"assembledhq"},
-  {"name":"Sierra","country":"GLOBAL","career_url":"https://jobs.ashbyhq.com/sierra","ats":"ashby","slug":"sierra"},
-  {"name":"Turnkey","country":"GLOBAL","career_url":"https://jobs.ashbyhq.com/turnkey","ats":"ashby","slug":"turnkey"},
-  {"name":"Campfire","country":"GLOBAL","career_url":"https://jobs.ashbyhq.com/campfire","ats":"ashby","slug":"campfire"},
-  {"name":"LI.FI","country":"GLOBAL","career_url":"https://jobs.ashbyhq.com/li.fi","ats":"ashby","slug":"li.fi"},
-  {"name":"Clerk","country":"GLOBAL","career_url":"https://jobs.ashbyhq.com/clerk","ats":"ashby","slug":"clerk"},
-  {"name":"Fin","country":"GLOBAL","career_url":"https://jobs.ashbyhq.com/fin","ats":"ashby","slug":"fin"},
-  {"name":"Jellyfish","country":"GLOBAL","career_url":"https://jobs.ashbyhq.com/jellyfish","ats":"ashby","slug":"jellyfish"},
-  {"name":"Super.com","country":"GLOBAL","career_url":"https://jobs.ashbyhq.com/super.com","ats":"ashby","slug":"super.com"},
-  {"name":"Protege","country":"GLOBAL","career_url":"https://jobs.ashbyhq.com/protege","ats":"ashby","slug":"protege"},
-  {"name":"Winona","country":"GLOBAL","career_url":"https://jobs.ashbyhq.com/winona","ats":"ashby","slug":"winona"},
-  {"name":"Harvey","country":"GLOBAL","career_url":"https://jobs.ashbyhq.com/harvey","ats":"ashby","slug":"harvey"},
-  {"name":"Anyscale","country":"GLOBAL","career_url":"https://jobs.ashbyhq.com/anyscale","ats":"ashby","slug":"anyscale"},
-  {"name":"Weaviate","country":"GLOBAL","career_url":"https://jobs.ashbyhq.com/weaviate","ats":"ashby","slug":"weaviate"},
-  {"name":"Apollo GraphQL","country":"GLOBAL","career_url":"https://jobs.ashbyhq.com/apollo-graphql","ats":"ashby","slug":"apollo-graphql"},
-  {"name":"Resend","country":"GLOBAL","career_url":"https://jobs.ashbyhq.com/resend","ats":"ashby","slug":"resend"},
-  {"name":"Gamma","country":"GLOBAL","career_url":"https://jobs.ashbyhq.com/gamma","ats":"ashby","slug":"gamma"},
-  {"name":"Help Scout","country":"GLOBAL","career_url":"https://jobs.ashbyhq.com/helpscout","ats":"ashby","slug":"helpscout"},
-  {"name":"Sanity","country":"GLOBAL","career_url":"https://jobs.ashbyhq.com/sanity","ats":"ashby","slug":"sanity"},
-  {"name":"Sahara","country":"GLOBAL","career_url":"https://jobs.ashbyhq.com/sahara","ats":"ashby","slug":"sahara"}
+  {
+    "name": "PhonePe",
+    "country": "IN",
+    "career_url": "https://boards.greenhouse.io/phonepe",
+    "ats": "greenhouse",
+    "slug": "phonepe"
+  },
+  {
+    "name": "PayPay India",
+    "country": "IN",
+    "career_url": "https://boards.greenhouse.io/paypay",
+    "ats": "greenhouse",
+    "slug": "paypay"
+  },
+  {
+    "name": "RevX",
+    "country": "IN",
+    "career_url": "https://boards.greenhouse.io/revx",
+    "ats": "greenhouse",
+    "slug": "revx"
+  },
+  {
+    "name": "Zinnia",
+    "country": "GLOBAL",
+    "career_url": "https://boards.greenhouse.io/zinnia",
+    "ats": "greenhouse",
+    "slug": "zinnia"
+  },
+  {
+    "name": "Netradyne",
+    "country": "GLOBAL",
+    "career_url": "https://boards.greenhouse.io/netradyne",
+    "ats": "greenhouse",
+    "slug": "netradyne"
+  },
+  {
+    "name": "Samsara",
+    "country": "GLOBAL",
+    "career_url": "https://boards.greenhouse.io/samsara",
+    "ats": "greenhouse",
+    "slug": "samsara"
+  },
+  {
+    "name": "Razorpay",
+    "country": "IN",
+    "career_url": "https://boards.greenhouse.io/razorpaysoftwareprivatelimited",
+    "ats": "greenhouse",
+    "slug": "razorpaysoftwareprivatelimited"
+  },
+  {
+    "name": "Slice",
+    "country": "IN",
+    "career_url": "https://boards.greenhouse.io/slice",
+    "ats": "greenhouse",
+    "slug": "slice"
+  },
+  {
+    "name": "Groww",
+    "country": "IN",
+    "career_url": "https://boards.greenhouse.io/groww",
+    "ats": "greenhouse",
+    "slug": "groww"
+  },
+  {
+    "name": "Pitchbookdata",
+    "country": "GLOBAL",
+    "career_url": "https://boards.greenhouse.io/pitchbookdata",
+    "ats": "greenhouse",
+    "slug": "pitchbookdata"
+  },
+  {
+    "name": "Anthropic",
+    "country": "GLOBAL",
+    "career_url": "https://boards.greenhouse.io/anthropic",
+    "ats": "greenhouse",
+    "slug": "anthropic"
+  },
+  {
+    "name": "OneTrust",
+    "country": "GLOBAL",
+    "career_url": "https://boards.greenhouse.io/onetrust",
+    "ats": "greenhouse",
+    "slug": "onetrust"
+  },
+  {
+    "name": "Airbnb",
+    "country": "GLOBAL",
+    "career_url": "https://boards.greenhouse.io/airbnb",
+    "ats": "greenhouse",
+    "slug": "airbnb"
+  },
+  {
+    "name": "Dropbox",
+    "country": "GLOBAL",
+    "career_url": "https://boards.greenhouse.io/dropbox",
+    "ats": "greenhouse",
+    "slug": "dropbox"
+  },
+  {
+    "name": "Stripe",
+    "country": "GLOBAL",
+    "career_url": "https://stripe.com/jobs",
+    "ats": "greenhouse",
+    "slug": "stripe"
+  },
+  {
+    "name": "Lyft",
+    "country": "GLOBAL",
+    "career_url": "https://boards.greenhouse.io/lyft",
+    "ats": "greenhouse",
+    "slug": "lyft"
+  },
+  {
+    "name": "Betterment",
+    "country": "GLOBAL",
+    "career_url": "https://boards.greenhouse.io/betterment",
+    "ats": "greenhouse",
+    "slug": "betterment"
+  },
+  {
+    "name": "Instacart",
+    "country": "GLOBAL",
+    "career_url": "https://boards.greenhouse.io/instacart",
+    "ats": "greenhouse",
+    "slug": "instacart"
+  },
+  {
+    "name": "GoDaddy",
+    "country": "GLOBAL",
+    "career_url": "https://boards.greenhouse.io/godaddy",
+    "ats": "greenhouse",
+    "slug": "godaddy"
+  },
+  {
+    "name": "Webflow",
+    "country": "GLOBAL",
+    "career_url": "https://boards.greenhouse.io/webflow",
+    "ats": "greenhouse",
+    "slug": "webflow"
+  },
+  {
+    "name": "Netlify",
+    "country": "GLOBAL",
+    "career_url": "https://boards.greenhouse.io/netlify",
+    "ats": "greenhouse",
+    "slug": "netlify"
+  },
+  {
+    "name": "Postman",
+    "country": "GLOBAL",
+    "career_url": "https://lnkd.in/gYUCnEvN",
+    "ats": "greenhouse",
+    "slug": "postman"
+  },
+  {
+    "name": "Mercury",
+    "country": "GLOBAL",
+    "career_url": "https://boards.greenhouse.io/mercury",
+    "ats": "greenhouse",
+    "slug": "mercury"
+  },
+  {
+    "name": "Zapier",
+    "country": "GLOBAL",
+    "career_url": "https://jobs.ashbyhq.com/zapier",
+    "ats": "ashby",
+    "slug": "zapier"
+  },
+  {
+    "name": "Ramp",
+    "country": "GLOBAL",
+    "career_url": "https://jobs.ashbyhq.com/ramp",
+    "ats": "ashby",
+    "slug": "ramp"
+  },
+  {
+    "name": "Notion",
+    "country": "GLOBAL",
+    "career_url": "https://jobs.ashbyhq.com/notion",
+    "ats": "ashby",
+    "slug": "notion"
+  },
+  {
+    "name": "Linear",
+    "country": "GLOBAL",
+    "career_url": "https://jobs.ashbyhq.com/linear",
+    "ats": "ashby",
+    "slug": "linear"
+  },
+  {
+    "name": "Supabase",
+    "country": "GLOBAL",
+    "career_url": "https://jobs.ashbyhq.com/supabase",
+    "ats": "ashby",
+    "slug": "supabase"
+  },
+  {
+    "name": "Vanta",
+    "country": "GLOBAL",
+    "career_url": "https://jobs.ashbyhq.com/vanta",
+    "ats": "ashby",
+    "slug": "vanta"
+  },
+  {
+    "name": "Watershed",
+    "country": "GLOBAL",
+    "career_url": "https://jobs.ashbyhq.com/watershed",
+    "ats": "ashby",
+    "slug": "watershed"
+  },
+  {
+    "name": "gigaml",
+    "country": "GLOBAL",
+    "career_url": "https://jobs.ashbyhq.com/gigaml",
+    "ats": "ashby",
+    "slug": "gigaml"
+  },
+  {
+    "name": "Cartesia",
+    "country": "GLOBAL",
+    "career_url": "https://jobs.ashbyhq.com/cartesia",
+    "ats": "ashby",
+    "slug": "cartesia"
+  },
+  {
+    "name": "Ema",
+    "country": "GLOBAL",
+    "career_url": "https://jobs.ashbyhq.com/ema",
+    "ats": "ashby",
+    "slug": "ema"
+  },
+  {
+    "name": "Granica",
+    "country": "GLOBAL",
+    "career_url": "https://jobs.ashbyhq.com/granica",
+    "ats": "ashby",
+    "slug": "granica"
+  },
+  {
+    "name": "Commure",
+    "country": "GLOBAL",
+    "career_url": "https://jobs.ashbyhq.com/commure",
+    "ats": "ashby",
+    "slug": "commure"
+  },
+  {
+    "name": "Mercor",
+    "country": "GLOBAL",
+    "career_url": "https://jobs.ashbyhq.com/mercor",
+    "ats": "ashby",
+    "slug": "mercor"
+  },
+  {
+    "name": "JuniperSquare",
+    "country": "GLOBAL",
+    "career_url": "https://jobs.ashbyhq.com/junipersquare",
+    "ats": "ashby",
+    "slug": "junipersquare"
+  },
+  {
+    "name": "AcaiTravel",
+    "country": "GLOBAL",
+    "career_url": "https://jobs.ashbyhq.com/acai",
+    "ats": "ashby",
+    "slug": "acai"
+  },
+  {
+    "name": "AltimateAI",
+    "country": "GLOBAL",
+    "career_url": "https://jobs.ashbyhq.com/altimate",
+    "ats": "ashby",
+    "slug": "altimate"
+  },
+  {
+    "name": "Upflow",
+    "country": "GLOBAL",
+    "career_url": "https://jobs.ashbyhq.com/upflow",
+    "ats": "ashby",
+    "slug": "upflow"
+  },
+  {
+    "name": "Articul8",
+    "country": "GLOBAL",
+    "career_url": "https://jobs.ashbyhq.com/articul8",
+    "ats": "ashby",
+    "slug": "articul8"
+  },
+  {
+    "name": "Axion",
+    "country": "GLOBAL",
+    "career_url": "https://jobs.ashbyhq.com/axion",
+    "ats": "ashby",
+    "slug": "axion"
+  },
+  {
+    "name": "Axelera AI",
+    "country": "GLOBAL",
+    "career_url": "https://jobs.ashbyhq.com/axelera",
+    "ats": "ashby",
+    "slug": "axelera"
+  },
+  {
+    "name": "Poshmark",
+    "country": "GLOBAL",
+    "career_url": "https://jobs.ashbyhq.com/poshmark",
+    "ats": "ashby",
+    "slug": "poshmark"
+  },
+  {
+    "name": "SigNoz",
+    "country": "GLOBAL",
+    "career_url": "https://jobs.ashbyhq.com/signoz",
+    "ats": "ashby",
+    "slug": "signoz"
+  },
+  {
+    "name": "Plane Software, Inc.",
+    "country": "GLOBAL",
+    "career_url": "https://jobs.ashbyhq.com/plane",
+    "ats": "ashby",
+    "slug": "plane"
+  },
+  {
+    "name": "Kraken",
+    "country": "GLOBAL",
+    "career_url": "https://jobs.ashbyhq.com/kraken.com",
+    "ats": "ashby",
+    "slug": "kraken.com"
+  },
+  {
+    "name": "Deel",
+    "country": "GLOBAL",
+    "career_url": "https://jobs.ashbyhq.com/deel",
+    "ats": "ashby",
+    "slug": "deel"
+  },
+  {
+    "name": "ElevenLabs",
+    "country": "GLOBAL",
+    "career_url": "https://jobs.ashbyhq.com/elevenlabs",
+    "ats": "ashby",
+    "slug": "elevenlabs"
+  },
+  {
+    "name": "Decagon",
+    "country": "GLOBAL",
+    "career_url": "https://jobs.ashbyhq.com/decagon",
+    "ats": "ashby",
+    "slug": "decagon"
+  },
+  {
+    "name": "Lovable",
+    "country": "GLOBAL",
+    "career_url": "https://jobs.ashbyhq.com/lovable",
+    "ats": "ashby",
+    "slug": "lovable"
+  },
+  {
+    "name": "Assembled",
+    "country": "GLOBAL",
+    "career_url": "https://jobs.ashbyhq.com/assembledhq",
+    "ats": "ashby",
+    "slug": "assembledhq"
+  },
+  {
+    "name": "Sierra",
+    "country": "GLOBAL",
+    "career_url": "https://jobs.ashbyhq.com/sierra",
+    "ats": "ashby",
+    "slug": "sierra"
+  },
+  {
+    "name": "Turnkey",
+    "country": "GLOBAL",
+    "career_url": "https://jobs.ashbyhq.com/turnkey",
+    "ats": "ashby",
+    "slug": "turnkey"
+  },
+  {
+    "name": "Campfire",
+    "country": "GLOBAL",
+    "career_url": "https://jobs.ashbyhq.com/campfire",
+    "ats": "ashby",
+    "slug": "campfire"
+  },
+  {
+    "name": "LI.FI",
+    "country": "GLOBAL",
+    "career_url": "https://jobs.ashbyhq.com/li.fi",
+    "ats": "ashby",
+    "slug": "li.fi"
+  },
+  {
+    "name": "Clerk",
+    "country": "GLOBAL",
+    "career_url": "https://jobs.ashbyhq.com/clerk",
+    "ats": "ashby",
+    "slug": "clerk"
+  },
+  {
+    "name": "Fin",
+    "country": "GLOBAL",
+    "career_url": "https://jobs.ashbyhq.com/fin",
+    "ats": "ashby",
+    "slug": "fin"
+  },
+  {
+    "name": "Jellyfish",
+    "country": "GLOBAL",
+    "career_url": "https://jobs.ashbyhq.com/jellyfish",
+    "ats": "ashby",
+    "slug": "jellyfish"
+  },
+  {
+    "name": "Super.com",
+    "country": "GLOBAL",
+    "career_url": "https://jobs.ashbyhq.com/super.com",
+    "ats": "ashby",
+    "slug": "super.com"
+  },
+  {
+    "name": "Protege",
+    "country": "GLOBAL",
+    "career_url": "https://jobs.ashbyhq.com/protege",
+    "ats": "ashby",
+    "slug": "protege"
+  },
+  {
+    "name": "Winona",
+    "country": "GLOBAL",
+    "career_url": "https://jobs.ashbyhq.com/winona",
+    "ats": "ashby",
+    "slug": "winona"
+  },
+  {
+    "name": "Harvey",
+    "country": "GLOBAL",
+    "career_url": "https://jobs.ashbyhq.com/harvey",
+    "ats": "ashby",
+    "slug": "harvey"
+  },
+  {
+    "name": "Anyscale",
+    "country": "GLOBAL",
+    "career_url": "https://jobs.ashbyhq.com/anyscale",
+    "ats": "ashby",
+    "slug": "anyscale"
+  },
+  {
+    "name": "Weaviate",
+    "country": "GLOBAL",
+    "career_url": "https://jobs.ashbyhq.com/weaviate",
+    "ats": "ashby",
+    "slug": "weaviate"
+  },
+  {
+    "name": "Apollo GraphQL",
+    "country": "GLOBAL",
+    "career_url": "https://jobs.ashbyhq.com/apollo-graphql",
+    "ats": "ashby",
+    "slug": "apollo-graphql"
+  },
+  {
+    "name": "Resend",
+    "country": "GLOBAL",
+    "career_url": "https://jobs.ashbyhq.com/resend",
+    "ats": "ashby",
+    "slug": "resend"
+  },
+  {
+    "name": "Gamma",
+    "country": "GLOBAL",
+    "career_url": "https://jobs.ashbyhq.com/gamma",
+    "ats": "ashby",
+    "slug": "gamma"
+  },
+  {
+    "name": "Help Scout",
+    "country": "GLOBAL",
+    "career_url": "https://jobs.ashbyhq.com/helpscout",
+    "ats": "ashby",
+    "slug": "helpscout"
+  },
+  {
+    "name": "Sanity",
+    "country": "GLOBAL",
+    "career_url": "https://jobs.ashbyhq.com/sanity",
+    "ats": "ashby",
+    "slug": "sanity"
+  },
+  {
+    "name": "Sahara",
+    "country": "GLOBAL",
+    "career_url": "https://jobs.ashbyhq.com/sahara",
+    "ats": "ashby",
+    "slug": "sahara"
+  }
 ]
