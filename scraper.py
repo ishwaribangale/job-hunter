@@ -12,6 +12,7 @@ import re
 import time
 import requests
 from datetime import datetime
+from urllib.parse import urlparse, urljoin, unquote
 from bs4 import BeautifulSoup
 from config import HEADERS, TIMEOUT, TOP_COMPANIES, CAREER_PAGES, ASHBY_COMPANIES
 from roles import infer_role
@@ -646,6 +647,92 @@ class JobScraper:
         except Exception as e:
             print(f"  ⚠ Detection error: {e}")
             return ("generic", None, url)
+
+    def _is_probable_job_url(self, href: str) -> bool:
+        if not href:
+            return False
+        href_lower = href.lower()
+        # Exclude root careers pages or listings without a specific job
+        if href_lower.rstrip("/").endswith("/careers") or href_lower.rstrip("/").endswith("/jobs"):
+            return False
+        # Require strong job indicators
+        indicators = ["/job/", "/jobs/", "/career/", "/careers/", "/position/", "/positions/", "/opening/", "/openings/"]
+        return any(ind in href_lower for ind in indicators)
+
+    def _title_from_url(self, href: str) -> str:
+        try:
+            path = urlparse(href).path
+            if not path:
+                return ""
+            slug = path.rstrip("/").split("/")[-1]
+            slug = unquote(slug).replace("-", " ").replace("_", " ").strip()
+            return slug.title() if slug else ""
+        except Exception:
+            return ""
+
+    def _extract_jobposting_jsonld(self, soup: BeautifulSoup):
+        jobs = []
+        for script in soup.find_all("script", type="application/ld+json"):
+            try:
+                data = json.loads(script.string or "{}")
+            except Exception:
+                continue
+
+            payloads = []
+            if isinstance(data, list):
+                payloads = data
+            elif isinstance(data, dict):
+                payloads = [data]
+
+            for item in payloads:
+                if not isinstance(item, dict):
+                    continue
+                if item.get("@type") != "JobPosting":
+                    continue
+                title = item.get("title", "")
+                url = item.get("url", "")
+                location = ""
+                loc = item.get("jobLocation")
+                if isinstance(loc, dict):
+                    location = loc.get("address", {}).get("addressLocality", "")
+                elif isinstance(loc, list) and loc:
+                    loc0 = loc[0]
+                    if isinstance(loc0, dict):
+                        location = loc0.get("address", {}).get("addressLocality", "")
+                if url and title:
+                    jobs.append((title, url, location or "Various"))
+        return jobs
+
+    def _find_job_urls_in_sitemap(self, base_url: str, limit: int = 50):
+        sitemap_urls = []
+        parsed = urlparse(base_url)
+        if not parsed.scheme or not parsed.netloc:
+            return sitemap_urls
+
+        candidates = [
+            f"{parsed.scheme}://{parsed.netloc}/sitemap.xml",
+            f"{parsed.scheme}://{parsed.netloc}/sitemap_index.xml",
+        ]
+
+        for sitemap_url in candidates:
+            try:
+                r = requests.get(sitemap_url, headers=HEADERS, timeout=10)
+                if r.status_code != 200:
+                    continue
+                soup = BeautifulSoup(r.text, "xml")
+                loc_tags = soup.find_all("loc")
+                for loc in loc_tags:
+                    href = (loc.get_text() or "").strip()
+                    if not href:
+                        continue
+                    if self._is_probable_job_url(href):
+                        sitemap_urls.append(href)
+                        if len(sitemap_urls) >= limit:
+                            return sitemap_urls
+            except Exception:
+                continue
+
+        return sitemap_urls
 
     def scrape_greenhouse_api(self, company_name, slug):
         """Try Greenhouse API endpoint with SMART validation"""
@@ -1534,14 +1621,9 @@ class JobScraper:
                     continue
                 if any(w in title.lower() for w in skip_words):
                     continue
-    
-                indicators = [
-                    '/job', '/position', '/opening', '/role', '/apply',
-                    '/posting', '/career', 'jobId', 'positionId'
-                ]
-                if not any(ind in href.lower() for ind in indicators):
+                if not self._is_probable_job_url(href):
                     continue
-    
+
                 valid_jobs.append((href, title))
     
             # If found jobs, process them
@@ -1567,6 +1649,41 @@ class JobScraper:
                         "postedDate": self.now(),
                     })
                 return  # Successfully found jobs
+
+            # Try JSON-LD JobPosting
+            jsonld_jobs = self._extract_jobposting_jsonld(soup)
+            if jsonld_jobs:
+                print(f"  ✓ JSON-LD: {len(jsonld_jobs)} jobs")
+                for title, full_url, location in jsonld_jobs:
+                    self.add({
+                        "id": f"jsonld_{company_name}_{hash(full_url)}",
+                        "title": title,
+                        "company": company_name,
+                        "location": location or "Various",
+                        "source": f"{company_name}",
+                        "applyLink": full_url,
+                        "postedDate": self.now(),
+                    })
+                return
+
+            # Try sitemap lookup
+            sitemap_urls = self._find_job_urls_in_sitemap(url)
+            if sitemap_urls:
+                print(f"  ✓ Sitemap: {len(sitemap_urls)} jobs")
+                for href in sitemap_urls:
+                    title = self._title_from_url(href)
+                    if not title:
+                        title = "Job Opening"
+                    self.add({
+                        "id": f"sitemap_{company_name}_{hash(href)}",
+                        "title": title,
+                        "company": company_name,
+                        "location": "Various",
+                        "source": f"{company_name}",
+                        "applyLink": href,
+                        "postedDate": self.now(),
+                    })
+                return
     
             # If no jobs found, try Playwright for JS-rendered content
             print(f"  ⚠ No jobs via requests, trying Playwright...")
@@ -1593,8 +1710,8 @@ class JobScraper:
                         if not href or href in seen_hrefs or len(title) < 3:
                             continue
                         
-                        # Must have job indicator
-                        if not any(ind in href.lower() for ind in ['/job', '/position', '/role', '/career', '/opening']):
+                        # Must have job indicator (avoid generic careers pages)
+                        if not self._is_probable_job_url(href):
                             continue
                         
                         # Skip navigation
