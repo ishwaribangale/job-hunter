@@ -605,6 +605,7 @@ class JobScraper:
                 (r'jobs\.smartrecruiters\.com/([^/?&]+)', "smartrecruiters"),
                 (r'apply\.workable\.com/([^/?&]+)', "workable"),
                 (r'careers\.kula\.ai/([^/?&]+)', "kula"),
+                (r'([^.]+)\.darwinbox\.in/.*/careers', "darwinbox"),
                 (r'myworkdayjobs\.com/([^/?&]+)', "workday"),
             ]
             
@@ -622,6 +623,7 @@ class JobScraper:
                 (r'jobs\.smartrecruiters\.com/([^"\'&/<>]+)', "smartrecruiters"),
                 (r'apply\.workable\.com/([^"\'&/<>]+)', "workable"),
                 (r'careers\.kula\.ai/([^"\'&/<>]+)', "kula"),
+                (r'([^.]+)\.darwinbox\.in/.*/careers', "darwinbox"),
             ]
             
             for pattern, ats_name in content_checks:
@@ -1381,6 +1383,83 @@ class JobScraper:
         except Exception as e:
             print(f"  ❌ Workday: {e}")
 
+    def scrape_darwinbox(self, company_name, career_url):
+        """Darwinbox scraper using Playwright to extract job links"""
+        headers = {**HEADERS, "Accept": "text/html"}
+
+        try:
+            r = requests.get(career_url, headers=headers, timeout=10)
+            if r.status_code in (401, 403):
+                print(f"  ⚠ Darwinbox HTTP {r.status_code} (login required?)")
+                return
+            if r.status_code != 200:
+                print(f"  ⚠ Darwinbox HTTP {r.status_code}")
+                return
+
+            if "login" in r.text.lower() and "candidate" in r.text.lower():
+                print("  ⚠ Darwinbox login detected, skipping")
+                return
+
+            try:
+                from playwright.sync_api import sync_playwright
+            except Exception:
+                print("  ⚠ Playwright not installed")
+                return
+
+            with sync_playwright() as p:
+                browser = p.chromium.launch(headless=True, args=["--no-sandbox"])
+                page = browser.new_page()
+                page.goto(career_url, wait_until="networkidle", timeout=30000)
+                page.wait_for_timeout(2000)
+
+                links = page.query_selector_all("a[href]")
+                valid = []
+                seen = set()
+
+                for link in links:
+                    href = link.get_attribute("href") or ""
+                    title = link.inner_text().strip()
+                    if not href:
+                        continue
+
+                    if "darwinbox.in" not in href and not href.startswith("/"):
+                        continue
+
+                    href_lower = href.lower()
+                    if "login" in href_lower or "signin" in href_lower:
+                        continue
+                    if href_lower.rstrip("/").endswith("/careers"):
+                        continue
+
+                    if not any(x in href_lower for x in ["candidate", "career", "job", "opening", "position"]):
+                        continue
+
+                    full_url = href if href.startswith("http") else urljoin(career_url, href)
+                    if full_url in seen:
+                        continue
+                    seen.add(full_url)
+
+                    if not title or len(title) < 3:
+                        title = self._title_from_url(full_url) or "Job Opening"
+
+                    valid.append((title, full_url))
+
+                browser.close()
+
+            print(f"  ✓ Darwinbox: {len(valid)} jobs")
+            for title, full_url in valid:
+                self.add({
+                    "id": f"darwinbox_{hash(full_url)}",
+                    "title": title,
+                    "company": company_name,
+                    "location": "Various",
+                    "source": f"{company_name} (Darwinbox)",
+                    "applyLink": full_url,
+                    "postedDate": self.now(),
+                })
+        except Exception as e:
+            print(f"  ❌ Darwinbox: {e}")
+
     def scrape_wpmudev(self, company_name, url):
         """WPMU DEV custom scraper"""
         headers = {**HEADERS, "Accept": "text/html"}
@@ -1594,6 +1673,8 @@ class JobScraper:
                     self.scrape_kula(name, slug)
                 elif ats == "workday" and url:
                     self.scrape_workday(name, url)
+                elif ats == "darwinbox" and url:
+                    self.scrape_darwinbox(name, url)
                 elif ats == "brainstormforce" and url:
                     self.scrape_brainstormforce(name, url)
                 elif ats == "rtcamp" and url:
@@ -1618,6 +1699,8 @@ class JobScraper:
                             self.scrape_workable(name, detected_slug)
                         elif ats_type == "kula" and detected_slug:
                             self.scrape_kula(name, detected_slug)
+                        elif ats_type == "darwinbox":
+                            self.scrape_darwinbox(name, final_url)
                         elif ats_type == "workday":
                             self.scrape_workday(name, final_url)
                         else:
@@ -1640,6 +1723,8 @@ class JobScraper:
                             self.scrape_workable(name, detected_slug)
                         elif ats_type == "kula" and detected_slug:
                             self.scrape_kula(name, detected_slug)
+                        elif ats_type == "darwinbox":
+                            self.scrape_darwinbox(name, final_url)
                         elif ats_type == "workday":
                             self.scrape_workday(name, final_url)
                         else:
