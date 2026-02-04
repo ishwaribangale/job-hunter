@@ -42,7 +42,7 @@ export default function Dashboard() {
   const sources = [...new Set(jobs.map(j => j?.source).filter(Boolean))].sort();
   const roles = [...new Set(jobs.map(j => j?.role).filter(Boolean))];
   const locations = [...new Set(jobs.map(j => j?.location).filter(Boolean))].sort();
-  const employmentTypes = [...new Set(jobs.map(j => j?.employment_type).filter(Boolean))];
+  const employmentTypes = [...new Set(jobs.map(j => j?.employment_type).filter(Boolean))].sort();
   const companies = [...new Set(jobs.map(j => j?.company).filter(Boolean))].sort();
   const topCompanies = React.useMemo(() => {
     const counts = {};
@@ -137,7 +137,8 @@ export default function Dashboard() {
     }
 
     if (selectedEmploymentType !== "all") {
-      data = data.filter(j => j.employment_type === selectedEmploymentType);
+      const target = selectedEmploymentType.toLowerCase();
+      data = data.filter(j => (j.employment_type || "").toLowerCase().includes(target));
     }
 
     // Apply resume matching scores if enabled
@@ -535,10 +536,11 @@ export default function Dashboard() {
                 <button
                   onClick={() => {
                     setSearchQuery("");
-                    setSelectedSource("all");
                     setSelectedRole("all");
-                    setSelectedLocation("all");
                     setSelectedEmploymentType("all");
+                    setSourceQuery("");
+                    setCompanyQuery("");
+                    setLocationQuery("");
                   }}
                   className="text-xs text-indigo-400 hover:text-indigo-300 underline"
                 >
