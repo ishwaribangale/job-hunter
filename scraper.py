@@ -714,6 +714,42 @@ class JobScraper:
         except Exception:
             return False
 
+    def _extract_darwinbox_jobs(self, payload, career_url):
+        results = []
+
+        def walk(obj):
+            if isinstance(obj, dict):
+                # Heuristic for job-like dicts
+                title = obj.get("jobTitle") or obj.get("title") or obj.get("positionName") or obj.get("designation")
+                job_id = obj.get("jobId") or obj.get("id")
+                location = obj.get("location") or obj.get("locationName") or obj.get("city")
+                url = obj.get("jobUrl") or obj.get("jobLink") or obj.get("applyUrl") or obj.get("detailUrl") or obj.get("jobApplyUrl")
+
+                if title and (url or job_id):
+                    if not url and job_id:
+                        # Best-effort URL construction
+                        base = career_url.rstrip("/")
+                        url = f"{base}/job/{job_id}"
+                    results.append((title, url, location or "Various"))
+
+                for v in obj.values():
+                    walk(v)
+            elif isinstance(obj, list):
+                for item in obj:
+                    walk(item)
+
+        walk(payload)
+
+        # Deduplicate by URL
+        deduped = []
+        seen = set()
+        for title, url, location in results:
+            if not url or url in seen:
+                continue
+            seen.add(url)
+            deduped.append((title, url, location))
+        return deduped
+
     def _find_job_urls_in_sitemap(self, base_url: str, limit: int = 50):
         sitemap_urls = []
         parsed = urlparse(base_url)
@@ -1389,16 +1425,11 @@ class JobScraper:
 
         try:
             r = requests.get(career_url, headers=headers, timeout=10)
-            if r.status_code in (401, 403):
-                print(f"  ⚠ Darwinbox HTTP {r.status_code} (login required?)")
-                return
             if r.status_code != 200:
-                print(f"  ⚠ Darwinbox HTTP {r.status_code}")
-                return
-
-            if "login" in r.text.lower() and "candidate" in r.text.lower():
-                print("  ⚠ Darwinbox login detected, skipping")
-                return
+                print(f"  ⚠ Darwinbox HTTP {r.status_code}, trying Playwright...")
+            else:
+                if "login" in r.text.lower() and "candidate" in r.text.lower():
+                    print("  ⚠ Darwinbox login detected, trying Playwright...")
 
             try:
                 from playwright.sync_api import sync_playwright
@@ -1409,9 +1440,24 @@ class JobScraper:
             with sync_playwright() as p:
                 browser = p.chromium.launch(headless=True, args=["--no-sandbox"])
                 page = browser.new_page()
-                page.goto(career_url, wait_until="networkidle", timeout=30000)
-                page.wait_for_timeout(2000)
+                job_payloads = []
 
+                def handle_response(response):
+                    try:
+                        ct = response.headers.get("content-type", "")
+                        url = response.url.lower()
+                        if "application/json" in ct and "darwinbox.in" in url:
+                            if any(k in url for k in ["job", "career", "opening", "position", "candidate"]):
+                                data = response.json()
+                                job_payloads.append(data)
+                    except Exception:
+                        return
+
+                page.on("response", handle_response)
+                page.goto(career_url, wait_until="networkidle", timeout=45000)
+                page.wait_for_timeout(3000)
+
+                # Try to extract job links from DOM as fallback
                 links = page.query_selector_all("a[href]")
                 valid = []
                 seen = set()
@@ -1444,15 +1490,35 @@ class JobScraper:
 
                     valid.append((title, full_url))
 
+                # Parse JSON payloads for job data
+                json_jobs = []
+                for payload in job_payloads:
+                    json_jobs.extend(self._extract_darwinbox_jobs(payload, career_url))
+
                 browser.close()
 
-            print(f"  ✓ Darwinbox: {len(valid)} jobs")
+            combined = []
+            seen_urls = set()
+
+            for title, full_url, location in json_jobs:
+                if full_url in seen_urls:
+                    continue
+                seen_urls.add(full_url)
+                combined.append((title, full_url, location))
+
             for title, full_url in valid:
+                if full_url in seen_urls:
+                    continue
+                seen_urls.add(full_url)
+                combined.append((title, full_url, "Various"))
+
+            print(f"  ✓ Darwinbox: {len(combined)} jobs")
+            for title, full_url, location in combined:
                 self.add({
                     "id": f"darwinbox_{hash(full_url)}",
                     "title": title,
                     "company": company_name,
-                    "location": "Various",
+                    "location": location or "Various",
                     "source": f"{company_name} (Darwinbox)",
                     "applyLink": full_url,
                     "postedDate": self.now(),
