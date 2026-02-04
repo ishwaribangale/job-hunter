@@ -1139,7 +1139,14 @@ class JobScraper:
                 job_id = j.get("id")
                 title = j.get("name") or j.get("title", "")
                 location = j.get("location", {}).get("city", "Various")
-                apply_url = j.get("applyUrl") or j.get("ref", "")
+                apply_url = j.get("applyUrl") or j.get("companyJobUrl") or ""
+                if not apply_url:
+                    # Build public posting URL
+                    if job_id:
+                        apply_url = f"https://jobs.smartrecruiters.com/{slug}/{job_id}"
+                # Avoid API URLs as apply links
+                if apply_url and "api.smartrecruiters.com" in apply_url:
+                    apply_url = ""
 
                 if not job_id or not title:
                     continue
