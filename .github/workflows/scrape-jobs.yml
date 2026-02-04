@@ -23,6 +23,7 @@ jobs:
     runs-on: ubuntu-latest
     env:
       EXTRACT_REQUIREMENTS: "true"
+      DARWINBOX_DEBUG: "true"
     
     steps:
       - name: 🛎️ Checkout Repository
