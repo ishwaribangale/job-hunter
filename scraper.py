@@ -22,6 +22,7 @@ from company_registry import get_companies
 SCRAPE_MODE = "VOLUME"
 EXTRACT_REQUIREMENTS = True  # Reuse existing requirements
 REQUIREMENTS_REUSE_ONLY = True  # Do not fetch new requirements for new jobs
+DARWINBOX_DEBUG = os.getenv("DARWINBOX_DEBUG", "false").lower() in {"1", "true", "yes"}
 
 # scraper.py
 # ----------------------------------
@@ -1441,6 +1442,7 @@ class JobScraper:
                 browser = p.chromium.launch(headless=True, args=["--no-sandbox"])
                 page = browser.new_page()
                 job_payloads = []
+                api_hits = []
 
                 def handle_response(response):
                     try:
@@ -1448,8 +1450,12 @@ class JobScraper:
                         url = response.url.lower()
                         if "application/json" in ct and "darwinbox.in" in url:
                             if any(k in url for k in ["job", "career", "opening", "position", "candidate"]):
-                                data = response.json()
-                                job_payloads.append(data)
+                                status = response.status
+                                if DARWINBOX_DEBUG:
+                                    api_hits.append((status, response.url))
+                                if status == 200:
+                                    data = response.json()
+                                    job_payloads.append(data)
                     except Exception:
                         return
 
@@ -1496,6 +1502,17 @@ class JobScraper:
                     json_jobs.extend(self._extract_darwinbox_jobs(payload, career_url))
 
                 browser.close()
+
+            if DARWINBOX_DEBUG:
+                print(f"  [Darwinbox Debug] API hits: {len(api_hits)}")
+                for status, url in api_hits[:10]:
+                    print(f"   - {status} {url}")
+                if not api_hits:
+                    print("   - No JSON API responses captured")
+                if job_payloads:
+                    print(f"  [Darwinbox Debug] Payloads captured: {len(job_payloads)}")
+                else:
+                    print("  [Darwinbox Debug] No payloads captured")
 
             combined = []
             seen_urls = set()
