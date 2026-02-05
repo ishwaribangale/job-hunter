@@ -142,16 +142,16 @@ export default function Dashboard() {
     }
 
     // Apply resume matching scores if enabled
-    if (resumeMatchEnabled && resumeKeywords.length > 0) {
+    if (resumeMatchEnabled && resumeText) {
       data = data.map(job => ({
         ...job,
-        matchScore: calculateMatchScore(job, resumeKeywords)
+        matchScore: calculateMatchScore(job, resumeText)
       }));
     }
 
     setFilteredJobs(data);
     setCurrentPage(1); // Reset to page 1 when filters change
-  }, [jobs, searchQuery, sourceQuery, companyQuery, selectedRole, locationQuery, selectedEmploymentType, resumeMatchEnabled, resumeKeywords]);
+  }, [jobs, searchQuery, sourceQuery, companyQuery, selectedRole, locationQuery, selectedEmploymentType, resumeMatchEnabled, resumeText]);
 
   /* ---------------- SECTION FILTER ---------------- */
   const displayJobs = React.useMemo(() => {
@@ -202,20 +202,72 @@ export default function Dashboard() {
   const toggleSaveJob = id =>
     setSavedJobs(prev => prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id]);
 
-  const calculateMatchScore = (job, userKeywords) => {
-    if (!job.requirements?.keywords || job.requirements.keywords.length === 0) {
-      return 0;
+  const normalizeTerms = (text) => {
+    if (!text) return [];
+    const cleaned = text
+      .toLowerCase()
+      .replace(/[^a-z0-9+/#\s.-]/g, " ")
+      .replace(/\s+/g, " ")
+      .trim();
+    if (!cleaned) return [];
+    return cleaned.split(" ").filter(Boolean);
+  };
+
+  const buildKeywordSet = (terms) => new Set(terms.filter(Boolean));
+
+  const overlapScore = (targetTerms, candidateSet) => {
+    if (!targetTerms.length) return 0;
+    let hits = 0;
+    for (const t of targetTerms) {
+      if (candidateSet.has(t)) hits += 1;
     }
-    
-    const jobKeywords = job.requirements.keywords.map(k => k.toLowerCase());
-    const userKwLower = userKeywords.map(k => k.toLowerCase());
-    
-    const matches = jobKeywords.filter(jk => 
-      userKwLower.some(uk => uk.includes(jk) || jk.includes(uk))
-    );
-    
-    const score = Math.round((matches.length / jobKeywords.length) * 100);
-    return Math.min(score, 100);
+    return hits / targetTerms.length;
+  };
+
+  const extractResumeSignals = (text) => {
+    const tokens = normalizeTerms(text);
+    const stopwords = new Set(["the","and","for","with","from","into","over","under","a","an","to","of","in","on","by","at","as","or","is","are","be","this","that","these","those","it","we","you","your","our","their"]);
+    const filtered = tokens.filter(t => !stopwords.has(t) && t.length > 1);
+
+    const bigrams = [];
+    for (let i = 0; i < filtered.length - 1; i += 1) {
+      bigrams.push(`${filtered[i]} ${filtered[i + 1]}`);
+    }
+
+    const rolePhrases = [
+      "product manager", "product management", "program manager",
+      "project manager", "product owner", "growth", "strategy"
+    ];
+    const skillPhrases = [
+      "sql", "python", "javascript", "react", "java", "aws", "docker",
+      "kubernetes", "node", "typescript", "figma", "jira", "agile",
+      "scrum", "analytics", "tableau", "power bi", "a/b", "ab"
+    ];
+
+    const phraseHits = rolePhrases
+      .concat(skillPhrases)
+      .filter(p => filtered.includes(p) || bigrams.includes(p));
+
+    return buildKeywordSet([...filtered, ...bigrams, ...phraseHits]);
+  };
+
+  const calculateMatchScore = (job, resumeTextValue) => {
+    if (!resumeTextValue) return 0;
+
+    const resumeSet = extractResumeSignals(resumeTextValue);
+
+    const jobSkills = (job.requirements?.skills || []).map(s => s.toLowerCase());
+    const jobKeywords = (job.requirements?.keywords || []).map(k => k.toLowerCase());
+    const titleTokens = normalizeTerms(job.title || "");
+    const roleTokens = normalizeTerms(job.role || "");
+
+    const skillScore = overlapScore(jobSkills, resumeSet);
+    const keywordScore = overlapScore(jobKeywords, resumeSet);
+    const titleScore = overlapScore(titleTokens, resumeSet);
+    const roleScore = overlapScore(roleTokens, resumeSet);
+
+    const weighted = (skillScore * 0.5) + (keywordScore * 0.3) + (titleScore * 0.15) + (roleScore * 0.05);
+    return Math.min(100, Math.round(weighted * 100));
   };
 
   const locationPill = (location) => {
