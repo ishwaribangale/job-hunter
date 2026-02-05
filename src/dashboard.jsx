@@ -2,6 +2,7 @@ import React from "react";
 import { SignedIn, SignedOut, SignInButton, UserButton, useAuth } from "@clerk/clerk-react";
 
 export default function Dashboard() {
+  const brandName = "ApplyPulse";
   const [jobs, setJobs] = React.useState([]);
   const [filteredJobs, setFilteredJobs] = React.useState([]);
   const [loading, setLoading] = React.useState(true);
@@ -544,7 +545,14 @@ export default function Dashboard() {
       {/* SIDEBAR */}
       <aside className={`${sidebarOpen ? "w-72" : "w-14"} bg-[#121216] border-r border-[#1f1f24] transition-all`}>
         <div className="p-4 flex justify-between items-center">
-          {sidebarOpen && <h1 className="text-xl font-semibold text-pink-400">JobFlow</h1>}
+          {sidebarOpen && (
+            <div className="flex items-center gap-2">
+              <div className="h-8 w-8 rounded-lg bg-pink-500/20 border border-pink-500/30 text-pink-300 flex items-center justify-center text-sm font-semibold">
+                AP
+              </div>
+              <h1 className="text-xl font-semibold text-pink-300">{brandName}</h1>
+            </div>
+          )}
           <button onClick={() => setSidebarOpen(!sidebarOpen)} className="text-pink-400">
             {sidebarOpen ? "✕" : "☰"}
           </button>
