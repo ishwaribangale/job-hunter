@@ -1650,6 +1650,132 @@ class JobScraper:
         except Exception as e:
             print(f"  ❌ Navana: {e}")
 
+    def scrape_e42(self, company_name, url):
+        """E42 custom scraper (careers page + job detail pages)"""
+        headers = {**HEADERS, "Accept": "text/html"}
+        base = "https://e42.ai"
+
+        try:
+            r = requests.get(url, headers=headers, timeout=10)
+            if r.status_code != 200:
+                print(f"  ⚠ E42 HTTP {r.status_code}")
+                return
+
+            soup = BeautifulSoup(r.text, "html.parser")
+            links = []
+            for a in soup.find_all("a", href=True):
+                href = a.get("href", "")
+                if "/career/" not in href:
+                    continue
+                full_url = href if href.startswith("http") else f"{base}{href}"
+                links.append(full_url)
+
+            seen = set()
+            valid = []
+            for link in links:
+                if link in seen:
+                    continue
+                seen.add(link)
+                try:
+                    jr = requests.get(link, headers=headers, timeout=10)
+                    if jr.status_code != 200:
+                        continue
+                    jsoup = BeautifulSoup(jr.text, "html.parser")
+                    title = None
+                    h1 = jsoup.find(["h1", "h2"])
+                    if h1:
+                        title = h1.get_text(strip=True)
+                    if not title:
+                        title = self._title_from_url(link) or "Open Position"
+
+                    location = "Various"
+                    # try to detect location text
+                    for text in jsoup.stripped_strings:
+                        if "location" in text.lower():
+                            location = text.split(":")[-1].strip()
+                            break
+                    valid.append((title, link, location))
+                except Exception:
+                    continue
+
+            print(f"  ✓ E42: {len(valid)} jobs")
+            for title, full_url, location in valid:
+                self.add({
+                    "id": f"e42_{hash(full_url)}",
+                    "title": title,
+                    "company": company_name,
+                    "location": location or "Various",
+                    "source": f"{company_name}",
+                    "applyLink": full_url,
+                    "postedDate": self.now(),
+                })
+        except Exception as e:
+            print(f"  ❌ E42: {e}")
+
+    def scrape_deeptek(self, company_name, url):
+        """DeepTek custom scraper (careers page + jd pages)"""
+        headers = {**HEADERS, "Accept": "text/html"}
+        base = "https://www.deeptek.ai"
+
+        try:
+            r = requests.get(url, headers=headers, timeout=10)
+            if r.status_code != 200:
+                print(f"  ⚠ DeepTek HTTP {r.status_code}")
+                return
+
+            soup = BeautifulSoup(r.text, "html.parser")
+            links = []
+            for a in soup.find_all("a", href=True):
+                href = a.get("href", "")
+                if "/jd-" not in href:
+                    continue
+                full_url = href if href.startswith("http") else f"{base}{href}"
+                links.append(full_url)
+
+            seen = set()
+            valid = []
+            for link in links:
+                if link in seen:
+                    continue
+                seen.add(link)
+                try:
+                    jr = requests.get(link, headers=headers, timeout=10)
+                    if jr.status_code != 200:
+                        continue
+                    jsoup = BeautifulSoup(jr.text, "html.parser")
+                    title = None
+                    h = jsoup.find(["h1", "h2", "h3"])
+                    if h:
+                        title = h.get_text(strip=True)
+                    if not title:
+                        title = self._title_from_url(link) or "Open Position"
+
+                    location = "Various"
+                    text_blob = " ".join(jsoup.stripped_strings)
+                    if "Remote" in text_blob:
+                        location = "Remote"
+                    elif "Pune" in text_blob:
+                        location = "Pune, India"
+
+                    apply_link = "mailto:hr@deeptek.ai"
+                    valid.append((title, link, location, apply_link))
+                except Exception:
+                    continue
+
+            print(f"  ✓ DeepTek: {len(valid)} jobs")
+            for title, full_url, location, apply_link in valid:
+                self.add({
+                    "id": f"deeptek_{hash(full_url)}",
+                    "title": title,
+                    "company": company_name,
+                    "location": location or "Various",
+                    "source": f"{company_name}",
+                    "applyLink": apply_link or full_url,
+                    "postedDate": self.now(),
+                })
+        except Exception as e:
+            print(f"  ❌ DeepTek: {e}")
+
     # ===================================================================
     # MAIN COMPANY SCRAPERS
     # ===================================================================
@@ -1773,6 +1899,10 @@ class JobScraper:
                     self.scrape_wpmudev(name, url)
                 elif ats == "navana" and url:
                     self.scrape_navana(name, url)
+                elif ats == "e42" and url:
+                    self.scrape_e42(name, url)
+                elif ats == "deeptek" and url:
+                    self.scrape_deeptek(name, url)
                 elif ats:
                     print(f"  ⚠ ATS '{ats}' not supported or missing slug; using auto-detect")
                     if url:
