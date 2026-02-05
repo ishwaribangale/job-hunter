@@ -96,6 +96,15 @@ export default function Dashboard() {
     load();
   }, [isSignedIn, authFetch]);
 
+  React.useEffect(() => {
+    if (!isSignedIn) return;
+    const interested = applications
+      .filter(app => (app.stage || "").toLowerCase() === "interested")
+      .map(app => app.job_id)
+      .filter(Boolean);
+    setSavedJobs(interested);
+  }, [applications, isSignedIn]);
+
   /* ---------------- FILTER VALUES ---------------- */
   const sources = [...new Set(jobs.map(j => j?.source).filter(Boolean))].sort();
   const roles = [...new Set(jobs.map(j => j?.role).filter(Boolean))];
@@ -266,8 +275,40 @@ export default function Dashboard() {
   const totalPages = Math.ceil(sortedJobs.length / itemsPerPage);
 
   /* ---------------- ACTIONS ---------------- */
-  const toggleSaveJob = id =>
+  const toggleSaveJob = async (id) => {
+    if (!isSignedIn) {
+      alert("Please sign in to save jobs.");
+      return;
+    }
+
     setSavedJobs(prev => prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id]);
+
+    const job = jobs.find(j => j.id === id);
+    if (!job) return;
+
+    const existing = applicationsByJobId.get(id);
+    if (existing) return;
+
+    try {
+      const response = await authFetch("/api/applications", {
+        method: "POST",
+        body: JSON.stringify({
+          job_id: id,
+          company: job.company,
+          title: job.title,
+          location: job.location,
+          source: job.source,
+          apply_link: job.applyLink,
+          stage: "Interested",
+        }),
+      });
+
+      setApplications(prev => [response.application, ...prev]);
+      refreshMetrics();
+    } catch (error) {
+      console.error("Failed to save job as interested", error);
+    }
+  };
 
   const normalizeTerms = (text) => {
     if (!text) return [];
