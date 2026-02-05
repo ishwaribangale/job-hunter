@@ -29,6 +29,7 @@ export default function Dashboard() {
   const [resumeText, setResumeText] = React.useState("");
   const [resumeKeywords, setResumeKeywords] = React.useState([]);
   const [showFilters, setShowFilters] = React.useState(false);
+  const [workspaceSearch, setWorkspaceSearch] = React.useState("");
   const { getToken, isSignedIn } = useAuth();
 
   const authFetch = React.useCallback(
@@ -562,9 +563,9 @@ export default function Dashboard() {
           <div className="px-4 space-y-6">
             {/* NAV */}
             <nav className="space-y-2">
-              <Nav label="All Jobs" active={activeSection === "all"} onClick={() => setActiveSection("all")} />
-              <Nav label="Pipeline" active={activeSection === "pipeline"} onClick={() => setActiveSection("pipeline")} />
-              <Nav label="Top Matches" active={activeSection === "top"} onClick={() => setActiveSection("top")} />
+              <Nav label="Overview" active={activeSection === "all"} onClick={() => setActiveSection("all")} />
+              <Nav label="Discovery" active={activeSection === "top"} onClick={() => setActiveSection("top")} />
+              <Nav label="My Pipeline" active={activeSection === "pipeline"} onClick={() => setActiveSection("pipeline")} />
               <Nav label="Saved" active={activeSection === "saved"} onClick={() => setActiveSection("saved")} />
               <Nav label="Applied" active={activeSection === "applied"} onClick={() => setActiveSection("applied")} />
               <Nav label="Resume Matches" active={activeSection === "resume"} onClick={() => setActiveSection("resume")} />
@@ -605,35 +606,32 @@ export default function Dashboard() {
 
       {/* MAIN */}
       <main className="flex-1 flex flex-col">
-        {/* HEADER */}
-        <header className="p-6 border-b border-[#1f1f24] bg-[#121216]">
-          <div className="flex items-center justify-between gap-3">
+        {/* TOP BAR */}
+        <header className="p-5 border-b border-[#1f1f24] bg-[#0f1014]">
+          <div className="flex items-center gap-4">
             {!sidebarOpen && (
               <button
                 onClick={() => setSidebarOpen(true)}
-                className="h-8 w-8 rounded-md bg-[#1b1b20] text-pink-300 hover:text-pink-200 hover:bg-[#24242b] transition-colors"
+                className="h-9 w-9 rounded-lg bg-[#1b1b20] text-pink-300 hover:text-pink-200 hover:bg-[#24242b] transition-colors"
                 aria-label="Open menu"
               >
                 ☰
               </button>
             )}
             <div className="flex-1">
-              <h2 className="text-3xl font-bold text-white">
-                {activeSection === "resume"
-                  ? "Resume Matches"
-                  : activeSection === "pipeline"
-                  ? "Application Pipeline"
-                  : "Job Intelligence"}
-              </h2>
-              <p className="text-gray-400 mt-1">
-                {activeSection === "resume"
-                  ? "Match your resume against open roles"
-                  : activeSection === "pipeline"
-                  ? `${applications.length} tracked applications`
-                  : `${displayJobs.length} opportunities`}
-              </p>
+              <div className="relative">
+                <input
+                  type="text"
+                  placeholder="Search across your workspace..."
+                  value={workspaceSearch}
+                  onChange={(e) => setWorkspaceSearch(e.target.value)}
+                  className="w-full bg-[#14151b] border border-[#26262d] rounded-xl px-4 py-3 text-sm text-gray-300 focus:outline-none focus:border-pink-500 transition-colors"
+                />
+              </div>
             </div>
             <div className="flex items-center gap-3">
+              <button className="h-9 w-9 rounded-full bg-[#1b1b20] text-gray-300 hover:text-white transition-colors">?</button>
+              <button className="h-9 w-9 rounded-full bg-[#1b1b20] text-gray-300 hover:text-white transition-colors">🔔</button>
               <SignedOut>
                 <SignInButton mode="modal">
                   <button className="px-4 py-2 rounded-lg bg-pink-500 text-gray-900 text-sm font-semibold hover:bg-pink-400 transition-colors">
@@ -650,7 +648,24 @@ export default function Dashboard() {
 
         {/* FILTERS BAR */}
         {activeSection !== "resume" && activeSection !== "pipeline" && (
-          <div className="p-6 bg-[#121216] border-b border-[#1f1f24]">
+          <div className="p-6 bg-[#0f1014] border-b border-[#1f1f24]">
+            <div className="flex items-center justify-between gap-4 mb-4">
+              <div>
+                <h2 className="text-2xl font-semibold text-white">Job Intelligence</h2>
+                <p className="text-sm text-gray-400">New opportunities match your profile today.</p>
+              </div>
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => setShowFilters(prev => !prev)}
+                  className="bg-[#16161b] border border-[#26262d] rounded-xl px-4 py-2 text-sm text-gray-200 hover:border-pink-500 transition-colors"
+                >
+                  Filters
+                </button>
+                <button className="bg-pink-500 text-gray-900 rounded-xl px-4 py-2 text-sm font-semibold hover:bg-pink-400 transition-colors">
+                  AI Match
+                </button>
+              </div>
+            </div>
             <div className="flex flex-col lg:flex-row gap-3 items-stretch lg:items-center">
               <div className="flex-1">
                 <input
@@ -671,12 +686,6 @@ export default function Dashboard() {
                 <option value="remote">Remote First</option>
                 {resumeMatchEnabled && <option value="matchScore">Match %</option>}
               </select>
-              <button
-                onClick={() => setShowFilters(prev => !prev)}
-                className="bg-[#16161b] border border-[#26262d] rounded-xl px-4 py-3 text-sm text-gray-200 hover:border-pink-500 transition-colors"
-              >
-                Filters
-              </button>
             </div>
 
             {showFilters && (
