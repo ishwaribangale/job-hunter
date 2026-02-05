@@ -1,4 +1,5 @@
 import React from "react";
+import { SignedIn, SignedOut, SignInButton, UserButton, useAuth } from "@clerk/clerk-react";
 
 export default function Dashboard() {
   const [jobs, setJobs] = React.useState([]);
@@ -16,16 +17,47 @@ export default function Dashboard() {
   const [resumeMatchEnabled, setResumeMatchEnabled] = React.useState(false);
 
   const [savedJobs, setSavedJobs] = React.useState([]);
-  const [appliedJobs, setAppliedJobs] = React.useState([]);
-  const [sidebarOpen, setSidebarOpen] = React.useState(true);
+  const [sidebarOpen, setSidebarOpen] = React.useState(false);
 
-  const [appliedJobsDetails, setAppliedJobsDetails] = React.useState({});
+  const [applications, setApplications] = React.useState([]);
+  const [metrics, setMetrics] = React.useState(null);
   const [expandedJob, setExpandedJob] = React.useState(null);
   const [currentPage, setCurrentPage] = React.useState(1);
   const [itemsPerPage] = React.useState(20);
   const [sortBy, setSortBy] = React.useState("score");
   const [resumeText, setResumeText] = React.useState("");
   const [resumeKeywords, setResumeKeywords] = React.useState([]);
+  const [showFilters, setShowFilters] = React.useState(false);
+  const { getToken, isSignedIn } = useAuth();
+
+  const authFetch = React.useCallback(
+    async (url, options = {}) => {
+      const token = await getToken();
+      if (!token) throw new Error("Missing auth token");
+      const headers = {
+        "Content-Type": "application/json",
+        ...(options.headers || {}),
+        Authorization: `Bearer ${token}`,
+      };
+      const response = await fetch(url, { ...options, headers });
+      if (!response.ok) {
+        const payload = await response.json().catch(() => ({}));
+        throw new Error(payload.error || "Request failed");
+      }
+      return response.json();
+    },
+    [getToken]
+  );
+
+  const refreshMetrics = React.useCallback(async () => {
+    if (!isSignedIn) return;
+    try {
+      const stats = await authFetch("/api/metrics");
+      setMetrics(stats);
+    } catch (error) {
+      console.error("Failed to refresh metrics", error);
+    }
+  }, [authFetch, isSignedIn]);
 
   /* ---------------- FETCH JOBS ---------------- */
   React.useEffect(() => {
@@ -37,6 +69,32 @@ export default function Dashboard() {
       })
       .finally(() => setLoading(false));
   }, []);
+
+  React.useEffect(() => {
+    if (!isSignedIn) {
+      setApplications([]);
+      setMetrics(null);
+      return;
+    }
+
+    const load = async () => {
+      try {
+        const apps = await authFetch("/api/applications");
+        setApplications(apps.applications || []);
+      } catch (error) {
+        console.error("Failed to load applications", error);
+      }
+
+      try {
+        const stats = await authFetch("/api/metrics");
+        setMetrics(stats);
+      } catch (error) {
+        console.error("Failed to load metrics", error);
+      }
+    };
+
+    load();
+  }, [isSignedIn, authFetch]);
 
   /* ---------------- FILTER VALUES ---------------- */
   const sources = [...new Set(jobs.map(j => j?.source).filter(Boolean))].sort();
@@ -155,12 +213,20 @@ export default function Dashboard() {
   }, [jobs, searchQuery, sourceQuery, companyQuery, selectedRole, locationQuery, selectedEmploymentType, resumeMatchEnabled, resumeText]);
 
   /* ---------------- SECTION FILTER ---------------- */
+  const applicationsByJobId = React.useMemo(() => {
+    const map = new Map();
+    applications.forEach(app => {
+      if (app.job_id) map.set(app.job_id, app);
+    });
+    return map;
+  }, [applications]);
+
   const displayJobs = React.useMemo(() => {
     if (activeSection === "saved") return filteredJobs.filter(j => savedJobs.includes(j.id));
-    if (activeSection === "applied") return filteredJobs.filter(j => appliedJobs.includes(j.id));
+    if (activeSection === "applied") return filteredJobs.filter(j => applicationsByJobId.has(j.id));
     if (activeSection === "top") return filteredJobs.filter(j => j.matchScore >= 75);
     return filteredJobs;
-  }, [filteredJobs, activeSection, savedJobs, appliedJobs]);
+  }, [filteredJobs, activeSection, savedJobs, applicationsByJobId]);
 
   /* ---------------- SORT JOBS ---------------- */
   const sortedJobs = React.useMemo(() => {
@@ -305,25 +371,63 @@ export default function Dashboard() {
     return "";
   };
 
-  const markJobAsApplied = (id, applyLink) => {
-    // Open the job link
-    if (applyLink) {
-      window.open(applyLink, '_blank', 'noopener,noreferrer');
+  const markJobAsApplied = async (id, applyLink) => {
+    if (!isSignedIn) {
+      alert("Please sign in to track applications.");
+      return;
     }
-    
-    // Mark as applied with details
-    setAppliedJobs(prev => prev.includes(id) ? prev : [...prev, id]);
-    
-    // Store application details
+
     const job = jobs.find(j => j.id === id);
-    setAppliedJobsDetails(prev => ({
-      ...prev,
-      [id]: {
-        appliedDate: new Date().toISOString(),
-        notes: "",
-        job: job
-      }
-    }));
+    if (!job) return;
+
+    try {
+      const response = await authFetch("/api/applications", {
+        method: "POST",
+        body: JSON.stringify({
+          job_id: id,
+          company: job.company,
+          title: job.title,
+          location: job.location,
+          source: job.source,
+          apply_link: job.applyLink,
+          stage: "Applied",
+        }),
+      });
+
+      setApplications(prev => {
+        const next = [...prev];
+        const index = next.findIndex(app => app.job_id === id);
+        if (index >= 0) {
+          next[index] = response.application;
+        } else {
+          next.unshift(response.application);
+        }
+        return next;
+      });
+      refreshMetrics();
+    } catch (error) {
+      console.error("Failed to create application", error);
+    }
+
+    if (applyLink) {
+      window.open(applyLink, "_blank", "noopener,noreferrer");
+    }
+  };
+
+  const updateApplication = async (id, updates) => {
+    if (!isSignedIn) return;
+    try {
+      const response = await authFetch("/api/applications", {
+        method: "PATCH",
+        body: JSON.stringify({ id, ...updates }),
+      });
+      setApplications(prev =>
+        prev.map(app => (app.id === id ? response.application : app))
+      );
+      refreshMetrics();
+    } catch (error) {
+      console.error("Failed to update application", error);
+    }
   };
 
   const handleResumeUpload = (event) => {
@@ -395,12 +499,12 @@ export default function Dashboard() {
 };
 
   return (
-    <div className="min-h-screen bg-[#0b0f19] text-gray-100 flex">
+    <div className="min-h-screen bg-[#0b0b0d] text-gray-100 flex">
       {/* SIDEBAR */}
-      <aside className={`${sidebarOpen ? "w-72" : "w-16"} bg-[#0f172a] border-r border-gray-800 transition-all`}>
+      <aside className={`${sidebarOpen ? "w-72" : "w-14"} bg-[#121216] border-r border-[#1f1f24] transition-all`}>
         <div className="p-4 flex justify-between items-center">
-          {sidebarOpen && <h1 className="text-xl font-bold text-indigo-400">JobFlow</h1>}
-          <button onClick={() => setSidebarOpen(!sidebarOpen)} className="text-indigo-400">
+          {sidebarOpen && <h1 className="text-xl font-semibold text-pink-400">JobFlow</h1>}
+          <button onClick={() => setSidebarOpen(!sidebarOpen)} className="text-pink-400">
             {sidebarOpen ? "✕" : "☰"}
           </button>
         </div>
@@ -410,6 +514,7 @@ export default function Dashboard() {
             {/* NAV */}
             <nav className="space-y-2">
               <Nav label="All Jobs" active={activeSection === "all"} onClick={() => setActiveSection("all")} />
+              <Nav label="Pipeline" active={activeSection === "pipeline"} onClick={() => setActiveSection("pipeline")} />
               <Nav label="Top Matches" active={activeSection === "top"} onClick={() => setActiveSection("top")} />
               <Nav label="Saved" active={activeSection === "saved"} onClick={() => setActiveSection("saved")} />
               <Nav label="Applied" active={activeSection === "applied"} onClick={() => setActiveSection("applied")} />
@@ -424,7 +529,7 @@ export default function Dashboard() {
                   <button
                     key={q.label}
                     onClick={q.action}
-                    className="w-full text-left px-3 py-2 rounded bg-gray-800/50 hover:bg-gray-800 text-sm transition-colors"
+                    className="w-full text-left px-3 py-2 rounded bg-[#18181d] hover:bg-[#1f1f26] text-sm transition-colors"
                   >
                     {q.label}
                   </button>
@@ -433,14 +538,14 @@ export default function Dashboard() {
             </div>
 
             {/* RESUME MATCHER CARD */}
-            <div className="bg-indigo-900/20 border border-indigo-900/40 rounded-lg p-4">
-              <h4 className="text-sm font-semibold text-indigo-300 mb-1">Resume Matcher</h4>
+            <div className="bg-[#1b121a] border border-[#2b1a24] rounded-lg p-4">
+              <h4 className="text-sm font-semibold text-pink-300 mb-1">Resume Matcher</h4>
               <p className="text-xs text-gray-400 mb-3">
                 Upload your resume to find best-fit roles
               </p>
               <button
                 onClick={() => setActiveSection("resume")}
-                className="w-full bg-indigo-500 text-gray-900 py-1.5 rounded text-sm font-semibold hover:bg-indigo-400 transition-colors"
+                className="w-full bg-pink-500 text-gray-900 py-1.5 rounded text-sm font-semibold hover:bg-pink-400 transition-colors"
               >
                 See Your Fit →
               </button>
@@ -452,114 +557,149 @@ export default function Dashboard() {
       {/* MAIN */}
       <main className="flex-1 flex flex-col">
         {/* HEADER */}
-        <header className="p-6 border-b border-gray-800 bg-[#0f172a]">
-          <h2 className="text-3xl font-bold text-indigo-400">
-            {activeSection === "resume" ? "Resume Matches" : "Job Intelligence"}
-          </h2>
-          <p className="text-gray-400 mt-1">
-            {activeSection === "resume"
-              ? "Match your resume against open roles"
-              : `${displayJobs.length} opportunities`}
-          </p>
+        <header className="p-6 border-b border-[#1f1f24] bg-[#121216]">
+          <div className="flex items-center justify-between gap-3">
+            {!sidebarOpen && (
+              <button
+                onClick={() => setSidebarOpen(true)}
+                className="h-8 w-8 rounded-md bg-[#1b1b20] text-pink-300 hover:text-pink-200 hover:bg-[#24242b] transition-colors"
+                aria-label="Open menu"
+              >
+                ☰
+              </button>
+            )}
+            <div className="flex-1">
+              <h2 className="text-3xl font-bold text-white">
+                {activeSection === "resume"
+                  ? "Resume Matches"
+                  : activeSection === "pipeline"
+                  ? "Application Pipeline"
+                  : "Job Intelligence"}
+              </h2>
+              <p className="text-gray-400 mt-1">
+                {activeSection === "resume"
+                  ? "Match your resume against open roles"
+                  : activeSection === "pipeline"
+                  ? `${applications.length} tracked applications`
+                  : `${displayJobs.length} opportunities`}
+              </p>
+            </div>
+            <div className="flex items-center gap-3">
+              <SignedOut>
+                <SignInButton mode="modal">
+                  <button className="px-4 py-2 rounded-lg bg-pink-500 text-gray-900 text-sm font-semibold hover:bg-pink-400 transition-colors">
+                    Sign in
+                  </button>
+                </SignInButton>
+              </SignedOut>
+              <SignedIn>
+                <UserButton appearance={{ elements: { userButtonAvatarBox: "h-9 w-9" } }} />
+              </SignedIn>
+            </div>
+          </div>
         </header>
 
         {/* FILTERS BAR */}
-        {activeSection !== "resume" && (
-          <div className="p-6 bg-[#0f172a] border-b border-gray-800">
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-6 gap-4">
-              {/* Search */}
-              <div className="lg:col-span-2">
+        {activeSection !== "resume" && activeSection !== "pipeline" && (
+          <div className="p-6 bg-[#121216] border-b border-[#1f1f24]">
+            <div className="flex flex-col lg:flex-row gap-3 items-stretch lg:items-center">
+              <div className="flex-1">
                 <input
                   type="text"
-                  placeholder="Search jobs by title or company..."
+                  placeholder="Search jobs, companies, or keywords..."
                   value={searchQuery}
                   onChange={e => setSearchQuery(e.target.value)}
-                  className="w-full bg-gray-900 border border-gray-800 rounded px-4 py-2 text-sm focus:outline-none focus:border-indigo-500 transition-colors"
+                  className="w-full bg-[#16161b] border border-[#26262d] rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-pink-500 transition-colors"
                 />
               </div>
-
-              {/* Source Filter (searchable) */}
-              <div>
-                <input
-                  list="source-options"
-                  placeholder="Filter by source..."
-                  value={sourceQuery}
-                  onChange={e => setSourceQuery(e.target.value)}
-                  className="w-full bg-gray-900 border border-gray-800 rounded px-4 py-2 text-sm focus:outline-none focus:border-indigo-500 transition-colors"
-                />
-                <datalist id="source-options">
-                  {sources.map(source => (
-                    <option key={source} value={source} />
-                  ))}
-                </datalist>
-              </div>
-
-              {/* Role Filter */}
-              <select
-                value={selectedRole}
-                onChange={e => setSelectedRole(e.target.value)}
-                className="bg-gray-900 border border-gray-800 rounded px-4 py-2 text-sm focus:outline-none focus:border-indigo-500 cursor-pointer transition-colors"
-              >
-                <option value="all">All Roles</option>
-                {roles.map(role => (
-                  <option key={role} value={role}>{role}</option>
-                ))}
-              </select>
-
-              {/* Location Filter (searchable) */}
-              <div>
-                <input
-                  list="location-options"
-                  placeholder="Filter by location..."
-                  value={locationQuery}
-                  onChange={e => setLocationQuery(e.target.value)}
-                  className="w-full bg-gray-900 border border-gray-800 rounded px-4 py-2 text-sm focus:outline-none focus:border-indigo-500 transition-colors"
-                />
-                <datalist id="location-options">
-                  {locations.map(location => (
-                    <option key={location} value={location} />
-                  ))}
-                </datalist>
-              </div>
-
-              {/* Employment Type Filter */}
-              <select
-                value={selectedEmploymentType}
-                onChange={e => setSelectedEmploymentType(e.target.value)}
-                className="bg-gray-900 border border-gray-800 rounded px-4 py-2 text-sm focus:outline-none focus:border-indigo-500 cursor-pointer transition-colors"
-              >
-                <option value="all">All Types</option>
-                {employmentTypes.map(type => (
-                  <option key={type} value={type}>{type}</option>
-                ))}
-              </select>
-            </div>
-
-            {/* Second Row - Sort */}
-            <div className="mt-4 flex flex-wrap gap-3 items-center">
               <select
                 value={sortBy}
                 onChange={e => setSortBy(e.target.value)}
-                className="bg-gray-900 border border-gray-800 rounded px-4 py-2 text-sm focus:outline-none focus:border-indigo-500 cursor-pointer transition-colors"
+                className="bg-[#16161b] border border-[#26262d] rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-pink-500 cursor-pointer transition-colors"
               >
-                <option value="score">Sort by: Score</option>
-                <option value="date">Sort by: Newest</option>
-                <option value="remote">Sort by: Remote First</option>
-                {resumeMatchEnabled && <option value="matchScore">Sort by: Match %</option>}
+                <option value="score">Most Relevant</option>
+                <option value="date">Newest</option>
+                <option value="remote">Remote First</option>
+                {resumeMatchEnabled && <option value="matchScore">Match %</option>}
               </select>
-              <input
-                list="company-options"
-                placeholder="Filter by company..."
-                value={companyQuery}
-                onChange={e => setCompanyQuery(e.target.value)}
-                className="bg-gray-900 border border-gray-800 rounded px-4 py-2 text-sm focus:outline-none focus:border-indigo-500 transition-colors w-full md:w-72"
-              />
-              <datalist id="company-options">
-                {companies.map(company => (
-                  <option key={company} value={company} />
-                ))}
-              </datalist>
+              <button
+                onClick={() => setShowFilters(prev => !prev)}
+                className="bg-[#16161b] border border-[#26262d] rounded-xl px-4 py-3 text-sm text-gray-200 hover:border-pink-500 transition-colors"
+              >
+                Filters
+              </button>
             </div>
+
+            {showFilters && (
+              <div className="mt-4 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-6 gap-4">
+                <div>
+                  <input
+                    list="source-options"
+                    placeholder="Source"
+                    value={sourceQuery}
+                    onChange={e => setSourceQuery(e.target.value)}
+                    className="w-full bg-[#16161b] border border-[#26262d] rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-pink-500 transition-colors"
+                  />
+                  <datalist id="source-options">
+                    {sources.map(source => (
+                      <option key={source} value={source} />
+                    ))}
+                  </datalist>
+                </div>
+
+                <select
+                  value={selectedRole}
+                  onChange={e => setSelectedRole(e.target.value)}
+                  className="bg-[#16161b] border border-[#26262d] rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-pink-500 cursor-pointer transition-colors"
+                >
+                  <option value="all">All Roles</option>
+                  {roles.map(role => (
+                    <option key={role} value={role}>{role}</option>
+                  ))}
+                </select>
+
+                <div>
+                  <input
+                    list="location-options"
+                    placeholder="Location"
+                    value={locationQuery}
+                    onChange={e => setLocationQuery(e.target.value)}
+                    className="w-full bg-[#16161b] border border-[#26262d] rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-pink-500 transition-colors"
+                  />
+                  <datalist id="location-options">
+                    {locations.map(location => (
+                      <option key={location} value={location} />
+                    ))}
+                  </datalist>
+                </div>
+
+                <select
+                  value={selectedEmploymentType}
+                  onChange={e => setSelectedEmploymentType(e.target.value)}
+                  className="bg-[#16161b] border border-[#26262d] rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-pink-500 cursor-pointer transition-colors"
+                >
+                  <option value="all">All Types</option>
+                  {employmentTypes.map(type => (
+                    <option key={type} value={type}>{type}</option>
+                  ))}
+                </select>
+
+                <div className="lg:col-span-2">
+                  <input
+                    list="company-options"
+                    placeholder="Company"
+                    value={companyQuery}
+                    onChange={e => setCompanyQuery(e.target.value)}
+                    className="w-full bg-[#16161b] border border-[#26262d] rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-pink-500 transition-colors"
+                  />
+                  <datalist id="company-options">
+                    {companies.map(company => (
+                      <option key={company} value={company} />
+                    ))}
+                  </datalist>
+                </div>
+              </div>
+            )}
 
             {/* Company quick chips */}
             <div className="mt-3 flex flex-wrap gap-2">
@@ -569,8 +709,8 @@ export default function Dashboard() {
                   onClick={() => setCompanyQuery(name)}
                   className={`px-3 py-1 rounded-full text-xs border transition-colors ${
                     companyQuery === name
-                      ? "bg-indigo-500 text-gray-900 border-indigo-400"
-                      : "bg-gray-900 text-gray-300 border-gray-700 hover:border-indigo-500"
+                      ? "bg-pink-500 text-gray-900 border-pink-400"
+                      : "bg-[#16161b] text-gray-300 border-[#2a2a33] hover:border-pink-500"
                   }`}
                 >
                   {name}
@@ -583,32 +723,32 @@ export default function Dashboard() {
               <div className="mt-4 flex flex-wrap gap-2 items-center">
                 <span className="text-xs text-gray-500">Active filters:</span>
                 {searchQuery && (
-                  <span className="text-xs bg-indigo-900/30 text-indigo-300 px-2 py-1 rounded">
+                  <span className="text-xs bg-pink-900/30 text-pink-300 px-2 py-1 rounded">
                     Search: "{searchQuery}"
                   </span>
                 )}
                 {sourceQuery && (
-                  <span className="text-xs bg-indigo-900/30 text-indigo-300 px-2 py-1 rounded">
+                  <span className="text-xs bg-pink-900/30 text-pink-300 px-2 py-1 rounded">
                     Source: {sourceQuery}
                   </span>
                 )}
                 {companyQuery && (
-                  <span className="text-xs bg-indigo-900/30 text-indigo-300 px-2 py-1 rounded">
+                  <span className="text-xs bg-pink-900/30 text-pink-300 px-2 py-1 rounded">
                     Company: {companyQuery}
                   </span>
                 )}
                 {selectedRole !== "all" && (
-                  <span className="text-xs bg-indigo-900/30 text-indigo-300 px-2 py-1 rounded">
+                  <span className="text-xs bg-pink-900/30 text-pink-300 px-2 py-1 rounded">
                     Role: {selectedRole}
                   </span>
                 )}
                 {locationQuery && (
-                  <span className="text-xs bg-indigo-900/30 text-indigo-300 px-2 py-1 rounded">
+                  <span className="text-xs bg-pink-900/30 text-pink-300 px-2 py-1 rounded">
                     Location: {locationQuery}
                   </span>
                 )}
                 {selectedEmploymentType !== "all" && (
-                  <span className="text-xs bg-indigo-900/30 text-indigo-300 px-2 py-1 rounded">
+                  <span className="text-xs bg-pink-900/30 text-pink-300 px-2 py-1 rounded">
                     Type: {selectedEmploymentType}
                   </span>
                 )}
@@ -621,7 +761,7 @@ export default function Dashboard() {
                     setCompanyQuery("");
                     setLocationQuery("");
                   }}
-                  className="text-xs text-indigo-400 hover:text-indigo-300 underline"
+                  className="text-xs text-pink-400 hover:text-pink-300 underline"
                 >
                   Clear all
                 </button>
@@ -637,8 +777,35 @@ export default function Dashboard() {
               onMatch={() => setResumeMatchEnabled(true)}
               onFileUpload={handleResumeUpload}
             />
+          ) : activeSection === "pipeline" ? (
+            <>
+              <SignedIn>
+                <PipelineBoard
+                  applications={applications}
+                  onMoveStage={(id, stage) => updateApplication(id, { stage })}
+                />
+              </SignedIn>
+              <SignedOut>
+                <div className="max-w-xl mx-auto text-center bg-[#121216] border border-[#1f1f24] rounded-2xl p-10">
+                  <h3 className="text-2xl font-bold text-pink-300 mb-2">Sign in to track applications</h3>
+                  <p className="text-gray-400 mb-6">
+                    Your pipeline is saved per account.
+                  </p>
+                  <SignInButton mode="modal">
+                    <button className="px-4 py-2 rounded-lg bg-pink-500 text-gray-900 text-sm font-semibold hover:bg-pink-400 transition-colors">
+                      Sign in to continue
+                    </button>
+                  </SignInButton>
+                </div>
+              </SignedOut>
+            </>
           ) : (
             <div className="space-y-4">
+              {activeSection === "all" && (
+                <SignedIn>
+                  <MetricsBar metrics={metrics} />
+                </SignedIn>
+              )}
               {displayJobs.length === 0 ? (
                 <div className="text-center py-12 text-gray-500">
                   <p className="text-lg mb-2">No jobs found matching your filters</p>
@@ -651,7 +818,7 @@ export default function Dashboard() {
                       setCompanyQuery("");
                       setLocationQuery("");
                     }}
-                    className="text-indigo-400 hover:text-indigo-300 underline"
+                  className="text-pink-400 hover:text-pink-300 underline"
                   >
                     Clear all filters
                   </button>
@@ -663,17 +830,12 @@ export default function Dashboard() {
                       key={job.id}
                       job={job}
                       saved={savedJobs.includes(job.id)}
-                      applied={appliedJobs.includes(job.id)}
-                      appliedDetails={appliedJobsDetails[job.id]}
+                      applied={applicationsByJobId.has(job.id)}
+                      appliedDetails={applicationsByJobId.get(job.id)}
                       isExpanded={expandedJob === job.id}
                       onSave={toggleSaveJob}
                       onApply={markJobAsApplied}
-                      onUpdateNotes={(id, notes) => {
-                        setAppliedJobsDetails(prev => ({
-                          ...prev,
-                          [id]: { ...prev[id], notes }
-                        }));
-                      }}
+                      onUpdateNotes={(appId, notes) => updateApplication(appId, { notes })}
                       onToggleDetails={(id) => {
                         setExpandedJob(expandedJob === id ? null : id);
                       }}
@@ -722,7 +884,7 @@ function Nav({ label, active, onClick }) {
     <button
       onClick={onClick}
       className={`w-full text-left px-4 py-2 rounded transition-colors ${
-        active ? "bg-indigo-900/30 text-indigo-400" : "text-gray-400 hover:bg-gray-800"
+        active ? "bg-[#231824] text-pink-300" : "text-gray-400 hover:bg-[#1b1b20]"
       }`}
     >
       {label}
@@ -732,8 +894,8 @@ function Nav({ label, active, onClick }) {
 
 function ResumeMatchScreen({ onMatch, onFileUpload }) {
   return (
-    <div className="max-w-xl mx-auto text-center bg-gray-900 border border-gray-800 rounded-xl p-10">
-      <h3 className="text-2xl font-bold text-indigo-400 mb-2">Match Your Resume</h3>
+    <div className="max-w-xl mx-auto text-center bg-[#121216] border border-[#1f1f24] rounded-2xl p-10">
+      <h3 className="text-2xl font-bold text-pink-300 mb-2">Match Your Resume</h3>
       <p className="text-gray-400 mb-6">
         Upload your resume (.txt file) and instantly see which roles fit you best.
       </p>
@@ -752,8 +914,107 @@ function ResumeMatchScreen({ onMatch, onFileUpload }) {
   );
 }
 
+function MetricsBar({ metrics }) {
+  if (!metrics) {
+    return (
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+        {["Applications", "Interviews", "Offers", "Interview Rate"].map(label => (
+          <div key={label} className="bg-[#15151a] border border-[#23232a] rounded-2xl p-4">
+            <div className="text-xs text-gray-500">{label}</div>
+            <div className="mt-2 h-6 w-16 bg-[#23232a] rounded" />
+          </div>
+        ))}
+      </div>
+    );
+  }
+
+  return (
+    <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+      <MetricCard label="Applications" value={metrics.totals?.total || 0} />
+      <MetricCard label="Interviews" value={metrics.totals?.interview || 0} />
+      <MetricCard label="Offers" value={metrics.totals?.offer || 0} />
+      <MetricCard label="Interview Rate" value={`${metrics.interviewRate || 0}%`} />
+    </div>
+  );
+}
+
+function MetricCard({ label, value }) {
+  return (
+    <div className="bg-[#15151a] border border-[#23232a] rounded-2xl p-4">
+      <div className="text-xs text-gray-500">{label}</div>
+      <div className="text-2xl font-semibold text-white mt-1">{value}</div>
+    </div>
+  );
+}
+
+function PipelineBoard({ applications, onMoveStage }) {
+  const stages = ["Interested", "Applied", "Interview", "Offer", "Rejected"];
+  const grouped = stages.reduce((acc, stage) => {
+    acc[stage] = [];
+    return acc;
+  }, {});
+
+  applications.forEach(app => {
+    const stage = app.stage || "Applied";
+    if (!grouped[stage]) grouped[stage] = [];
+    grouped[stage].push(app);
+  });
+
+  const stageIndex = (stage) => stages.indexOf(stage);
+
+  return (
+    <div className="space-y-4">
+      <div>
+        <h3 className="text-xl font-semibold text-white">Application Pipeline</h3>
+        <p className="text-sm text-gray-400">Move applications across stages as you progress.</p>
+      </div>
+      <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-4">
+        {stages.map(stage => (
+          <div key={stage} className="bg-[#121216] border border-[#1f1f24] rounded-2xl p-3 min-h-[240px]">
+            <div className="flex items-center justify-between mb-3">
+              <span className="text-sm font-semibold text-white">{stage}</span>
+              <span className="text-xs text-gray-500">{grouped[stage]?.length || 0}</span>
+            </div>
+            <div className="space-y-3">
+              {(grouped[stage] || []).map(app => (
+                <div key={app.id} className="bg-[#15151a] border border-[#23232a] rounded-xl p-3">
+                  <div className="text-sm font-semibold text-white">{app.title}</div>
+                  <div className="text-xs text-gray-400 mt-1">{app.company}</div>
+                  <div className="text-xs text-gray-500 mt-1">{app.location || "Location"}</div>
+                  <div className="flex items-center gap-2 mt-3">
+                    <button
+                      disabled={stageIndex(stage) === 0}
+                      onClick={() => onMoveStage(app.id, stages[stageIndex(stage) - 1])}
+                      className="px-2 py-1 text-xs rounded bg-[#1e1e25] text-gray-300 disabled:opacity-40"
+                    >
+                      ←
+                    </button>
+                    <button
+                      disabled={stageIndex(stage) === stages.length - 1}
+                      onClick={() => onMoveStage(app.id, stages[stageIndex(stage) + 1])}
+                      className="px-2 py-1 text-xs rounded bg-[#1e1e25] text-gray-300 disabled:opacity-40"
+                    >
+                      →
+                    </button>
+                  </div>
+                </div>
+              ))}
+              {grouped[stage]?.length === 0 && (
+                <div className="text-xs text-gray-500">No applications</div>
+              )}
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 function JobCard({ job, saved, applied, onSave, onApply, resumeMatchEnabled, appliedDetails, onUpdateNotes, onToggleDetails, isExpanded }) {
   const [notes, setNotes] = React.useState(appliedDetails?.notes || "");
+  React.useEffect(() => {
+    setNotes(appliedDetails?.notes || "");
+  }, [appliedDetails?.notes]);
   const pill = (() => {
     const loc = (job.location || "").toLowerCase();
     if (loc.includes("remote")) return "Remote";
@@ -764,23 +1025,23 @@ function JobCard({ job, saved, applied, onSave, onApply, resumeMatchEnabled, app
   const initial = (job.company || "?").trim().charAt(0).toUpperCase();
   
   return (
-    <div className="bg-gray-900 border border-gray-800 rounded-lg p-5 hover:border-gray-700 transition-colors">
-      <div className="flex gap-6">
+    <div className="bg-[#15151a] border border-[#23232a] rounded-2xl p-5 hover:border-[#2f2f39] transition-colors shadow-[0_6px_20px_rgba(0,0,0,0.25)]">
+      <div className="flex gap-5">
         {resumeMatchEnabled && job.matchScore !== undefined && (
-          <div className="w-20 h-20 rounded-full border-4 border-indigo-400 flex items-center justify-center flex-shrink-0">
-            <span className="text-xl font-bold text-indigo-400">{job.matchScore}%</span>
+          <div className="w-20 h-20 rounded-full border-4 border-pink-400 flex items-center justify-center flex-shrink-0">
+            <span className="text-xl font-bold text-pink-300">{job.matchScore}%</span>
           </div>
         )}
 
         <div className="flex-1">
           <div className="flex items-center gap-3 mb-2">
-            <div className="w-9 h-9 rounded-full bg-indigo-900/40 border border-indigo-800 text-indigo-300 flex items-center justify-center text-sm font-semibold">
+            <div className="w-11 h-11 rounded-xl bg-[#1e1e25] border border-[#2a2a33] text-pink-300 flex items-center justify-center text-sm font-semibold">
               {initial}
             </div>
             <div className="flex flex-wrap items-center gap-2">
-              <span className="text-xs bg-gray-800 text-gray-300 px-2 py-1 rounded">{job.company}</span>
+              <span className="text-xs bg-[#1e1e25] text-gray-300 px-2 py-1 rounded">{job.company}</span>
               {job.source && (
-                <span className="text-xs bg-gray-800/60 text-gray-400 px-2 py-1 rounded">{job.source}</span>
+                <span className="text-xs bg-[#1e1e25]/60 text-gray-400 px-2 py-1 rounded">{job.source}</span>
               )}
               {pill && (
                 <span className="text-xs bg-emerald-900/30 text-emerald-300 px-2 py-1 rounded">{pill}</span>
@@ -788,28 +1049,28 @@ function JobCard({ job, saved, applied, onSave, onApply, resumeMatchEnabled, app
             </div>
           </div>
           <div className="flex items-center gap-2 mb-1">
-            <h3 className="text-xl font-semibold">{job.title}</h3>
+            <h3 className="text-lg font-semibold text-white">{job.title}</h3>
             {!applied && (
-              <span className="text-xs bg-indigo-900/40 text-indigo-300 px-2 py-0.5 rounded">
+              <span className="text-xs bg-pink-500/20 text-pink-300 px-2 py-0.5 rounded-full">
                 ✨ New
               </span>
             )}
           </div>
-          <p className="text-gray-400 text-sm mb-2">{job.company} · {job.location}</p>
+          <p className="text-gray-400 text-sm mb-2">{job.location} · {job.employment_type || "Full-time"} · {job.postedDate || job.fetchedAt || "Recently"}</p>
           
           <div className="flex gap-2 flex-wrap">
             {job.employment_type && (
-              <span className="inline-block text-xs bg-gray-800 text-gray-400 px-2 py-1 rounded">
+              <span className="inline-block text-xs bg-[#1e1e25] text-gray-400 px-2 py-1 rounded-full">
                 {job.employment_type}
               </span>
             )}
             {job.role && (
-              <span className="inline-block text-xs bg-gray-800 text-gray-400 px-2 py-1 rounded">
+              <span className="inline-block text-xs bg-[#1e1e25] text-gray-400 px-2 py-1 rounded-full">
                 {job.role}
               </span>
             )}
             {job.requirements?.skills && job.requirements.skills.length > 0 && (
-              <span className="inline-block text-xs bg-blue-900/30 text-blue-300 px-2 py-1 rounded">
+              <span className="inline-block text-xs bg-[#1e1e25] text-gray-300 px-2 py-1 rounded-full">
                 {job.requirements.skills.slice(0, 3).join(", ")}
               </span>
             )}
@@ -829,11 +1090,14 @@ function JobCard({ job, saved, applied, onSave, onApply, resumeMatchEnabled, app
           )}
         </div>
 
-        <div className="flex flex-col gap-2 flex-shrink-0">
+        <div className="flex flex-col gap-2 flex-shrink-0 items-end">
+          {job.salary && (
+            <div className="text-sm font-semibold text-white">{job.salary}</div>
+          )}
           <button
             onClick={() => onSave(job.id)}
-            className={`px-3 py-2 rounded transition-colors ${
-              saved ? "bg-yellow-900/40 text-yellow-400" : "bg-gray-800 text-gray-400 hover:bg-gray-700"
+            className={`h-9 w-9 rounded-lg transition-colors ${
+              saved ? "bg-pink-500/20 text-pink-300" : "bg-[#1e1e25] text-gray-400 hover:bg-[#26262f]"
             }`}
             title={saved ? "Unsave job" : "Save job"}
           >
@@ -843,7 +1107,7 @@ function JobCard({ job, saved, applied, onSave, onApply, resumeMatchEnabled, app
             disabled={applied}
             onClick={() => onApply(job.id, job.applyLink)}
             className={`px-4 py-2 rounded font-semibold transition-colors ${
-              applied ? "bg-gray-700 text-gray-500 cursor-not-allowed" : "bg-indigo-500 text-gray-900 hover:bg-indigo-400 shadow-md shadow-indigo-900/30"
+              applied ? "bg-gray-700 text-gray-500 cursor-not-allowed" : "bg-pink-500 text-gray-900 hover:bg-pink-400 shadow-md shadow-pink-900/30"
             }`}
           >
             {applied ? "Applied ✓" : "Apply →"}
@@ -861,12 +1125,12 @@ function JobCard({ job, saved, applied, onSave, onApply, resumeMatchEnabled, app
       </div>
       
       {/* Expanded Details */}
-      {applied && isExpanded && appliedDetails && (
+          {applied && isExpanded && appliedDetails && (
         <div className="mt-4 pt-4 border-t border-gray-800 space-y-3">
           <div>
             <p className="text-xs text-gray-500 mb-1">Applied on:</p>
             <p className="text-sm text-gray-300">
-              {new Date(appliedDetails.appliedDate).toLocaleDateString('en-US', { 
+              {new Date(appliedDetails.applied_date || appliedDetails.appliedDate || new Date().toISOString()).toLocaleDateString('en-US', { 
                 year: 'numeric', month: 'long', day: 'numeric' 
               })}
             </p>
@@ -903,9 +1167,9 @@ function JobCard({ job, saved, applied, onSave, onApply, resumeMatchEnabled, app
             <textarea
               value={notes}
               onChange={(e) => setNotes(e.target.value)}
-              onBlur={() => onUpdateNotes(job.id, notes)}
+              onBlur={() => onUpdateNotes(appliedDetails.id, notes)}
               placeholder="Add notes about your application..."
-              className="w-full bg-gray-800 border border-gray-700 rounded px-3 py-2 text-sm text-gray-300 focus:outline-none focus:border-indigo-500 resize-none"
+              className="w-full bg-gray-800 border border-gray-700 rounded px-3 py-2 text-sm text-gray-300 focus:outline-none focus:border-pink-500 resize-none"
               rows={3}
             />
           </div>

@@ -18,7 +18,7 @@ TIMEOUT = 12
 # ===================================================================
 TOP_COMPANIES = [
     {"name": "PhonePe", "ats": "greenhouse", "slug": "phonepe"},
-    {"name": "PayPay India", "ats": "greenhouse", "slug": "paypay"},
+    {"name": "PayPay India", "ats": "greenhouse", "slug": "pay2dc"},
     {"name": "RevX", "ats": "greenhouse", "slug": "revx"},
     {"name": "Zinnia", "ats": "greenhouse", "slug": "zinnia"},
     {"name": "Netradyne", "ats": "greenhouse", "slug": "netradyne"},
