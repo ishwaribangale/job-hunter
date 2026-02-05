@@ -42,55 +42,6 @@
     "slug": "samsara"
   },
   {
-    "name": "Razorpay",
-    "country": "IN",
-    "career_url": "https://job-boards.greenhouse.io/razorpaysoftwareprivatelimited",
-    "ats": "greenhouse",
-    "slug": "razorpaysoftwareprivatelimited"
-  },
-  {
-    "name": "Myntra",
-    "country": "IN",
-    "career_url": "https://boards.greenhouse.io/myntra",
-    "ats": "greenhouse",
-    "slug": "myntra"
-  },
-  {
-    "name": "Sumo Logic Technologies Pvt Ltd",
-    "country": "GLOBAL",
-    "career_url": "https://job-boards.greenhouse.io/sumologic",
-    "ats": "greenhouse",
-    "slug": "sumologic"
-  },
-  {
-    "name": "Storable India",
-    "country": "IN",
-    "career_url": "https://job-boards.greenhouse.io/storableindia",
-    "ats": "greenhouse",
-    "slug": "storableindia"
-  },
-  {
-    "name": "ModMed India",
-    "country": "GLOBAL",
-    "career_url": "https://job-boards.greenhouse.io/modernizingmedicineinc",
-    "ats": "greenhouse",
-    "slug": "modernizingmedicineinc"
-  },
-  {
-    "name": "Helium 10",
-    "country": "GLOBAL",
-    "career_url": "https://job-boards.greenhouse.io/helium10",
-    "ats": "greenhouse",
-    "slug": "helium10"
-  },
-  {
-    "name": "Taboola India + SEA",
-    "country": "GLOBAL",
-    "career_url": "https://job-boards.greenhouse.io/taboola",
-    "ats": "greenhouse",
-    "slug": "taboola"
-  },
-  {
     "name": "Slice",
     "country": "IN",
     "career_url": "https://boards.greenhouse.io/slice",
@@ -518,13 +469,6 @@
     "slug": "gamma"
   },
   {
-    "name": "Help Scout",
-    "country": "GLOBAL",
-    "career_url": "https://jobs.ashbyhq.com/helpscout",
-    "ats": "ashby",
-    "slug": "helpscout"
-  },
-  {
     "name": "Sanity",
     "country": "GLOBAL",
     "career_url": "https://jobs.ashbyhq.com/sanity",
@@ -545,21 +489,10 @@
     "ats": "brainstormforce"
   },
   {
-    "name": "rtCamp",
-    "country": "IN",
-    "career_url": "https://careers.rtcamp.com/",
-    "ats": "rtcamp"
-  },
-  {
     "name": "WPMU DEV",
     "country": "GLOBAL",
     "career_url": "https://wpmudev.com/careers/",
     "ats": "wpmudev"
-  },
-  {
-    "name": "Mokkup.ai",
-    "country": "IN",
-    "career_url": "https://www.mokkup.ai"
   },
   {
     "name": "Navana Tech",
@@ -568,136 +501,11 @@
     "ats": "navana"
   },
   {
-    "name": "Bolna AI",
-    "country": "IN",
-    "career_url": "https://bolna.dev"
-  },
-  {
-    "name": "Sarvam AI",
-    "country": "IN",
-    "career_url": "https://careers.kula.ai/sarvam-ai",
-    "ats": "kula",
-    "slug": "sarvam-ai"
-  },
-  {
-    "name": "Krutrim",
-    "country": "IN",
-    "career_url": "https://krutrim.ai"
-  },
-  {
-    "name": "Phot.AI",
-    "country": "IN",
-    "career_url": "https://www.phot.ai"
-  },
-  {
-    "name": "Kombai",
-    "country": "IN",
-    "career_url": "https://kombai.com"
-  },
-  {
-    "name": "Yellow.ai",
-    "country": "IN",
-    "career_url": "https://yellow.ai/career/"
-  },
-  {
-    "name": "Haptik",
-    "country": "IN",
-    "career_url": "https://www.haptik.ai"
-  },
-  {
-    "name": "Mad Street Den (Vue.ai)",
-    "country": "IN",
-    "career_url": "https://vue.ai"
-  },
-  {
-    "name": "SigTuple",
-    "country": "IN",
-    "career_url": "https://sigtuple.com"
-  },
-  {
-    "name": "Attentive.ai",
-    "country": "IN",
-    "career_url": "https://attentive.ai/careers"
-  },
-  {
-    "name": "Rivia.ai",
-    "country": "IN",
-    "career_url": "https://rivia.ai"
-  },
-  {
     "name": "Hevo Data",
     "country": "IN",
     "career_url": "https://jobs.lever.co/hevodata",
     "ats": "lever",
     "slug": "hevodata"
-  },
-  {
-    "name": "Freshworks",
-    "country": "IN",
-    "career_url": "https://freshworks.darwinbox.in/ms/candidate/careers/",
-    "ats": "darwinbox",
-    "slug": "Freshworks"
-  },
-  {
-    "name": "BrowserStack",
-    "country": "IN",
-    "career_url": "https://browserstack.wd3.myworkdayjobs.com/External",
-    "ats": "workday"
-  },
-  {
-    "name": "Zoho",
-    "country": "IN",
-    "career_url": "https://careers.zohocorp.com/jobs/careers"
-  },
-  {
-    "name": "Chargebee",
-    "country": "IN",
-    "career_url": "https://chargebee.darwinbox.in/ms/candidate/careers/",
-    "ats": "darwinbox"
-  },
-  {
-    "name": "Dukaan",
-    "country": "IN",
-    "career_url": "https://mydukaan.io"
-  },
-  {
-    "name": "WebEngage",
-    "country": "IN",
-    "career_url": "https://webengage.com/careers"
-  },
-  {
-    "name": "CleverTap",
-    "country": "IN",
-    "career_url": "https://jobs.lever.co/clevertap",
-    "ats": "lever",
-    "slug": "clevertap"
-  },
-  {
-    "name": "Whatfix",
-    "country": "IN",
-    "career_url": "https://jobs.lever.co/whatfix",
-    "ats": "lever",
-    "slug": "whatfix"
-  },
-  {
-    "name": "Rocketium",
-    "country": "IN",
-    "career_url": "https://rocketium.com"
-  },
-  {
-    "name": "Factors.ai",
-    "country": "IN",
-    "career_url": "https://factors.ai"
-  },
-  {
-    "name": "AlgoTest",
-    "country": "IN",
-    "career_url": "https://algotest.in"
-  },
-  {
-    "name": "HelloVerify",
-    "country": "IN",
-    "career_url": "https://helloverify.com"
   },
   {
     "name": "Zomato",
@@ -784,105 +592,58 @@
     "slug": "ZiffitySolutions"
   },
   {
-    "name": "SpotDraft",
-    "country": "IN",
-    "career_url": "https://spotdraft.darwinbox.in/ms/candidate/careers/",
-    "ats": "darwinbox"
-  },
-  {
-    "name": "Pine Labs",
-    "country": "IN",
-    "career_url": "https://pinelabs.darwinbox.in/ms/candidate/careers/",
-    "ats": "darwinbox"
-  },
-  {
-    "name": "PayU India",
-    "country": "IN",
-    "career_url": "https://payu.darwinbox.in/ms/candidate/careers/",
-    "ats": "darwinbox"
-  },
-  {
-    "name": "Vivriti Capital",
-    "country": "IN",
-    "career_url": "https://vivriti.darwinbox.in/ms/candidate/careers/",
-    "ats": "darwinbox"
-  },
-  {
-    "name": "Darwinbox",
-    "country": "IN",
-    "career_url": "https://dbx.darwinbox.in/ms/candidatev2/main/careers/",
-    "ats": "darwinbox"
-  },
-  {
-    "name": "HighRadius",
-    "country": "IN",
-    "career_url": "https://highradius.darwinbox.in/ms/candidate/careers/",
-    "ats": "darwinbox"
-  },
-  {
-    "name": "Disprz",
-    "country": "IN",
-    "career_url": "https://disprz.darwinbox.in/ms/candidate/careers/",
-    "ats": "darwinbox"
-  },
-  {
     "name": "Atlan",
     "country": "IN",
     "career_url": "https://atlan.darwinbox.in/ms/candidate/careers/",
     "ats": "darwinbox"
   },
   {
-    "name": "MosChip",
-    "country": "IN",
-    "career_url": "https://moschip.darwinbox.in/ms/candidate/careers/",
-    "ats": "darwinbox"
+    "name": "Aspire",
+    "country": "GLOBAL",
+    "career_url": "https://job-boards.greenhouse.io/aspireio",
+    "ats": "greenhouse",
+    "slug": "aspireio"
   },
   {
-    "name": "Ninjacart",
-    "country": "IN",
-    "career_url": "https://ninjacart.darwinbox.in/ms/candidate/careers/",
-    "ats": "darwinbox"
+    "name": "Armada",
+    "country": "GLOBAL",
+    "career_url": "https://job-boards.greenhouse.io/armada",
+    "ats": "greenhouse",
+    "slug": "armada"
   },
   {
-    "name": "Udaan",
-    "country": "IN",
-    "career_url": "https://udaan.darwinbox.in/ms/candidate/careers/",
-    "ats": "darwinbox"
+    "name": "Motive",
+    "country": "GLOBAL",
+    "career_url": "https://job-boards.greenhouse.io/gomotive",
+    "ats": "greenhouse",
+    "slug": "gomotive"
   },
   {
-    "name": "BigBasket",
-    "country": "IN",
-    "career_url": "https://bigbasket.darwinbox.in/ms/candidate/careers/",
-    "ats": "darwinbox"
+    "name": "Twilio",
+    "country": "GLOBAL",
+    "career_url": "https://job-boards.greenhouse.io/twilio",
+    "ats": "greenhouse",
+    "slug": "twilio"
   },
   {
-    "name": "Tata 1mg",
-    "country": "IN",
-    "career_url": "https://1mg.darwinbox.in/ms/candidate/careers/",
-    "ats": "darwinbox"
+    "name": "Zynga",
+    "country": "GLOBAL",
+    "career_url": "https://job-boards.greenhouse.io/zyngacareers",
+    "ats": "greenhouse",
+    "slug": "zyngacareers"
   },
   {
-    "name": "MakeO",
-    "country": "IN",
-    "career_url": "https://makeo.darwinbox.in/ms/candidate/careers/",
-    "ats": "darwinbox"
+    "name": "HighLevel",
+    "country": "GLOBAL",
+    "career_url": "https://jobs.lever.co/gohighlevel",
+    "ats": "lever",
+    "slug": "gohighlevel"
   },
   {
-    "name": "TalentSprint",
-    "country": "IN",
-    "career_url": "https://talentsprint.darwinbox.in/ms/candidate/careers/",
-    "ats": "darwinbox"
-  },
-  {
-    "name": "Zoomcar",
-    "country": "IN",
-    "career_url": "https://zoomcar.darwinbox.in/ms/candidate/careers/",
-    "ats": "darwinbox"
-  },
-  {
-    "name": "AgroStar",
-    "country": "IN",
-    "career_url": "https://agrostar.darwinbox.in/ms/candidate/careers/",
-    "ats": "darwinbox"
+    "name": "Yassir",
+    "country": "GLOBAL",
+    "career_url": "https://jobs.lever.co/Yassir",
+    "ats": "lever",
+    "slug": "Yassir"
   }
 ]
