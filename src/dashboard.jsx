@@ -145,7 +145,8 @@ export default function Dashboard() {
     if (resumeMatchEnabled && resumeText) {
       data = data.map(job => ({
         ...job,
-        matchScore: calculateMatchScore(job, resumeText)
+        matchScore: calculateMatchScore(job, resumeText),
+        matchExplain: getMatchExplanation(job, resumeText)
       }));
     }
 
@@ -249,6 +250,32 @@ export default function Dashboard() {
       .filter(p => filtered.includes(p) || bigrams.includes(p));
 
     return buildKeywordSet([...filtered, ...bigrams, ...phraseHits]);
+  };
+
+  const getMatchExplanation = (job, resumeTextValue) => {
+    if (!resumeTextValue) return [];
+
+    const resumeSet = extractResumeSignals(resumeTextValue);
+    const jobSkills = (job.requirements?.skills || []).map(s => s.toLowerCase());
+    const jobKeywords = (job.requirements?.keywords || []).map(k => k.toLowerCase());
+    const titleTokens = normalizeTerms(job.title || "");
+    const roleTokens = normalizeTerms(job.role || "");
+
+    const explain = [];
+
+    const addMatches = (label, terms, limit = 4) => {
+      const hits = terms.filter(t => resumeSet.has(t)).slice(0, limit);
+      if (hits.length) {
+        explain.push({ label, hits });
+      }
+    };
+
+    addMatches("Skills", jobSkills);
+    addMatches("Keywords", jobKeywords);
+    addMatches("Title", titleTokens, 3);
+    addMatches("Role", roleTokens, 3);
+
+    return explain;
   };
 
   const calculateMatchScore = (job, resumeTextValue) => {
@@ -787,6 +814,19 @@ function JobCard({ job, saved, applied, onSave, onApply, resumeMatchEnabled, app
               </span>
             )}
           </div>
+
+          {resumeMatchEnabled && job.matchExplain && job.matchExplain.length > 0 && (
+            <div className="mt-3 flex flex-wrap gap-2 text-xs text-gray-300">
+              {job.matchExplain.map((item) => (
+                <span
+                  key={item.label}
+                  className="bg-emerald-900/20 text-emerald-300 px-2 py-1 rounded"
+                >
+                  {item.label}: {item.hits.join(", ")}
+                </span>
+              ))}
+            </div>
+          )}
         </div>
 
         <div className="flex flex-col gap-2 flex-shrink-0">
