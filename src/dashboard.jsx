@@ -643,40 +643,69 @@ export default function Dashboard() {
   const handleResumeUpload = (event) => {
     const file = event.target.files[0];
     if (!file) return;
-
-    const fileType = file.type;
-    if (fileType === "application/pdf" || file.name.endsWith(".pdf")) {
-      alert("PDF auto-parsing is disabled for stability. Please copy-paste resume text in the textarea.");
-      return;
-    }
-
-    if (fileType === "text/plain" || file.name.endsWith(".txt")) {
-      const reader = new FileReader();
-      reader.onload = (e) => {
-        const text = String(e.target.result || "");
+    extractTextFromResumeFile(file)
+      .then((text) => {
         setResumeText(text);
         const words = text.match(/\b[A-Z][a-z]+\b|\b[A-Z]{2,}\b/g) || [];
         const techTerms = text.match(/\b(python|javascript|react|java|aws|docker|kubernetes|sql|mongodb|node|typescript|vue|angular|django|flask|spring|express|postgres|redis|git|agile|scrum|api|rest|graphql|ci\/cd|devops|machine learning|ml|ai|data science|analytics|tableau|power bi|excel|powerpoint)\b/gi) || [];
         setResumeKeywords([...new Set([...words, ...techTerms])]);
-        // Do not auto-run matching on all jobs; user triggers it manually in Resume screen.
-      };
-      reader.readAsText(file);
-      return;
-    }
-
-    alert("Please upload TXT. For PDF, paste text manually.");
+      })
+      .catch((error) => {
+        console.error("Resume parse failed", error);
+        alert(error.message || "Unable to parse resume file.");
+      });
   };
 
   const handleMatcherResumeUpload = (event) => {
     const file = event.target.files[0];
     if (!file) return;
-    const fileType = file.type;
-    if (!(fileType === "text/plain" || file.name.endsWith(".txt"))) return;
-    const reader = new FileReader();
-    reader.onload = (e) => {
-      setMatcherResumeText(String(e.target.result || ""));
-    };
-    reader.readAsText(file);
+    extractTextFromResumeFile(file)
+      .then((text) => setMatcherResumeText(text))
+      .catch((error) => {
+        console.error("Matcher resume parse failed", error);
+        alert(error.message || "Unable to parse resume file.");
+      });
+  };
+
+  const extractTextFromResumeFile = async (file) => {
+    const fileType = String(file.type || "").toLowerCase();
+    const fileName = String(file.name || "").toLowerCase();
+    const isPdf = fileType === "application/pdf" || fileName.endsWith(".pdf");
+    const isTxt = fileType === "text/plain" || fileName.endsWith(".txt");
+
+    if (isTxt) {
+      return await new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = (e) => resolve(String(e.target?.result || ""));
+        reader.onerror = () => reject(new Error("Could not read TXT file."));
+        reader.readAsText(file);
+      });
+    }
+
+    if (!isPdf) {
+      throw new Error("Please upload PDF or TXT resume.");
+    }
+
+    const pdfjsLib = window?.pdfjsLib;
+    if (!pdfjsLib) {
+      throw new Error("PDF parser unavailable. Refresh once and try again.");
+    }
+
+    const bytes = await file.arrayBuffer();
+    const pdf = await pdfjsLib.getDocument({ data: bytes }).promise;
+    const maxPages = Math.min(pdf.numPages, 40);
+    let fullText = "";
+
+    for (let i = 1; i <= maxPages; i += 1) {
+      const page = await pdf.getPage(i);
+      const textContent = await page.getTextContent();
+      const pageText = textContent.items.map((item) => item.str).join(" ");
+      fullText += `${pageText}\n`;
+      // Yield so browser stays responsive on large PDFs.
+      if (i % 3 === 0) await new Promise((resolve) => setTimeout(resolve, 0));
+    }
+
+    return fullText.trim();
   };
 
   const runResumeMatcher = () => {
@@ -1084,8 +1113,8 @@ export default function Dashboard() {
                 </p>
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
                   <div>
-                    <label className={`text-xs ${isLight ? "text-[#64748b]" : "text-gray-400"}`}>Upload resume (.txt)</label>
-                    <input type="file" accept=".txt" onChange={handleMatcherResumeUpload} className={`mt-2 text-sm ${isLight ? "text-[#0f172a]" : "text-gray-300"}`} />
+                    <label className={`text-xs ${isLight ? "text-[#64748b]" : "text-gray-400"}`}>Upload resume (.pdf or .txt)</label>
+                    <input type="file" accept=".pdf,.txt" onChange={handleMatcherResumeUpload} className={`mt-2 text-sm ${isLight ? "text-[#0f172a]" : "text-gray-300"}`} />
                   </div>
                   <div>
                     <label className={`text-xs ${isLight ? "text-[#64748b]" : "text-gray-400"}`}>Or paste resume text</label>
