@@ -390,7 +390,10 @@ export default function Dashboard() {
       const response = await fetch(url, { ...options, headers });
       if (!response.ok) {
         const payload = await response.json().catch(() => ({}));
-        throw new Error(payload.error || "Request failed");
+        const error = new Error(payload.error || `Request failed (${response.status})`);
+        error.details = payload.details || "";
+        error.status = response.status;
+        throw error;
       }
       return response.json();
     },
@@ -1418,7 +1421,9 @@ function ResumeTailorScreen({ onMatch, onFileUpload, authFetch, resumeText, onRe
       onMatch();
       setStep(4);
     } catch (e) {
-      setError(e.message || "Failed to generate tailored resume.");
+      const details = typeof e?.details === "string" ? e.details.trim() : "";
+      const detailSnippet = details ? ` ${details.slice(0, 280)}` : "";
+      setError(`${e?.message || "Failed to generate tailored resume."}${detailSnippet}`);
       setStep(2);
     } finally {
       setLoading(false);

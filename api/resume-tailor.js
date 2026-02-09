@@ -1,6 +1,6 @@
 import { requireUser } from "./_lib/auth.js";
 
-const GEMINI_MODEL = "gemini-1.5-flash";
+const GEMINI_MODELS = ["gemini-2.0-flash", "gemini-1.5-flash"];
 
 function safeParseBody(req) {
   if (!req.body) return {};
@@ -22,6 +22,17 @@ function extractTextFromGemini(payload) {
     .trim();
 }
 
+function parseGeminiErrorDetails(raw) {
+  const text = String(raw || "").trim();
+  if (!text) return "Empty Gemini error response";
+  try {
+    const payload = JSON.parse(text);
+    return payload?.error?.message || text.slice(0, 600);
+  } catch {
+    return text.slice(0, 600);
+  }
+}
+
 function extractJsonObject(text) {
   const cleaned = String(text || "")
     .replace(/```json/gi, "")
@@ -35,6 +46,61 @@ function extractJsonObject(text) {
   } catch {
     return null;
   }
+}
+
+async function requestGemini({ model, prompt, apiKey }) {
+  const response = await fetch(
+    `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`,
+    {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        contents: [{ role: "user", parts: [{ text: prompt }] }],
+        generationConfig: {
+          temperature: 0.2,
+          maxOutputTokens: 1800,
+        },
+      }),
+    }
+  );
+
+  const responseText = await response.text();
+  if (!response.ok) {
+    return {
+      ok: false,
+      status: response.status,
+      model,
+      details: parseGeminiErrorDetails(responseText),
+    };
+  }
+
+  let data = null;
+  try {
+    data = JSON.parse(responseText);
+  } catch {
+    return {
+      ok: false,
+      status: 502,
+      model,
+      details: "Gemini returned invalid JSON payload",
+    };
+  }
+
+  const raw = extractTextFromGemini(data);
+  const parsed = extractJsonObject(raw);
+  if (!parsed) {
+    return {
+      ok: false,
+      status: 502,
+      model,
+      details: "Could not parse structured JSON from Gemini output",
+    };
+  }
+
+  return {
+    ok: true,
+    parsed,
+  };
 }
 
 export default async function handler(req, res) {
@@ -95,46 +161,35 @@ export default async function handler(req, res) {
     JSON.stringify(candidateFacts, null, 2),
   ].join("\n");
 
-  const response = await fetch(
-    `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent?key=${process.env.GEMINI_API_KEY}`,
-    {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        contents: [{ role: "user", parts: [{ text: prompt }] }],
-        generationConfig: {
-          temperature: 0.2,
-          maxOutputTokens: 1800,
-          responseMimeType: "application/json",
+  let lastFailure = null;
+  for (const model of GEMINI_MODELS) {
+    const attempt = await requestGemini({
+      model,
+      prompt,
+      apiKey: process.env.GEMINI_API_KEY,
+    });
+
+    if (attempt.ok) {
+      const parsed = attempt.parsed;
+      return res.status(200).json({
+        result: {
+          headline: parsed.headline || "",
+          professional_summary: parsed.professional_summary || "",
+          tailored_experience_bullets: Array.isArray(parsed.tailored_experience_bullets) ? parsed.tailored_experience_bullets : [],
+          tailored_skills: Array.isArray(parsed.tailored_skills) ? parsed.tailored_skills : [],
+          ats_keywords: Array.isArray(parsed.ats_keywords) ? parsed.ats_keywords : [],
+          changes_made: Array.isArray(parsed.changes_made) ? parsed.changes_made : [],
+          missing_information: Array.isArray(parsed.missing_information) ? parsed.missing_information : [],
+          tailored_resume_text: parsed.tailored_resume_text || "",
         },
-      }),
+      });
     }
-  );
 
-  if (!response.ok) {
-    const details = await response.text();
-    return res.status(response.status).json({ error: "Gemini request failed", details });
+    lastFailure = attempt;
   }
 
-  const data = await response.json();
-  const raw = extractTextFromGemini(data);
-  const parsed = extractJsonObject(raw);
-
-  if (!parsed) {
-    return res.status(502).json({ error: "Could not parse AI output", raw });
-  }
-
-  return res.status(200).json({
-    result: {
-      headline: parsed.headline || "",
-      professional_summary: parsed.professional_summary || "",
-      tailored_experience_bullets: Array.isArray(parsed.tailored_experience_bullets) ? parsed.tailored_experience_bullets : [],
-      tailored_skills: Array.isArray(parsed.tailored_skills) ? parsed.tailored_skills : [],
-      ats_keywords: Array.isArray(parsed.ats_keywords) ? parsed.ats_keywords : [],
-      changes_made: Array.isArray(parsed.changes_made) ? parsed.changes_made : [],
-      missing_information: Array.isArray(parsed.missing_information) ? parsed.missing_information : [],
-      tailored_resume_text: parsed.tailored_resume_text || "",
-    },
+  return res.status(lastFailure?.status || 502).json({
+    error: "Gemini request failed",
+    details: `${lastFailure?.details || "Unknown Gemini failure"}${lastFailure?.model ? ` (model: ${lastFailure.model})` : ""}`,
   });
 }
-
