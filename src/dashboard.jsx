@@ -4,6 +4,40 @@ import { SignedIn, SignedOut, SignInButton, UserButton, useAuth } from "@clerk/c
 const STALE_DAYS = 45;
 const VERY_FRESH_DAYS = 3;
 const FRESH_DAYS = 14;
+const STOPWORDS = new Set(["the","and","for","with","from","into","over","under","a","an","to","of","in","on","by","at","as","or","is","are","be","this","that","these","those","it","we","you","your","our","their"]);
+
+const SKILL_TAXONOMY = {
+  product: ["product management", "product manager", "prd", "roadmap", "go to market", "gtm", "user research", "a b testing", "ab testing", "funnel", "retention", "stakeholder management"],
+  analytics: ["sql", "tableau", "power bi", "mixpanel", "amplitude", "analytics", "kpi", "cohort", "dashboard", "excel"],
+  engineering: ["python", "javascript", "typescript", "java", "react", "node", "api", "graphql", "docker", "kubernetes", "aws", "gcp"],
+  process: ["agile", "scrum", "jira", "confluence", "kanban", "sprint planning"],
+};
+
+const SYNONYM_MAP = {
+  "pm": "product manager",
+  "prod manager": "product manager",
+  "apm": "associate product manager",
+  "sde": "software engineer",
+  "devops engineer": "devops",
+  "restful": "rest",
+  "k8s": "kubernetes",
+  "js": "javascript",
+  "ts": "typescript",
+  "ai ml": "machine learning",
+  "ml": "machine learning",
+  "gen ai": "generative ai",
+  "a/b": "ab testing",
+  "g tm": "gtm",
+};
+
+const SENIORITY_BANDS = [
+  { rank: 0, label: "intern", patterns: ["intern", "trainee"] },
+  { rank: 1, label: "junior", patterns: ["junior", "associate", "entry level"] },
+  { rank: 2, label: "mid", patterns: ["ii", "2", "specialist"] },
+  { rank: 3, label: "senior", patterns: ["senior", "sr", "lead"] },
+  { rank: 4, label: "staff", patterns: ["staff", "principal", "architect", "manager"] },
+  { rank: 5, label: "director", patterns: ["director", "head", "vp", "chief"] },
+];
 
 function toTimestamp(value) {
   if (!value) return 0;
@@ -58,6 +92,175 @@ function dedupeAndEnhanceJobs(rawJobs) {
     ...job,
     ...freshnessMeta(job),
   }));
+}
+
+function normalizeTerms(text) {
+  if (!text) return [];
+  const cleaned = text
+    .toLowerCase()
+    .replace(/[_-]+/g, " ")
+    .replace(/[^a-z0-9+/#\s.-]/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+  if (!cleaned) return [];
+  return cleaned.split(" ").filter(Boolean);
+}
+
+function normalizePhrase(text) {
+  if (!text) return "";
+  const compact = normalizeTerms(text).join(" ");
+  return SYNONYM_MAP[compact] || compact;
+}
+
+function buildKeywordSet(terms) {
+  return new Set(terms.filter(Boolean));
+}
+
+function buildNgrams(tokens, maxN = 3) {
+  const grams = [];
+  for (let n = 2; n <= maxN; n += 1) {
+    for (let i = 0; i <= tokens.length - n; i += 1) {
+      grams.push(tokens.slice(i, i + n).join(" "));
+    }
+  }
+  return grams;
+}
+
+function overlapScore(targetTerms, candidateSet) {
+  if (!targetTerms.length) return 0;
+  let hits = 0;
+  for (const t of targetTerms) {
+    if (candidateSet.has(t)) hits += 1;
+  }
+  return hits / targetTerms.length;
+}
+
+function detectSeniorityRank(text) {
+  const haystack = ` ${normalizePhrase(text)} `;
+  let best = 2;
+  SENIORITY_BANDS.forEach((band) => {
+    if (band.patterns.some((pattern) => haystack.includes(` ${pattern} `))) {
+      best = Math.max(best, band.rank);
+    }
+  });
+  return best;
+}
+
+function parseYears(text) {
+  if (!text) return null;
+  const pattern = /(\d{1,2})\s*(\+)?\s*(years?|yrs?)/i;
+  const match = String(text).match(pattern);
+  if (!match) return null;
+  const value = Number(match[1]);
+  if (!Number.isFinite(value)) return null;
+  return value;
+}
+
+function extractResumeSignals(resumeText) {
+  const tokens = normalizeTerms(resumeText).filter((t) => !STOPWORDS.has(t) && t.length > 1);
+  const canonicalTokens = tokens.map((token) => normalizePhrase(token));
+  const ngrams = buildNgrams(canonicalTokens, 3).map((gram) => normalizePhrase(gram));
+  const baseSet = buildKeywordSet([...canonicalTokens, ...ngrams]);
+
+  Object.values(SKILL_TAXONOMY).flat().forEach((term) => {
+    const normalized = normalizePhrase(term);
+    if (baseSet.has(normalized)) return;
+    if (` ${normalizePhrase(resumeText)} `.includes(` ${normalized} `)) {
+      baseSet.add(normalized);
+    }
+  });
+
+  return {
+    set: baseSet,
+    years: parseYears(resumeText),
+    seniorityRank: detectSeniorityRank(resumeText),
+  };
+}
+
+function extractJobSignals(job) {
+  const skills = (job.requirements?.skills || []).map((s) => normalizePhrase(s));
+  const keywords = (job.requirements?.keywords || []).map((k) => normalizePhrase(k));
+  const titleTokens = normalizeTerms(job.title || "").map((t) => normalizePhrase(t));
+  const roleTokens = normalizeTerms(job.role || "").map((t) => normalizePhrase(t));
+  const ngrams = buildNgrams([...titleTokens, ...roleTokens], 3).map((gram) => normalizePhrase(gram));
+  const all = buildKeywordSet([...skills, ...keywords, ...titleTokens, ...roleTokens, ...ngrams]);
+
+  Object.values(SKILL_TAXONOMY).flat().forEach((term) => {
+    const normalized = normalizePhrase(term);
+    if (` ${normalizePhrase(`${job.title || ""} ${keywords.join(" ")} ${skills.join(" ")}`)} `.includes(` ${normalized} `)) {
+      all.add(normalized);
+    }
+  });
+
+  const minYears = Number(job.requirements?.experience_years || 0) || parseYears((job.requirements?.keywords || []).join(" ")) || null;
+  const seniorityRank = detectSeniorityRank(`${job.title || ""} ${job.role || ""}`);
+
+  return {
+    set: all,
+    skills,
+    keywords,
+    titleTokens,
+    roleTokens,
+    minYears,
+    seniorityRank,
+  };
+}
+
+function locationGate(jobLocation, resumeText) {
+  const loc = String(jobLocation || "").toLowerCase();
+  const resume = String(resumeText || "").toLowerCase();
+
+  if (!loc) return 0.95;
+  if (loc.includes("remote")) return 1;
+  if (loc.includes("india")) return 1;
+
+  const hasIndiaSignal = /india|bangalore|bengaluru|mumbai|pune|hyderabad|delhi|gurgaon|gurugram|chennai|noida/.test(resume);
+  const likelyForeign = /united states|usa|canada|london|uk|europe|singapore|tokyo|germany|france|australia/.test(loc);
+
+  if (likelyForeign && hasIndiaSignal) return 0.75;
+  return 0.95;
+}
+
+function computeMatch(job, resumeText) {
+  const resume = extractResumeSignals(resumeText);
+  const jobSignals = extractJobSignals(job);
+  const resumeSet = resume.set;
+
+  const skillScore = overlapScore(jobSignals.skills, resumeSet);
+  const keywordScore = overlapScore(jobSignals.keywords, resumeSet);
+  const titleScore = overlapScore(jobSignals.titleTokens, resumeSet);
+  const roleScore = overlapScore(jobSignals.roleTokens, resumeSet);
+  const taxonomyTerms = Object.values(SKILL_TAXONOMY).flat().map((t) => normalizePhrase(t));
+  const taxonomyScore = overlapScore(taxonomyTerms.filter((term) => jobSignals.set.has(term)), resumeSet);
+
+  const seniorityGap = Math.abs((resume.seniorityRank ?? 2) - (jobSignals.seniorityRank ?? 2));
+  const seniorityGate = seniorityGap <= 1 ? 1 : 0.85;
+  const yearsGate = resume.years && jobSignals.minYears ? (resume.years >= jobSignals.minYears ? 1 : 0.8) : 0.95;
+  const geoGate = locationGate(job.location, resumeText);
+
+  const weightedBase = (skillScore * 0.32) + (keywordScore * 0.23) + (titleScore * 0.16) + (roleScore * 0.09) + (taxonomyScore * 0.2);
+  const gated = weightedBase * seniorityGate * yearsGate * geoGate;
+  const matchScore = Math.max(0, Math.min(100, Math.round(gated * 100)));
+
+  const signalCoverage = Math.min(1, (jobSignals.set.size || 0) / 14);
+  const structuredData = jobSignals.skills.length > 0 ? 1 : 0.5;
+  const confidence = Math.max(1, Math.min(100, Math.round(((signalCoverage * 0.5) + (structuredData * 0.3) + ((1 - seniorityGap / 6) * 0.2)) * 100)));
+
+  const explain = [];
+  const addMatches = (label, terms, limit = 4) => {
+    const hits = terms.filter((term) => resumeSet.has(term)).slice(0, limit);
+    if (hits.length) explain.push({ label, hits });
+  };
+
+  addMatches("Skills", jobSignals.skills);
+  addMatches("Keywords", jobSignals.keywords);
+  addMatches("Title", jobSignals.titleTokens, 3);
+  addMatches("Role", jobSignals.roleTokens, 3);
+  explain.push({ label: "Seniority", hits: [seniorityGap <= 1 ? "Aligned" : "Partial Match"] });
+  explain.push({ label: "Location", hits: [geoGate >= 0.95 ? "Good Fit" : "Limited Fit"] });
+  explain.push({ label: "Confidence", hits: [`${confidence}%`] });
+
+  return { matchScore, matchExplain: explain, matchConfidence: confidence };
 }
 
 export default function Dashboard() {
@@ -267,8 +470,7 @@ export default function Dashboard() {
     if (resumeMatchEnabled && resumeText) {
       data = data.map(job => ({
         ...job,
-        matchScore: calculateMatchScore(job, resumeText),
-        matchExplain: getMatchExplanation(job, resumeText)
+        ...computeMatch(job, resumeText)
       }));
     }
 
@@ -362,108 +564,6 @@ export default function Dashboard() {
     } catch (error) {
       console.error("Failed to save job as interested", error);
     }
-  };
-
-  const normalizeTerms = (text) => {
-    if (!text) return [];
-    const cleaned = text
-      .toLowerCase()
-      .replace(/[^a-z0-9+/#\s.-]/g, " ")
-      .replace(/\s+/g, " ")
-      .trim();
-    if (!cleaned) return [];
-    return cleaned.split(" ").filter(Boolean);
-  };
-
-  const buildKeywordSet = (terms) => new Set(terms.filter(Boolean));
-
-  const overlapScore = (targetTerms, candidateSet) => {
-    if (!targetTerms.length) return 0;
-    let hits = 0;
-    for (const t of targetTerms) {
-      if (candidateSet.has(t)) hits += 1;
-    }
-    return hits / targetTerms.length;
-  };
-
-  const extractResumeSignals = (text) => {
-    const tokens = normalizeTerms(text);
-    const stopwords = new Set(["the","and","for","with","from","into","over","under","a","an","to","of","in","on","by","at","as","or","is","are","be","this","that","these","those","it","we","you","your","our","their"]);
-    const filtered = tokens.filter(t => !stopwords.has(t) && t.length > 1);
-
-    const bigrams = [];
-    for (let i = 0; i < filtered.length - 1; i += 1) {
-      bigrams.push(`${filtered[i]} ${filtered[i + 1]}`);
-    }
-
-    const rolePhrases = [
-      "product manager", "product management", "program manager",
-      "project manager", "product owner", "growth", "strategy"
-    ];
-    const skillPhrases = [
-      "sql", "python", "javascript", "react", "java", "aws", "docker",
-      "kubernetes", "node", "typescript", "figma", "jira", "agile",
-      "scrum", "analytics", "tableau", "power bi", "a/b", "ab"
-    ];
-
-    const phraseHits = rolePhrases
-      .concat(skillPhrases)
-      .filter(p => filtered.includes(p) || bigrams.includes(p));
-
-    return buildKeywordSet([...filtered, ...bigrams, ...phraseHits]);
-  };
-
-  const getMatchExplanation = (job, resumeTextValue) => {
-    if (!resumeTextValue) return [];
-
-    const resumeSet = extractResumeSignals(resumeTextValue);
-    const jobSkills = (job.requirements?.skills || []).map(s => s.toLowerCase());
-    const jobKeywords = (job.requirements?.keywords || []).map(k => k.toLowerCase());
-    const titleTokens = normalizeTerms(job.title || "");
-    const roleTokens = normalizeTerms(job.role || "");
-
-    const explain = [];
-
-    const addMatches = (label, terms, limit = 4) => {
-      const hits = terms.filter(t => resumeSet.has(t)).slice(0, limit);
-      if (hits.length) {
-        explain.push({ label, hits });
-      }
-    };
-
-    addMatches("Skills", jobSkills);
-    addMatches("Keywords", jobKeywords);
-    addMatches("Title", titleTokens, 3);
-    addMatches("Role", roleTokens, 3);
-
-    return explain;
-  };
-
-  const calculateMatchScore = (job, resumeTextValue) => {
-    if (!resumeTextValue) return 0;
-
-    const resumeSet = extractResumeSignals(resumeTextValue);
-
-    const jobSkills = (job.requirements?.skills || []).map(s => s.toLowerCase());
-    const jobKeywords = (job.requirements?.keywords || []).map(k => k.toLowerCase());
-    const titleTokens = normalizeTerms(job.title || "");
-    const roleTokens = normalizeTerms(job.role || "");
-
-    const skillScore = overlapScore(jobSkills, resumeSet);
-    const keywordScore = overlapScore(jobKeywords, resumeSet);
-    const titleScore = overlapScore(titleTokens, resumeSet);
-    const roleScore = overlapScore(roleTokens, resumeSet);
-
-    const weighted = (skillScore * 0.5) + (keywordScore * 0.3) + (titleScore * 0.15) + (roleScore * 0.05);
-    return Math.min(100, Math.round(weighted * 100));
-  };
-
-  const locationPill = (location) => {
-    const loc = (location || "").toLowerCase();
-    if (loc.includes("remote")) return "Remote";
-    if (loc.includes("hybrid")) return "Hybrid";
-    if (loc.includes("india")) return "India";
-    return "";
   };
 
   const markJobAsApplied = async (id, applyLink) => {
@@ -1138,8 +1238,13 @@ function JobCard({ job, index, saved, applied, onSave, onApply, resumeMatchEnabl
     >
       <div className="flex gap-5">
         {resumeMatchEnabled && job.matchScore !== undefined && (
-          <div className="w-20 h-20 rounded-full border-4 border-pink-400 flex items-center justify-center flex-shrink-0">
-            <span className="text-xl font-bold text-pink-300">{job.matchScore}%</span>
+          <div className="w-24 flex-shrink-0 text-center">
+            <div className="w-20 h-20 mx-auto rounded-full border-4 border-pink-400 flex items-center justify-center">
+              <span className="text-xl font-bold text-pink-300">{job.matchScore}%</span>
+            </div>
+            {job.matchConfidence !== undefined && (
+              <div className="text-[11px] text-gray-400 mt-1">Conf {job.matchConfidence}%</div>
+            )}
           </div>
         )}
 
