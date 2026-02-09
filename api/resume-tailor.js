@@ -1,6 +1,12 @@
 import { requireUser } from "./_lib/auth.js";
 
-const GEMINI_MODELS = ["gemini-2.0-flash", "gemini-1.5-flash"];
+const GEMINI_API_BASE = "https://generativelanguage.googleapis.com/v1beta";
+const MODEL_PREFERENCE = [
+  "gemini-2.0-flash",
+  "gemini-2.0-flash-lite",
+  "gemini-1.5-flash",
+  "gemini-1.5-flash-8b",
+];
 
 function safeParseBody(req) {
   if (!req.body) return {};
@@ -48,9 +54,77 @@ function extractJsonObject(text) {
   }
 }
 
+async function listGenerateContentModels(apiKey) {
+  let pageToken = "";
+  let pages = 0;
+  const available = new Set();
+
+  while (pages < 8) {
+    const tokenPart = pageToken ? `&pageToken=${encodeURIComponent(pageToken)}` : "";
+    const response = await fetch(`${GEMINI_API_BASE}/models?key=${apiKey}${tokenPart}`);
+    const raw = await response.text();
+
+    if (!response.ok) {
+      return {
+        ok: false,
+        status: response.status,
+        details: parseGeminiErrorDetails(raw),
+      };
+    }
+
+    let payload = null;
+    try {
+      payload = JSON.parse(raw);
+    } catch {
+      return {
+        ok: false,
+        status: 502,
+        details: "Gemini ListModels returned invalid JSON",
+      };
+    }
+
+    const models = Array.isArray(payload?.models) ? payload.models : [];
+    for (const model of models) {
+      const methods = Array.isArray(model?.supportedGenerationMethods) ? model.supportedGenerationMethods : [];
+      if (!methods.includes("generateContent")) continue;
+      const name = String(model?.name || "");
+      const modelId = name.replace(/^models\//, "").trim();
+      if (modelId) available.add(modelId);
+    }
+
+    pageToken = String(payload?.nextPageToken || "").trim();
+    pages += 1;
+    if (!pageToken) break;
+  }
+
+  return { ok: true, models: Array.from(available) };
+}
+
+function pickCandidateModels(availableModels) {
+  const available = Array.from(new Set((availableModels || []).filter(Boolean)));
+  const selected = [];
+  const configured = String(process.env.GEMINI_MODEL || "").trim();
+
+  if (configured && available.includes(configured)) {
+    selected.push(configured);
+  }
+
+  for (const preferred of MODEL_PREFERENCE) {
+    if (available.includes(preferred) && !selected.includes(preferred)) {
+      selected.push(preferred);
+    }
+  }
+
+  for (const model of available.sort()) {
+    if (!selected.includes(model)) selected.push(model);
+  }
+
+  return selected;
+}
+
 async function requestGemini({ model, prompt, apiKey }) {
   const response = await fetch(
-    `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`,
+    `${GEMINI_API_BASE}/models/${model}:generateContent?key=${apiKey}`,
     {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -161,8 +235,24 @@ export default async function handler(req, res) {
     JSON.stringify(candidateFacts, null, 2),
   ].join("\n");
 
-  let lastFailure = null;
-  for (const model of GEMINI_MODELS) {
+  const listed = await listGenerateContentModels(process.env.GEMINI_API_KEY);
+  if (!listed.ok) {
+    return res.status(listed.status || 502).json({
+      error: "Gemini request failed",
+      details: `ListModels failed: ${listed.details}`,
+    });
+  }
+
+  const candidateModels = pickCandidateModels(listed.models);
+  if (candidateModels.length === 0) {
+    return res.status(502).json({
+      error: "Gemini request failed",
+      details: "No generateContent-capable Gemini models available for this API key/project.",
+    });
+  }
+
+  const failures = [];
+  for (const model of candidateModels) {
     const attempt = await requestGemini({
       model,
       prompt,
@@ -185,11 +275,17 @@ export default async function handler(req, res) {
       });
     }
 
-    lastFailure = attempt;
+    failures.push(attempt);
   }
+
+  const lastFailure = failures[failures.length - 1] || null;
+  const detailPreview = failures
+    .slice(0, 3)
+    .map((failure) => `${failure.model}: ${failure.details}`)
+    .join(" | ");
 
   return res.status(lastFailure?.status || 502).json({
     error: "Gemini request failed",
-    details: `${lastFailure?.details || "Unknown Gemini failure"}${lastFailure?.model ? ` (model: ${lastFailure.model})` : ""}`,
+    details: detailPreview || "Unknown Gemini failure",
   });
 }
