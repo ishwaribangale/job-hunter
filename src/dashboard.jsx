@@ -32,6 +32,13 @@ export default function Dashboard() {
   const [workspaceSearch, setWorkspaceSearch] = React.useState("");
   const { getToken, isSignedIn } = useAuth();
 
+  const formatLabel = React.useCallback((value) => {
+    if (!value) return "";
+    const text = String(value).replace(/[_-]+/g, " ").trim();
+    if (!text) return "";
+    return text.replace(/\b\w/g, (char) => char.toUpperCase());
+  }, []);
+
   const authFetch = React.useCallback(
     async (url, options = {}) => {
       const token = await getToken();
@@ -564,7 +571,6 @@ export default function Dashboard() {
             {/* NAV */}
             <nav className="space-y-2">
               <Nav label="Overview" active={activeSection === "all"} onClick={() => setActiveSection("all")} />
-              <Nav label="Discovery" active={activeSection === "top"} onClick={() => setActiveSection("top")} />
               <Nav label="My Pipeline" active={activeSection === "pipeline"} onClick={() => setActiveSection("pipeline")} />
               <Nav label="Saved" active={activeSection === "saved"} onClick={() => setActiveSection("saved")} />
               <Nav label="Applied" active={activeSection === "applied"} onClick={() => setActiveSection("applied")} />
@@ -712,7 +718,7 @@ export default function Dashboard() {
                 >
                   <option value="all">All Roles</option>
                   {roles.map(role => (
-                    <option key={role} value={role}>{role}</option>
+                    <option key={role} value={role}>{formatLabel(role)}</option>
                   ))}
                 </select>
 
@@ -738,23 +744,21 @@ export default function Dashboard() {
                 >
                   <option value="all">All Types</option>
                   {employmentTypes.map(type => (
-                    <option key={type} value={type}>{type}</option>
+                    <option key={type} value={type}>{formatLabel(type)}</option>
                   ))}
                 </select>
 
                 <div className="lg:col-span-2">
-                  <input
-                    list="company-options"
-                    placeholder="Company"
-                    value={companyQuery}
-                    onChange={e => setCompanyQuery(e.target.value)}
-                    className="w-full bg-[#16161b] border border-[#26262d] rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-pink-500 transition-colors"
-                  />
-                  <datalist id="company-options">
+                  <select
+                    value={companyQuery || "__all__"}
+                    onChange={e => setCompanyQuery(e.target.value === "__all__" ? "" : e.target.value)}
+                    className="w-full bg-[#16161b] border border-[#26262d] rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-pink-500 transition-colors cursor-pointer"
+                  >
+                    <option value="__all__">All Companies</option>
                     {companies.map(company => (
                       <option key={company} value={company} />
                     ))}
-                  </datalist>
+                  </select>
                 </div>
               </div>
             )}
@@ -797,7 +801,7 @@ export default function Dashboard() {
                 )}
                 {selectedRole !== "all" && (
                   <span className="text-xs bg-pink-900/30 text-pink-300 px-2 py-1 rounded">
-                    Role: {selectedRole}
+                    Role: {formatLabel(selectedRole)}
                   </span>
                 )}
                 {locationQuery && (
@@ -807,7 +811,7 @@ export default function Dashboard() {
                 )}
                 {selectedEmploymentType !== "all" && (
                   <span className="text-xs bg-pink-900/30 text-pink-300 px-2 py-1 rounded">
-                    Type: {selectedEmploymentType}
+                    Type: {formatLabel(selectedEmploymentType)}
                   </span>
                 )}
                 <button
@@ -1007,6 +1011,8 @@ function MetricCard({ label, value }) {
 
 function PipelineBoard({ applications, onMoveStage }) {
   const stages = ["Interested", "Applied", "Interview", "Offer", "Rejected"];
+  const [draggedAppId, setDraggedAppId] = React.useState(null);
+  const [dragOverStage, setDragOverStage] = React.useState("");
   const grouped = stages.reduce((acc, stage) => {
     acc[stage] = [];
     return acc;
@@ -1028,14 +1034,40 @@ function PipelineBoard({ applications, onMoveStage }) {
       </div>
       <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-4">
         {stages.map(stage => (
-          <div key={stage} className="bg-[#121216] border border-[#1f1f24] rounded-2xl p-3 min-h-[240px]">
+          <div
+            key={stage}
+            onDragOver={(event) => {
+              event.preventDefault();
+              setDragOverStage(stage);
+            }}
+            onDragLeave={() => setDragOverStage((current) => (current === stage ? "" : current))}
+            onDrop={() => {
+              if (draggedAppId) {
+                onMoveStage(draggedAppId, stage);
+              }
+              setDraggedAppId(null);
+              setDragOverStage("");
+            }}
+            className={`bg-[#121216] border rounded-2xl p-3 min-h-[240px] transition-colors ${
+              dragOverStage === stage ? "border-pink-500/70 bg-[#16131a]" : "border-[#1f1f24]"
+            }`}
+          >
             <div className="flex items-center justify-between mb-3">
               <span className="text-sm font-semibold text-white">{stage}</span>
               <span className="text-xs text-gray-500">{grouped[stage]?.length || 0}</span>
             </div>
             <div className="space-y-3">
               {(grouped[stage] || []).map(app => (
-                <div key={app.id} className="bg-[#15151a] border border-[#23232a] rounded-xl p-3">
+                <div
+                  key={app.id}
+                  draggable
+                  onDragStart={() => setDraggedAppId(app.id)}
+                  onDragEnd={() => {
+                    setDraggedAppId(null);
+                    setDragOverStage("");
+                  }}
+                  className="bg-[#15151a] border border-[#23232a] rounded-xl p-3 cursor-grab active:cursor-grabbing"
+                >
                   <div className="text-sm font-semibold text-white">{app.title}</div>
                   <div className="text-xs text-gray-400 mt-1">{app.company}</div>
                   <div className="text-xs text-gray-500 mt-1">{app.location || "Location"}</div>
