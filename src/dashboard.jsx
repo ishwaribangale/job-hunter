@@ -80,7 +80,6 @@ export default function Dashboard() {
   const [sidebarOpen, setSidebarOpen] = React.useState(false);
 
   const [applications, setApplications] = React.useState([]);
-  const [metrics, setMetrics] = React.useState(null);
   const [expandedJob, setExpandedJob] = React.useState(null);
   const [currentPage, setCurrentPage] = React.useState(1);
   const [itemsPerPage] = React.useState(20);
@@ -118,16 +117,6 @@ export default function Dashboard() {
     [getToken]
   );
 
-  const refreshMetrics = React.useCallback(async () => {
-    if (!isSignedIn) return;
-    try {
-      const stats = await authFetch("/api/metrics");
-      setMetrics(stats);
-    } catch (error) {
-      console.error("Failed to refresh metrics", error);
-    }
-  }, [authFetch, isSignedIn]);
-
   /* ---------------- FETCH JOBS ---------------- */
   React.useEffect(() => {
     fetch("https://raw.githubusercontent.com/ishwaribangale/job-hunter/main/data/jobs.json")
@@ -143,7 +132,6 @@ export default function Dashboard() {
   React.useEffect(() => {
     if (!isSignedIn) {
       setApplications([]);
-      setMetrics(null);
       return;
     }
 
@@ -153,13 +141,6 @@ export default function Dashboard() {
         setApplications(apps.applications || []);
       } catch (error) {
         console.error("Failed to load applications", error);
-      }
-
-      try {
-        const stats = await authFetch("/api/metrics");
-        setMetrics(stats);
-      } catch (error) {
-        console.error("Failed to load metrics", error);
       }
     };
 
@@ -191,28 +172,6 @@ export default function Dashboard() {
       .sort((a, b) => b[1] - a[1])
       .slice(0, 10)
       .map(([name]) => name);
-  }, [jobs]);
-
-  const sourceHealth = React.useMemo(() => {
-    const sourceMap = new Map();
-    jobs.forEach((job) => {
-      const source = job.source || "Unknown";
-      const row = sourceMap.get(source) || { source, total: 0, fresh: 0, stale: 0 };
-      row.total += 1;
-      if ((job.ageDays ?? 999) <= FRESH_DAYS) row.fresh += 1;
-      if (job.stale) row.stale += 1;
-      sourceMap.set(source, row);
-    });
-
-    return Array.from(sourceMap.values())
-      .map((row) => {
-        const freshRatio = row.total ? row.fresh / row.total : 0;
-        let status = "Failing";
-        if (row.total >= 10 && freshRatio >= 0.45) status = "Healthy";
-        else if (row.total >= 3 && freshRatio >= 0.2) status = "Partial";
-        return { ...row, status };
-      })
-      .sort((a, b) => b.total - a.total);
   }, [jobs]);
 
   /* ---------------- QUICK FILTERS ---------------- */
@@ -400,7 +359,6 @@ export default function Dashboard() {
       });
 
       setApplications(prev => [response.application, ...prev]);
-      refreshMetrics();
     } catch (error) {
       console.error("Failed to save job as interested", error);
     }
@@ -541,7 +499,6 @@ export default function Dashboard() {
         }
         return next;
       });
-      refreshMetrics();
     } catch (error) {
       console.error("Failed to create application", error);
     }
@@ -561,7 +518,6 @@ export default function Dashboard() {
       setApplications(prev =>
         prev.map(app => (app.id === id ? response.application : app))
       );
-      refreshMetrics();
     } catch (error) {
       console.error("Failed to update application", error);
     }
@@ -708,15 +664,6 @@ export default function Dashboard() {
         {/* TOP BAR */}
         <header className="p-5 border-b border-[#1f1f24] bg-[#0f1014]">
           <div className="flex items-center gap-4">
-            {!sidebarOpen && (
-              <button
-                onClick={() => setSidebarOpen(true)}
-                className="h-9 w-9 rounded-lg bg-[#1b1b20] text-pink-300 hover:text-pink-200 hover:bg-[#24242b] transition-colors"
-                aria-label="Open menu"
-              >
-                ☰
-              </button>
-            )}
             <div className="flex-1">
               <div className="relative">
                 <input
@@ -751,7 +698,7 @@ export default function Dashboard() {
             <div className="flex items-center justify-between gap-4 mb-4">
               <div>
                 <h2 className="text-2xl font-semibold text-white">Job Intelligence</h2>
-                <p className="text-sm text-gray-400">New opportunities match your profile today.</p>
+                <p className="text-sm text-gray-400">Find the jobs from 100+ verified companies.</p>
               </div>
               <div className="flex items-center gap-2">
                 <button
@@ -760,7 +707,10 @@ export default function Dashboard() {
                 >
                   Filters
                 </button>
-                <button className="bg-pink-500 text-gray-900 rounded-xl px-4 py-2 text-sm font-semibold hover:bg-pink-400 transition-colors">
+                <button
+                  onClick={() => setActiveSection("resume")}
+                  className="bg-pink-500 text-gray-900 rounded-xl px-4 py-2 text-sm font-semibold hover:bg-pink-400 transition-colors"
+                >
                   AI Match
                 </button>
               </div>
@@ -966,14 +916,6 @@ export default function Dashboard() {
             </>
           ) : (
             <div className="space-y-4">
-              {activeSection === "all" && (
-                <SignedIn>
-                  <MetricsBar metrics={metrics} />
-                </SignedIn>
-              )}
-              {activeSection === "all" && sourceHealth.length > 0 && (
-                <SourceHealthBar rows={sourceHealth.slice(0, 8)} />
-              )}
               {displayJobs.length === 0 ? (
                 <div className="text-center py-12 text-gray-500">
                   <p className="text-lg mb-2">No jobs found matching your filters</p>
@@ -1080,60 +1022,6 @@ function ResumeMatchScreen({ onMatch, onFileUpload }) {
       <p className="text-xs text-gray-500 mt-2">
         Tip: Save your resume as .txt or pdf for best results
       </p>
-    </div>
-  );
-}
-
-function MetricsBar({ metrics }) {
-  if (!metrics) {
-    return (
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-        {["Applications", "Interviews", "Offers", "Interview Rate"].map(label => (
-          <div key={label} className="bg-[#15151a] border border-[#23232a] rounded-2xl p-4">
-            <div className="text-xs text-gray-500">{label}</div>
-            <div className="mt-2 h-6 w-16 bg-[#23232a] rounded" />
-          </div>
-        ))}
-      </div>
-    );
-  }
-
-  return (
-    <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-      <MetricCard label="Applications" value={metrics.totals?.total || 0} />
-      <MetricCard label="Interviews" value={metrics.totals?.interview || 0} />
-      <MetricCard label="Offers" value={metrics.totals?.offer || 0} />
-      <MetricCard label="Interview Rate" value={`${metrics.interviewRate || 0}%`} />
-    </div>
-  );
-}
-
-function MetricCard({ label, value }) {
-  return (
-    <div className="bg-[#15151a] border border-[#23232a] rounded-2xl p-4">
-      <div className="text-xs text-gray-500">{label}</div>
-      <div className="text-2xl font-semibold text-white mt-1">{value}</div>
-    </div>
-  );
-}
-
-function SourceHealthBar({ rows }) {
-  const statusClasses = (status) => {
-    if (status === "Healthy") return "text-emerald-300 bg-emerald-900/20 border-emerald-700/40";
-    if (status === "Partial") return "text-amber-300 bg-amber-900/20 border-amber-700/40";
-    return "text-rose-300 bg-rose-900/20 border-rose-700/40";
-  };
-
-  return (
-    <div className="bg-[#15151a] border border-[#23232a] rounded-2xl p-4">
-      <div className="text-xs text-gray-500 mb-3">Source Health</div>
-      <div className="flex flex-wrap gap-2">
-        {rows.map((row) => (
-          <span key={row.source} className={`text-xs px-2 py-1 rounded border ${statusClasses(row.status)}`}>
-            {row.source}: {row.status}
-          </span>
-        ))}
-      </div>
     </div>
   );
 }
@@ -1339,13 +1227,10 @@ function JobCard({ job, index, saved, applied, onSave, onApply, resumeMatchEnabl
             🔖
           </button>
           <button
-            disabled={applied}
             onClick={() => onApply(job.id, job.applyLink)}
-            className={`px-4 py-2 rounded font-semibold transition-colors ${
-              applied ? "bg-gray-700 text-gray-500 cursor-not-allowed" : "bg-pink-500 text-gray-900 hover:bg-pink-400 shadow-md shadow-pink-900/30"
-            }`}
+            className="px-4 py-2 rounded font-semibold transition-colors bg-pink-500 text-gray-900 hover:bg-pink-400 shadow-md shadow-pink-900/30"
           >
-            {applied ? "Applied ✓" : "Apply →"}
+            Apply →
           </button>
           
           {applied && (
