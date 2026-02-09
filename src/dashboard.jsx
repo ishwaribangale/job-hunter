@@ -291,7 +291,6 @@ export default function Dashboard() {
   const [resumeKeywords, setResumeKeywords] = React.useState([]);
   const [showFilters, setShowFilters] = React.useState(false);
   const [hideStale, setHideStale] = React.useState(true);
-  const [workspaceSearch, setWorkspaceSearch] = React.useState("");
   const [theme, setTheme] = React.useState(() => localStorage.getItem("app_theme") || "dark");
   const [feedbackOpen, setFeedbackOpen] = React.useState(false);
   const [feedbackText, setFeedbackText] = React.useState("");
@@ -417,70 +416,6 @@ export default function Dashboard() {
       .map(([name]) => name);
   }, [jobs]);
 
-  /* ---------------- QUICK FILTERS ---------------- */
-  const quickFilters = [
-    {
-      label: "Remote Only",
-      action: () => {
-        setSearchQuery("");
-        setSelectedRole("all");
-        setSelectedEmploymentType("all");
-        setSourceQuery("");
-        setCompanyQuery("");
-        setLocationQuery("");
-        setFilteredJobs(jobs.filter(j => j.location?.toLowerCase().includes("remote")));
-      }
-    },
-    {
-      label: "India Only",
-      action: () => {
-        setSearchQuery("");
-        setSelectedRole("all");
-        setSelectedEmploymentType("all");
-        setSourceQuery("");
-        setCompanyQuery("");
-        setLocationQuery("");
-        setFilteredJobs(jobs.filter(j => (j.location || "").toLowerCase().includes("india")));
-      }
-    },
-    {
-      label: "Product Roles",
-      action: () => {
-        setSearchQuery("");
-        setSelectedRole("all");
-        setSelectedEmploymentType("all");
-        setSourceQuery("");
-        setCompanyQuery("");
-        setLocationQuery("");
-        setFilteredJobs(jobs.filter(j => (j.role || "").toLowerCase().includes("product") || (j.title || "").toLowerCase().includes("product")));
-      }
-    },
-    {
-      label: "Full-time",
-      action: () => {
-        setSearchQuery("");
-        setSelectedRole("all");
-        setSelectedEmploymentType("all");
-        setSourceQuery("");
-        setCompanyQuery("");
-        setLocationQuery("");
-        setFilteredJobs(jobs.filter(j => j.employment_type === "Full-time"));
-      }
-    },
-    {
-      label: "Reset Filters",
-      action: () => {
-        setSearchQuery("");
-        setSelectedRole("all");
-        setSelectedEmploymentType("all");
-        setSourceQuery("");
-        setCompanyQuery("");
-        setLocationQuery("");
-        setFilteredJobs(jobs);
-      }
-    }
-  ];
-
   /* ---------------- FILTER LOGIC ---------------- */
   React.useEffect(() => {
     let data = [...jobs];
@@ -518,17 +453,9 @@ export default function Dashboard() {
       data = data.filter(j => !j.stale);
     }
 
-    // Apply resume matching scores if enabled
-    if (resumeMatchEnabled && resumeText) {
-      data = data.map(job => ({
-        ...job,
-        ...computeMatch(job, resumeText)
-      }));
-    }
-
     setFilteredJobs(data);
     setCurrentPage(1); // Reset to page 1 when filters change
-  }, [jobs, searchQuery, sourceQuery, companyQuery, selectedRole, locationQuery, selectedEmploymentType, resumeMatchEnabled, resumeText, hideStale]);
+  }, [jobs, searchQuery, sourceQuery, companyQuery, selectedRole, locationQuery, selectedEmploymentType, hideStale]);
 
   /* ---------------- SECTION FILTER ---------------- */
   const applicationsByJobId = React.useMemo(() => {
@@ -676,72 +603,31 @@ export default function Dashboard() {
   };
 
   const handleResumeUpload = (event) => {
-  const file = event.target.files[0];
-  if (!file) return;
-  
-  const fileType = file.type;
-  
-  // Handle PDF files
-  if (fileType === 'application/pdf' || file.name.endsWith('.pdf')) {
-    // Using pdf.js library (works in browser)
-    const reader = new FileReader();
-    reader.onload = async (e) => {
-      try {
-        // Load PDF.js library dynamically
-        const pdfjsLib = window['pdfjs-dist/build/pdf'];
-        pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
-        
-        const typedArray = new Uint8Array(e.target.result);
-        const pdf = await pdfjsLib.getDocument(typedArray).promise;
-        
-        let fullText = '';
-        
-        // Extract text from all pages
-        for (let i = 1; i <= pdf.numPages; i++) {
-          const page = await pdf.getPage(i);
-          const textContent = await page.getTextContent();
-          const pageText = textContent.items.map(item => item.str).join(' ');
-          fullText += pageText + ' ';
-        }
-        
-        setResumeText(fullText);
-        
-        // Extract keywords
-        const words = fullText.match(/\b[A-Z][a-z]+\b|\b[A-Z]{2,}\b/g) || [];
-        const techTerms = fullText.match(/\b(python|javascript|react|java|aws|docker|kubernetes|sql|mongodb|node|typescript|vue|angular|django|flask|spring|express|postgres|redis|git|agile|scrum|api|rest|graphql|ci\/cd|devops|machine learning|ml|ai|data science|analytics|tableau|power bi|excel|powerpoint)\b/gi) || [];
-        
-        const allKeywords = [...new Set([...words, ...techTerms])];
-        setResumeKeywords(allKeywords);
-        setResumeMatchEnabled(true);
-        setActiveSection("all");
-      } catch (error) {
-        alert('Error reading PDF. Please try a different file or convert to TXT.');
-        console.error('PDF parsing error:', error);
-      }
-    };
-    reader.readAsArrayBuffer(file);
-  } 
-  // Handle TXT files
-  else if (fileType === 'text/plain' || file.name.endsWith('.txt')) {
-    const reader = new FileReader();
-    reader.onload = (e) => {
-      const text = e.target.result;
-      setResumeText(text);
-      
-      // Extract keywords
-      const words = text.match(/\b[A-Z][a-z]+\b|\b[A-Z]{2,}\b/g) || [];
-      const techTerms = text.match(/\b(python|javascript|react|java|aws|docker|kubernetes|sql|mongodb|node|typescript|vue|angular|django|flask|spring|express|postgres|redis|git|agile|scrum|api|rest|graphql|ci\/cd|devops|machine learning|ml|ai|data science|analytics|tableau|power bi|excel|powerpoint)\b/gi) || [];
-      
-      const allKeywords = [...new Set([...words, ...techTerms])];
-      setResumeKeywords(allKeywords);
-      setResumeMatchEnabled(true);
-      setActiveSection("all");
-    };
-    reader.readAsText(file);
-  } else {
-    alert('Please upload a PDF or TXT file');
-  }
-};
+    const file = event.target.files[0];
+    if (!file) return;
+
+    const fileType = file.type;
+    if (fileType === "application/pdf" || file.name.endsWith(".pdf")) {
+      alert("PDF auto-parsing is disabled for stability. Please copy-paste resume text in the textarea.");
+      return;
+    }
+
+    if (fileType === "text/plain" || file.name.endsWith(".txt")) {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        const text = String(e.target.result || "");
+        setResumeText(text);
+        const words = text.match(/\b[A-Z][a-z]+\b|\b[A-Z]{2,}\b/g) || [];
+        const techTerms = text.match(/\b(python|javascript|react|java|aws|docker|kubernetes|sql|mongodb|node|typescript|vue|angular|django|flask|spring|express|postgres|redis|git|agile|scrum|api|rest|graphql|ci\/cd|devops|machine learning|ml|ai|data science|analytics|tableau|power bi|excel|powerpoint)\b/gi) || [];
+        setResumeKeywords([...new Set([...words, ...techTerms])]);
+        // Do not auto-run matching on all jobs; user triggers it manually in Resume screen.
+      };
+      reader.readAsText(file);
+      return;
+    }
+
+    alert("Please upload TXT. For PDF, paste text manually.");
+  };
 
   if (!isLoaded) {
     return (
@@ -850,22 +736,6 @@ export default function Dashboard() {
               <Nav icon="✦" label="CV Checker" active={activeSection === "resume"} onClick={() => setActiveSection("resume")} />
             </nav>
 
-            {/* QUICK FILTERS */}
-            <div>
-              <h4 className={`text-xs uppercase mb-2 ${isLight ? "text-[#64748b]" : "text-gray-500"}`}>Quick Filters</h4>
-              <div className="space-y-1">
-                {quickFilters.map(q => (
-                  <button
-                    key={q.label}
-                    onClick={q.action}
-                    className={`w-full text-left px-3 py-2 rounded text-sm transition-colors ${isLight ? "bg-[#f3f7fd] hover:bg-[#e7eef8] text-[#1f2937]" : "bg-[#18181d] hover:bg-[#1f1f26] text-gray-100"}`}
-                  >
-                    {q.label}
-                  </button>
-                ))}
-              </div>
-            </div>
-
             {/* RESUME MATCHER CARD */}
             <div className={`rounded-lg p-4 border ${isLight ? "bg-[#fff1f8] border-[#f3c2d8]" : "bg-[#1b121a] border-[#2b1a24]"}`}>
               <h4 className="text-sm font-semibold text-pink-300 mb-1">Resume Matcher</h4>
@@ -887,18 +757,7 @@ export default function Dashboard() {
       <main className="flex-1 flex flex-col">
         {/* TOP BAR */}
         <header className={`p-5 border-b ${isLight ? "bg-white border-[#dbe4f0]" : "bg-[#0f1014] border-[#1f1f24]"}`}>
-          <div className="flex items-center gap-4">
-            <div className="flex-1">
-              <div className="relative">
-                <input
-                  type="text"
-                  placeholder="Search across your workspace..."
-                  value={workspaceSearch}
-                  onChange={(e) => setWorkspaceSearch(e.target.value)}
-                  className={`w-full border rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-pink-500 transition-colors ${isLight ? "bg-[#f7f9fc] border-[#d6e0ee] text-[#1f2937]" : "bg-[#14151b] border-[#26262d] text-gray-300"}`}
-                />
-              </div>
-            </div>
+          <div className="flex items-center justify-end">
             <div className="flex items-center gap-3">
               <button
                 onClick={() => setTheme((prev) => (prev === "dark" ? "light" : "dark"))}
@@ -935,7 +794,7 @@ export default function Dashboard() {
               <div className="flex items-center gap-2">
                 <button
                   onClick={() => setShowFilters(prev => !prev)}
-                  className="bg-[#16161b] border border-[#26262d] rounded-xl px-4 py-2 text-sm text-gray-200 hover:border-pink-500 transition-colors"
+                  className={`rounded-xl px-4 py-2 text-sm transition-colors border ${isLight ? "bg-white border-[#d8e2ef] text-[#0f172a] hover:border-pink-500" : "bg-[#16161b] border-[#26262d] text-gray-200 hover:border-pink-500"}`}
                 >
                   Filters
                 </button>
@@ -954,20 +813,20 @@ export default function Dashboard() {
                   placeholder="Search jobs, companies, or keywords..."
                   value={searchQuery}
                   onChange={e => setSearchQuery(e.target.value)}
-                  className="w-full bg-[#16161b] border border-[#26262d] rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-pink-500 transition-colors"
+                  className={`w-full rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-pink-500 transition-colors border ${isLight ? "bg-white border-[#d8e2ef] text-[#0f172a]" : "bg-[#16161b] border-[#26262d] text-gray-100"}`}
                 />
               </div>
               <select
                 value={sortBy}
                 onChange={e => setSortBy(e.target.value)}
-                className="bg-[#16161b] border border-[#26262d] rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-pink-500 cursor-pointer transition-colors"
+                className={`rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-pink-500 cursor-pointer transition-colors border ${isLight ? "bg-white border-[#d8e2ef] text-[#0f172a]" : "bg-[#16161b] border-[#26262d] text-gray-100"}`}
               >
                 <option value="score">Most Relevant</option>
                 <option value="date">Newest</option>
                 <option value="remote">Remote First</option>
                 {resumeMatchEnabled && <option value="matchScore">Match %</option>}
               </select>
-              <label className="text-xs text-gray-300 inline-flex items-center gap-2 px-3">
+              <label className={`text-xs inline-flex items-center gap-2 px-3 ${isLight ? "text-[#334155]" : "text-gray-300"}`}>
                 <input
                   type="checkbox"
                   checked={hideStale}
@@ -986,7 +845,7 @@ export default function Dashboard() {
                     placeholder="Source"
                     value={sourceQuery}
                     onChange={e => setSourceQuery(e.target.value)}
-                    className="w-full bg-[#16161b] border border-[#26262d] rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-pink-500 transition-colors"
+                    className={`w-full rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-pink-500 transition-colors border ${isLight ? "bg-white border-[#d8e2ef] text-[#0f172a]" : "bg-[#16161b] border-[#26262d] text-gray-100"}`}
                   />
                   <datalist id="source-options">
                     {sources.map(source => (
@@ -998,7 +857,7 @@ export default function Dashboard() {
                 <select
                   value={selectedRole}
                   onChange={e => setSelectedRole(e.target.value)}
-                  className="bg-[#16161b] border border-[#26262d] rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-pink-500 cursor-pointer transition-colors"
+                  className={`rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-pink-500 cursor-pointer transition-colors border ${isLight ? "bg-white border-[#d8e2ef] text-[#0f172a]" : "bg-[#16161b] border-[#26262d] text-gray-100"}`}
                 >
                   <option value="all">All Roles</option>
                   {roles.map(role => (
@@ -1012,7 +871,7 @@ export default function Dashboard() {
                     placeholder="Location"
                     value={locationQuery}
                     onChange={e => setLocationQuery(e.target.value)}
-                    className="w-full bg-[#16161b] border border-[#26262d] rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-pink-500 transition-colors"
+                    className={`w-full rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-pink-500 transition-colors border ${isLight ? "bg-white border-[#d8e2ef] text-[#0f172a]" : "bg-[#16161b] border-[#26262d] text-gray-100"}`}
                   />
                   <datalist id="location-options">
                     {locations.map(location => (
@@ -1024,7 +883,7 @@ export default function Dashboard() {
                 <select
                   value={selectedEmploymentType}
                   onChange={e => setSelectedEmploymentType(e.target.value)}
-                  className="bg-[#16161b] border border-[#26262d] rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-pink-500 cursor-pointer transition-colors"
+                  className={`rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-pink-500 cursor-pointer transition-colors border ${isLight ? "bg-white border-[#d8e2ef] text-[#0f172a]" : "bg-[#16161b] border-[#26262d] text-gray-100"}`}
                 >
                   <option value="all">All Types</option>
                   {employmentTypes.map(type => (
@@ -1039,12 +898,12 @@ export default function Dashboard() {
                       placeholder="Company"
                       value={companyQuery}
                       onChange={e => setCompanyQuery(e.target.value)}
-                      className="w-full bg-[#16161b] border border-[#26262d] rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-pink-500 transition-colors"
+                      className={`w-full rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-pink-500 transition-colors border ${isLight ? "bg-white border-[#d8e2ef] text-[#0f172a]" : "bg-[#16161b] border-[#26262d] text-gray-100"}`}
                     />
                     {companyQuery && (
                       <button
                         onClick={() => setCompanyQuery("")}
-                        className="px-2 py-2 text-xs rounded bg-[#1f1f25] border border-[#2a2a33] hover:border-pink-500"
+                        className={`px-2 py-2 text-xs rounded border hover:border-pink-500 ${isLight ? "bg-white border-[#d8e2ef] text-[#0f172a]" : "bg-[#1f1f25] border-[#2a2a33] text-gray-100"}`}
                       >
                         Clear
                       </button>
@@ -1068,6 +927,8 @@ export default function Dashboard() {
                   className={`px-3 py-1 rounded-full text-xs border transition-colors ${
                     companyQuery === name
                       ? "bg-pink-500 text-gray-900 border-pink-400"
+                      : isLight
+                      ? "bg-white text-[#334155] border-[#d8e2ef] hover:border-pink-500"
                       : "bg-[#16161b] text-gray-300 border-[#2a2a33] hover:border-pink-500"
                   }`}
                 >
@@ -1135,6 +996,10 @@ export default function Dashboard() {
             <ResumeMatchScreen 
               onMatch={() => setResumeMatchEnabled(true)}
               onFileUpload={handleResumeUpload}
+              authFetch={authFetch}
+              resumeText={resumeText}
+              onResumeTextChange={setResumeText}
+              isLight={isLight}
             />
           ) : activeSection === "pipeline" ? (
             <>
@@ -1142,6 +1007,7 @@ export default function Dashboard() {
                 <PipelineBoard
                   applications={applications}
                   onMoveStage={(id, stage) => updateApplication(id, { stage })}
+                  isLight={isLight}
                 />
               </SignedIn>
               <SignedOut>
@@ -1196,6 +1062,7 @@ export default function Dashboard() {
                         setExpandedJob(expandedJob === id ? null : id);
                       }}
                       resumeMatchEnabled={resumeMatchEnabled}
+                      isLight={isLight}
                     />
                   ))}
 
@@ -1306,29 +1173,186 @@ function StatTile({ label, value, isLight }) {
   );
 }
 
-function ResumeMatchScreen({ onMatch, onFileUpload }) {
-  return (
-    <div className="max-w-xl mx-auto text-center bg-[#121216] border border-[#1f1f24] rounded-2xl p-10">
-      <h3 className="text-2xl font-bold text-pink-300 mb-2">Match Your Resume</h3>
-      <p className="text-gray-400 mb-6">
-        Upload your resume (.txt file) and instantly see which roles fit you best.
-      </p>
+function ResumeMatchScreen({ onMatch, onFileUpload, authFetch, resumeText, onResumeTextChange, isLight }) {
+  const [jobDescription, setJobDescription] = React.useState("");
+  const [profile, setProfile] = React.useState({
+    name: "",
+    education: "",
+    currentCompany: "",
+    experienceSummary: "",
+    skills: "",
+  });
+  const [loading, setLoading] = React.useState(false);
+  const [error, setError] = React.useState("");
+  const [result, setResult] = React.useState(null);
 
-      <input 
-        type="file" 
-        accept=".pdf,.txt" 
-        onChange={onFileUpload}
-        className="mb-4 text-gray-300" 
-      />
-            
-      <p className="text-xs text-gray-500 mt-2">
-        Tip: Save your resume as .txt or pdf for best results
-      </p>
+  const generateTailoredResume = async () => {
+    setError("");
+    setResult(null);
+    if (!jobDescription.trim()) {
+      setError("Paste a job description first.");
+      return;
+    }
+    if (!resumeText.trim() && !profile.experienceSummary.trim()) {
+      setError("Upload/paste your base resume or add experience summary.");
+      return;
+    }
+
+    setLoading(true);
+    try {
+      const payload = await authFetch("/api/resume-tailor", {
+        method: "POST",
+        body: JSON.stringify({
+          jobDescription,
+          resumeText,
+          profile,
+        }),
+      });
+      setResult(payload.result || null);
+      onMatch();
+    } catch (e) {
+      setError(e.message || "Failed to generate tailored resume.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <div className="max-w-5xl mx-auto space-y-6">
+      <div className={`rounded-2xl p-6 border ${isLight ? "bg-white border-[#d8e2ef]" : "bg-[#121216] border-[#1f1f24]"}`}>
+        <h3 className="text-2xl font-bold text-pink-300 mb-2">Resume Matcher + Tailor (AI)</h3>
+        <p className={`mb-4 ${isLight ? "text-[#475569]" : "text-gray-400"}`}>
+          Upload your resume, paste a job description, and generate a JD-tailored resume draft using Gemini.
+        </p>
+
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <div className="space-y-3">
+            <label className={`text-xs ${isLight ? "text-[#64748b]" : "text-gray-400"}`}>Base resume upload</label>
+            <input type="file" accept=".pdf,.txt" onChange={onFileUpload} className={`text-sm ${isLight ? "text-[#0f172a]" : "text-gray-300"}`} />
+            <label className={`text-xs ${isLight ? "text-[#64748b]" : "text-gray-400"}`}>Or paste base resume text</label>
+            <textarea
+              value={resumeText}
+              onChange={(e) => onResumeTextChange(e.target.value)}
+              rows={10}
+              placeholder="Paste your existing resume text..."
+              className={`w-full rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-pink-500 border ${isLight ? "bg-white border-[#d8e2ef] text-[#0f172a]" : "bg-[#16161b] border-[#26262d] text-gray-200"}`}
+            />
+          </div>
+
+          <div className="space-y-3">
+            <label className={`text-xs ${isLight ? "text-[#64748b]" : "text-gray-400"}`}>Job description</label>
+            <textarea
+              value={jobDescription}
+              onChange={(e) => setJobDescription(e.target.value)}
+              rows={10}
+              placeholder="Paste target job description..."
+              className={`w-full rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-pink-500 border ${isLight ? "bg-white border-[#d8e2ef] text-[#0f172a]" : "bg-[#16161b] border-[#26262d] text-gray-200"}`}
+            />
+          </div>
+        </div>
+
+        <div className="mt-6 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+          <input
+            value={profile.name}
+            onChange={(e) => setProfile((prev) => ({ ...prev, name: e.target.value }))}
+            placeholder="Name"
+            className={`rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-pink-500 border ${isLight ? "bg-white border-[#d8e2ef] text-[#0f172a]" : "bg-[#16161b] border-[#26262d] text-gray-200"}`}
+          />
+          <input
+            value={profile.education}
+            onChange={(e) => setProfile((prev) => ({ ...prev, education: e.target.value }))}
+            placeholder="Education"
+            className={`rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-pink-500 border ${isLight ? "bg-white border-[#d8e2ef] text-[#0f172a]" : "bg-[#16161b] border-[#26262d] text-gray-200"}`}
+          />
+          <input
+            value={profile.currentCompany}
+            onChange={(e) => setProfile((prev) => ({ ...prev, currentCompany: e.target.value }))}
+            placeholder="Current company"
+            className={`rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-pink-500 border ${isLight ? "bg-white border-[#d8e2ef] text-[#0f172a]" : "bg-[#16161b] border-[#26262d] text-gray-200"}`}
+          />
+          <input
+            value={profile.skills}
+            onChange={(e) => setProfile((prev) => ({ ...prev, skills: e.target.value }))}
+            placeholder="Skills (comma separated)"
+            className={`md:col-span-2 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-pink-500 border ${isLight ? "bg-white border-[#d8e2ef] text-[#0f172a]" : "bg-[#16161b] border-[#26262d] text-gray-200"}`}
+          />
+          <input
+            value={profile.experienceSummary}
+            onChange={(e) => setProfile((prev) => ({ ...prev, experienceSummary: e.target.value }))}
+            placeholder="Experience summary"
+            className={`rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-pink-500 border ${isLight ? "bg-white border-[#d8e2ef] text-[#0f172a]" : "bg-[#16161b] border-[#26262d] text-gray-200"}`}
+          />
+        </div>
+
+        <div className="mt-5 flex items-center gap-3">
+          <button
+            onClick={generateTailoredResume}
+            disabled={loading}
+            className="px-4 py-2 rounded-lg bg-pink-500 text-gray-900 text-sm font-semibold hover:bg-pink-400 disabled:opacity-60"
+          >
+            {loading ? "Generating..." : "Generate Tailored Resume"}
+          </button>
+          <span className={`text-xs ${isLight ? "text-[#64748b]" : "text-gray-500"}`}>Uses Gemini with strict no-fabrication guardrails.</span>
+        </div>
+
+        {error && <div className="mt-3 text-sm text-rose-400">{error}</div>}
+      </div>
+
+      {result && (
+        <div className={`rounded-2xl p-6 space-y-4 border ${isLight ? "bg-white border-[#d8e2ef]" : "bg-[#121216] border-[#1f1f24]"}`}>
+          <h4 className={`text-xl font-semibold ${isLight ? "text-[#0f172a]" : "text-white"}`}>{result.headline || "Tailored Resume Draft"}</h4>
+          {result.professional_summary && (
+            <p className={`text-sm ${isLight ? "text-[#334155]" : "text-gray-300"}`}>{result.professional_summary}</p>
+          )}
+
+          <ResultList title="Changes Made" items={result.changes_made} />
+          <ResultList title="Tailored Experience Bullets" items={result.tailored_experience_bullets} />
+          <ResultList title="Tailored Skills" items={result.tailored_skills} inline />
+          <ResultList title="ATS Keywords" items={result.ats_keywords} inline />
+          <ResultList title="Missing Information" items={result.missing_information} warn />
+
+          <div>
+            <div className={`text-sm font-medium mb-2 ${isLight ? "text-[#0f172a]" : "text-gray-200"}`}>Tailored Resume (editable)</div>
+            <textarea
+              value={result.tailored_resume_text || ""}
+              onChange={(e) => setResult((prev) => ({ ...prev, tailored_resume_text: e.target.value }))}
+              rows={16}
+              className={`w-full rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-pink-500 border ${isLight ? "bg-white border-[#d8e2ef] text-[#0f172a]" : "bg-[#16161b] border-[#26262d] text-gray-200"}`}
+            />
+          </div>
+        </div>
+      )}
     </div>
   );
 }
 
-function PipelineBoard({ applications, onMoveStage }) {
+function ResultList({ title, items, inline = false, warn = false }) {
+  if (!Array.isArray(items) || items.length === 0) return null;
+  return (
+    <div>
+      <div className={`text-sm font-medium mb-2 ${warn ? "text-amber-300" : "text-gray-200"}`}>{title}</div>
+      {inline ? (
+        <div className="flex flex-wrap gap-2">
+          {items.map((item, idx) => (
+            <span key={`${title}-${idx}`} className="text-xs px-2 py-1 rounded bg-[#1e1e25] text-gray-300">
+              {item}
+            </span>
+          ))}
+        </div>
+      ) : (
+        <ul className="space-y-1">
+          {items.map((item, idx) => (
+            <li key={`${title}-${idx}`} className={`text-sm ${warn ? "text-amber-200" : "text-gray-300"}`}>
+              • {item}
+            </li>
+          ))}
+        </ul>
+      )}
+    </div>
+  );
+}
+
+function PipelineBoard({ applications, onMoveStage, isLight }) {
   const stages = ["Interested", "Applied", "Interview", "Offer", "Rejected"];
   const [draggedAppId, setDraggedAppId] = React.useState(null);
   const [dragOverStage, setDragOverStage] = React.useState("");
@@ -1419,7 +1443,7 @@ function PipelineBoard({ applications, onMoveStage }) {
   );
 }
 
-function JobCard({ job, index, saved, applied, onSave, onApply, resumeMatchEnabled, appliedDetails, onUpdateNotes, onToggleDetails, isExpanded }) {
+function JobCard({ job, index, saved, applied, onSave, onApply, resumeMatchEnabled, appliedDetails, onUpdateNotes, onToggleDetails, isExpanded, isLight }) {
   const [notes, setNotes] = React.useState(appliedDetails?.notes || "");
   React.useEffect(() => {
     setNotes(appliedDetails?.notes || "");
@@ -1435,7 +1459,11 @@ function JobCard({ job, index, saved, applied, onSave, onApply, resumeMatchEnabl
   
   return (
     <div
-      className="bg-[#15151a] border border-[#23232a] rounded-2xl p-5 hover:border-[#2f2f39] hover:-translate-y-[1px] transition-all duration-300 shadow-[0_6px_20px_rgba(0,0,0,0.25)] animate-[fadeInUp_.35s_ease_forwards]"
+      className={`rounded-2xl p-5 hover:-translate-y-[1px] transition-all duration-300 animate-[fadeInUp_.35s_ease_forwards] border ${
+        isLight
+          ? "bg-white border-[#d8e2ef] hover:border-[#c5d4ea] shadow-[0_4px_12px_rgba(15,23,42,0.06)]"
+          : "bg-[#15151a] border-[#23232a] hover:border-[#2f2f39] shadow-[0_6px_20px_rgba(0,0,0,0.25)]"
+      }`}
       style={{ animationDelay: `${Math.min(index, 8) * 40}ms` }}
     >
       <div className="flex gap-5">
@@ -1452,13 +1480,13 @@ function JobCard({ job, index, saved, applied, onSave, onApply, resumeMatchEnabl
 
         <div className="flex-1">
           <div className="flex items-center gap-3 mb-2">
-            <div className="w-11 h-11 rounded-xl bg-[#1e1e25] border border-[#2a2a33] text-pink-300 flex items-center justify-center text-sm font-semibold">
+            <div className={`w-11 h-11 rounded-xl border text-pink-300 flex items-center justify-center text-sm font-semibold ${isLight ? "bg-[#f8fbff] border-[#d8e2ef]" : "bg-[#1e1e25] border-[#2a2a33]"}`}>
               {initial}
             </div>
             <div className="flex flex-wrap items-center gap-2">
-              <span className="text-xs bg-[#1e1e25] text-gray-300 px-2 py-1 rounded">{job.company}</span>
+              <span className={`text-xs px-2 py-1 rounded ${isLight ? "bg-[#f8fbff] text-[#334155]" : "bg-[#1e1e25] text-gray-300"}`}>{job.company}</span>
               {job.source && (
-                <span className="text-xs bg-[#1e1e25]/60 text-gray-400 px-2 py-1 rounded">{job.source}</span>
+                <span className={`text-xs px-2 py-1 rounded ${isLight ? "bg-[#eef4ff] text-[#64748b]" : "bg-[#1e1e25]/60 text-gray-400"}`}>{job.source}</span>
               )}
               {pill && (
                 <span className="text-xs bg-emerald-900/30 text-emerald-300 px-2 py-1 rounded">{pill}</span>
@@ -1479,26 +1507,26 @@ function JobCard({ job, index, saved, applied, onSave, onApply, resumeMatchEnabl
             </div>
           </div>
           <div className="flex items-center gap-2 mb-1">
-            <h3 className="text-lg font-semibold text-white">{job.title}</h3>
+            <h3 className={`text-lg font-semibold ${isLight ? "text-[#0f172a]" : "text-white"}`}>{job.title}</h3>
           </div>
-          <p className="text-gray-400 text-sm mb-2">{job.location} · {job.employment_type || "Full-time"} · {job.postedDate || job.fetchedAt || "Recently"}</p>
+          <p className={`text-sm mb-2 ${isLight ? "text-[#64748b]" : "text-gray-400"}`}>{job.location} · {job.employment_type || "Full-time"} · {job.postedDate || job.fetchedAt || "Recently"}</p>
           
           <div className="flex gap-2 flex-wrap">
             {job.employment_type && (
-              <span className="inline-block text-xs bg-[#1e1e25] text-gray-400 px-2 py-1 rounded-full">
-                {job.employment_type}
-              </span>
-            )}
-            {job.role && (
-              <span className="inline-block text-xs bg-[#1e1e25] text-gray-400 px-2 py-1 rounded-full">
-                {job.role}
-              </span>
-            )}
-            {job.requirements?.skills && job.requirements.skills.length > 0 && (
-              <span className="inline-block text-xs bg-[#1e1e25] text-gray-300 px-2 py-1 rounded-full">
-                {job.requirements.skills.slice(0, 3).join(", ")}
-              </span>
-            )}
+                <span className={`inline-block text-xs px-2 py-1 rounded-full ${isLight ? "bg-[#eef4ff] text-[#64748b]" : "bg-[#1e1e25] text-gray-400"}`}>
+                  {job.employment_type}
+                </span>
+              )}
+              {job.role && (
+                <span className={`inline-block text-xs px-2 py-1 rounded-full ${isLight ? "bg-[#eef4ff] text-[#64748b]" : "bg-[#1e1e25] text-gray-400"}`}>
+                  {job.role}
+                </span>
+              )}
+              {job.requirements?.skills && job.requirements.skills.length > 0 && (
+                <span className={`inline-block text-xs px-2 py-1 rounded-full ${isLight ? "bg-[#f8fbff] text-[#334155]" : "bg-[#1e1e25] text-gray-300"}`}>
+                  {job.requirements.skills.slice(0, 3).join(", ")}
+                </span>
+              )}
           </div>
 
           {resumeMatchEnabled && job.matchExplain && job.matchExplain.length > 0 && (
