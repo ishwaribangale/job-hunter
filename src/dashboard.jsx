@@ -1345,167 +1345,267 @@ function StatTile({ label, value, isLight }) {
 }
 
 function ResumeTailorScreen({ onMatch, onFileUpload, authFetch, resumeText, onResumeTextChange, isLight }) {
+  const [step, setStep] = React.useState(1);
   const [jobDescription, setJobDescription] = React.useState("");
-  const [profile, setProfile] = React.useState({
+  const [mode, setMode] = React.useState("");
+  const [manual, setManual] = React.useState({
     name: "",
-    education: "",
-    currentCompany: "",
-    experienceSummary: "",
-    skills: "",
+    email: "",
+    phone: "",
+    company: "",
+    highlights: "",
   });
-  const [loading, setLoading] = React.useState(false);
   const [error, setError] = React.useState("");
+  const [loading, setLoading] = React.useState(false);
   const [result, setResult] = React.useState(null);
 
-  const generateTailoredResume = async () => {
-    setError("");
-    setResult(null);
+  const goNextFromStep1 = () => {
     if (!jobDescription.trim()) {
-      setError("Paste a job description first.");
+      setError("Please paste job description first.");
       return;
     }
-    if (!resumeText.trim() && !profile.experienceSummary.trim()) {
-      setError("Upload/paste your base resume or add experience summary.");
+    setError("");
+    setStep(2);
+  };
+
+  const buildManualResumeText = () => {
+    return [
+      `Name: ${manual.name}`,
+      `Email: ${manual.email}`,
+      `Phone: ${manual.phone}`,
+      `Company: ${manual.company}`,
+      `Highlights: ${manual.highlights}`,
+    ].join("\n");
+  };
+
+  const generateResume = async () => {
+    if (!mode) {
+      setError("Choose import resume or manual.");
       return;
     }
 
+    if (mode === "import" && !resumeText.trim()) {
+      setError("Upload a PDF/TXT resume first.");
+      return;
+    }
+
+    if (mode === "manual" && (!manual.name.trim() || !manual.company.trim() || !manual.highlights.trim())) {
+      setError("For manual mode, add name, company and highlights.");
+      return;
+    }
+
+    setError("");
     setLoading(true);
+    setStep(3);
+    setResult(null);
+
     try {
       const payload = await authFetch("/api/resume-tailor", {
         method: "POST",
         body: JSON.stringify({
           jobDescription,
-          resumeText,
-          profile,
+          resumeText: mode === "import" ? resumeText : buildManualResumeText(),
+          profile: {
+            name: manual.name,
+            currentCompany: manual.company,
+            experienceSummary: manual.highlights,
+            email: manual.email,
+            phone: manual.phone,
+          },
         }),
       });
       setResult(payload.result || null);
       onMatch();
+      setStep(4);
     } catch (e) {
       setError(e.message || "Failed to generate tailored resume.");
+      setStep(2);
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div className="max-w-5xl mx-auto space-y-6">
+    <div className="max-w-4xl mx-auto space-y-6">
       <div className={`rounded-2xl p-6 border ${isLight ? "bg-white border-[#d8e2ef]" : "bg-[#121216] border-[#1f1f24]"}`}>
-        <h3 className="text-2xl font-bold text-pink-300 mb-2">Resume Matcher + Tailor (AI)</h3>
-        <p className={`mb-4 ${isLight ? "text-[#475569]" : "text-gray-400"}`}>
-          Upload your resume, paste a job description, and generate a JD-tailored resume draft using Gemini.
+        <h3 className="text-2xl font-bold text-pink-300 mb-1">JD Tailor (AI)</h3>
+        <p className={`text-sm mb-5 ${isLight ? "text-[#64748b]" : "text-gray-400"}`}>
+          Step {step} of 4
         </p>
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          <div className="space-y-3">
-            <label className={`text-xs ${isLight ? "text-[#64748b]" : "text-gray-400"}`}>Base resume upload</label>
-            <input type="file" accept=".pdf,.txt" onChange={onFileUpload} className={`text-sm ${isLight ? "text-[#0f172a]" : "text-gray-300"}`} />
-            <label className={`text-xs ${isLight ? "text-[#64748b]" : "text-gray-400"}`}>Or paste base resume text</label>
-            <textarea
-              value={resumeText}
-              onChange={(e) => onResumeTextChange(e.target.value)}
-              rows={10}
-              placeholder="Paste your existing resume text..."
-              className={`w-full rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-pink-500 border ${isLight ? "bg-white border-[#d8e2ef] text-[#0f172a]" : "bg-[#16161b] border-[#26262d] text-gray-200"}`}
-            />
-          </div>
-
-          <div className="space-y-3">
-            <label className={`text-xs ${isLight ? "text-[#64748b]" : "text-gray-400"}`}>Job description</label>
+        {step === 1 && (
+          <div className="space-y-4">
+            <p className={`${isLight ? "text-[#334155]" : "text-gray-300"}`}>
+              Add the job description for the role you want to tailor your resume for.
+            </p>
             <textarea
               value={jobDescription}
               onChange={(e) => setJobDescription(e.target.value)}
-              rows={10}
-              placeholder="Paste target job description..."
-              className={`w-full rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-pink-500 border ${isLight ? "bg-white border-[#d8e2ef] text-[#0f172a]" : "bg-[#16161b] border-[#26262d] text-gray-200"}`}
+              rows={12}
+              placeholder="Paste full JD here..."
+              className={`w-full rounded-xl px-3 py-2 text-sm border focus:outline-none focus:border-pink-500 ${isLight ? "bg-white border-[#d8e2ef] text-[#0f172a]" : "bg-[#16161b] border-[#26262d] text-gray-200"}`}
             />
+            <div className="flex justify-end">
+              <button onClick={goNextFromStep1} className="px-4 py-2 rounded-lg bg-pink-500 text-gray-900 text-sm font-semibold hover:bg-pink-400">
+                Next
+              </button>
+            </div>
           </div>
-        </div>
+        )}
 
-        <div className="mt-6 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
-          <input
-            value={profile.name}
-            onChange={(e) => setProfile((prev) => ({ ...prev, name: e.target.value }))}
-            placeholder="Name"
-            className={`rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-pink-500 border ${isLight ? "bg-white border-[#d8e2ef] text-[#0f172a]" : "bg-[#16161b] border-[#26262d] text-gray-200"}`}
-          />
-          <input
-            value={profile.education}
-            onChange={(e) => setProfile((prev) => ({ ...prev, education: e.target.value }))}
-            placeholder="Education"
-            className={`rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-pink-500 border ${isLight ? "bg-white border-[#d8e2ef] text-[#0f172a]" : "bg-[#16161b] border-[#26262d] text-gray-200"}`}
-          />
-          <input
-            value={profile.currentCompany}
-            onChange={(e) => setProfile((prev) => ({ ...prev, currentCompany: e.target.value }))}
-            placeholder="Current company"
-            className={`rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-pink-500 border ${isLight ? "bg-white border-[#d8e2ef] text-[#0f172a]" : "bg-[#16161b] border-[#26262d] text-gray-200"}`}
-          />
-          <input
-            value={profile.skills}
-            onChange={(e) => setProfile((prev) => ({ ...prev, skills: e.target.value }))}
-            placeholder="Skills (comma separated)"
-            className={`md:col-span-2 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-pink-500 border ${isLight ? "bg-white border-[#d8e2ef] text-[#0f172a]" : "bg-[#16161b] border-[#26262d] text-gray-200"}`}
-          />
-          <input
-            value={profile.experienceSummary}
-            onChange={(e) => setProfile((prev) => ({ ...prev, experienceSummary: e.target.value }))}
-            placeholder="Experience summary"
-            className={`rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-pink-500 border ${isLight ? "bg-white border-[#d8e2ef] text-[#0f172a]" : "bg-[#16161b] border-[#26262d] text-gray-200"}`}
-          />
-        </div>
+        {step === 2 && (
+          <div className="space-y-5">
+            <p className={`${isLight ? "text-[#334155]" : "text-gray-300"}`}>
+              Choose how you want to provide your profile details.
+            </p>
 
-        <div className="mt-5 flex items-center gap-3">
-          <button
-            onClick={generateTailoredResume}
-            disabled={loading}
-            className="px-4 py-2 rounded-lg bg-pink-500 text-gray-900 text-sm font-semibold hover:bg-pink-400 disabled:opacity-60"
-          >
-            {loading ? "Generating..." : "Generate Tailored Resume"}
-          </button>
-          <span className={`text-xs ${isLight ? "text-[#64748b]" : "text-gray-500"}`}>Uses Gemini with strict no-fabrication guardrails.</span>
-        </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+              <button
+                onClick={() => setMode("import")}
+                className={`p-4 rounded-xl border text-left ${mode === "import" ? "border-pink-500 bg-pink-500/10" : isLight ? "border-[#d8e2ef]" : "border-[#26262d]"}`}
+              >
+                <div className="font-semibold">Import your resume</div>
+                <div className={`text-xs mt-1 ${isLight ? "text-[#64748b]" : "text-gray-400"}`}>Upload PDF/TXT and tailor from your existing resume.</div>
+              </button>
+              <button
+                onClick={() => setMode("manual")}
+                className={`p-4 rounded-xl border text-left ${mode === "manual" ? "border-pink-500 bg-pink-500/10" : isLight ? "border-[#d8e2ef]" : "border-[#26262d]"}`}
+              >
+                <div className="font-semibold">Enter manually</div>
+                <div className={`text-xs mt-1 ${isLight ? "text-[#64748b]" : "text-gray-400"}`}>Fill basic profile fields and highlights.</div>
+              </button>
+            </div>
 
-        {error && <div className="mt-3 text-sm text-rose-400">{error}</div>}
+            {mode === "import" && (
+              <div className="space-y-3">
+                <label className={`text-xs ${isLight ? "text-[#64748b]" : "text-gray-400"}`}>Upload PDF/TXT resume</label>
+                <input type="file" accept=".pdf,.txt" onChange={onFileUpload} className={`text-sm ${isLight ? "text-[#0f172a]" : "text-gray-300"}`} />
+                <textarea
+                  value={resumeText}
+                  onChange={(e) => onResumeTextChange(e.target.value)}
+                  rows={8}
+                  placeholder="Parsed resume text appears here (editable)..."
+                  className={`w-full rounded-xl px-3 py-2 text-sm border focus:outline-none focus:border-pink-500 ${isLight ? "bg-white border-[#d8e2ef] text-[#0f172a]" : "bg-[#16161b] border-[#26262d] text-gray-200"}`}
+                />
+              </div>
+            )}
+
+            {mode === "manual" && (
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                <input
+                  value={manual.name}
+                  onChange={(e) => setManual((prev) => ({ ...prev, name: e.target.value }))}
+                  placeholder="Name"
+                  className={`rounded-lg px-3 py-2 text-sm border focus:outline-none focus:border-pink-500 ${isLight ? "bg-white border-[#d8e2ef] text-[#0f172a]" : "bg-[#16161b] border-[#26262d] text-gray-200"}`}
+                />
+                <input
+                  value={manual.email}
+                  onChange={(e) => setManual((prev) => ({ ...prev, email: e.target.value }))}
+                  placeholder="Email"
+                  className={`rounded-lg px-3 py-2 text-sm border focus:outline-none focus:border-pink-500 ${isLight ? "bg-white border-[#d8e2ef] text-[#0f172a]" : "bg-[#16161b] border-[#26262d] text-gray-200"}`}
+                />
+                <input
+                  value={manual.phone}
+                  onChange={(e) => setManual((prev) => ({ ...prev, phone: e.target.value }))}
+                  placeholder="Phone number"
+                  className={`rounded-lg px-3 py-2 text-sm border focus:outline-none focus:border-pink-500 ${isLight ? "bg-white border-[#d8e2ef] text-[#0f172a]" : "bg-[#16161b] border-[#26262d] text-gray-200"}`}
+                />
+                <input
+                  value={manual.company}
+                  onChange={(e) => setManual((prev) => ({ ...prev, company: e.target.value }))}
+                  placeholder="Company worked at"
+                  className={`rounded-lg px-3 py-2 text-sm border focus:outline-none focus:border-pink-500 ${isLight ? "bg-white border-[#d8e2ef] text-[#0f172a]" : "bg-[#16161b] border-[#26262d] text-gray-200"}`}
+                />
+                <textarea
+                  value={manual.highlights}
+                  onChange={(e) => setManual((prev) => ({ ...prev, highlights: e.target.value }))}
+                  rows={4}
+                  placeholder="Highlights: what you did and impact"
+                  className={`md:col-span-2 rounded-lg px-3 py-2 text-sm border focus:outline-none focus:border-pink-500 ${isLight ? "bg-white border-[#d8e2ef] text-[#0f172a]" : "bg-[#16161b] border-[#26262d] text-gray-200"}`}
+                />
+              </div>
+            )}
+
+            <div className="flex items-center justify-between">
+              <button
+                onClick={() => setStep(1)}
+                className={`px-4 py-2 rounded-lg text-sm border ${isLight ? "border-[#d8e2ef]" : "border-[#26262d]"}`}
+              >
+                Back
+              </button>
+              <button
+                onClick={generateResume}
+                disabled={loading}
+                className="px-4 py-2 rounded-lg bg-pink-500 text-gray-900 text-sm font-semibold hover:bg-pink-400 disabled:opacity-60"
+              >
+                Generate Tailored Resume
+              </button>
+            </div>
+          </div>
+        )}
+
+        {step === 3 && (
+          <div className="py-16 text-center">
+            <div className="mx-auto h-14 w-14 rounded-full border-4 border-pink-500 border-t-transparent animate-spin" />
+            <h4 className="text-xl font-semibold mt-6">Creating your tailored resume...</h4>
+            <p className={`text-sm mt-2 ${isLight ? "text-[#64748b]" : "text-gray-400"}`}>
+              We are aligning your profile to the job description.
+            </p>
+          </div>
+        )}
+
+        {step === 4 && result && (
+          <div className="space-y-4">
+            <h4 className={`text-xl font-semibold ${isLight ? "text-[#0f172a]" : "text-white"}`}>{result.headline || "Tailored Resume Draft"}</h4>
+            {result.professional_summary && (
+              <p className={`text-sm ${isLight ? "text-[#334155]" : "text-gray-300"}`}>{result.professional_summary}</p>
+            )}
+            <ResultList title="Changes Made" items={result.changes_made} isLight={isLight} />
+            <ResultList title="Tailored Experience Bullets" items={result.tailored_experience_bullets} isLight={isLight} />
+            <ResultList title="Tailored Skills" items={result.tailored_skills} inline isLight={isLight} />
+            <ResultList title="ATS Keywords" items={result.ats_keywords} inline isLight={isLight} />
+            <ResultList title="Missing Information" items={result.missing_information} warn isLight={isLight} />
+
+            <div>
+              <div className={`text-sm font-medium mb-2 ${isLight ? "text-[#0f172a]" : "text-gray-200"}`}>Tailored Resume (editable)</div>
+              <textarea
+                value={result.tailored_resume_text || ""}
+                onChange={(e) => setResult((prev) => ({ ...prev, tailored_resume_text: e.target.value }))}
+                rows={16}
+                className={`w-full rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-pink-500 border ${isLight ? "bg-white border-[#d8e2ef] text-[#0f172a]" : "bg-[#16161b] border-[#26262d] text-gray-200"}`}
+              />
+            </div>
+
+            <div className="flex justify-end">
+              <button
+                onClick={() => {
+                  setStep(1);
+                  setResult(null);
+                  setMode("");
+                }}
+                className="px-4 py-2 rounded-lg bg-pink-500 text-gray-900 text-sm font-semibold hover:bg-pink-400"
+              >
+                Create Another
+              </button>
+            </div>
+          </div>
+        )}
+
+        {error && step !== 4 && <div className="mt-4 text-sm text-rose-400">{error}</div>}
       </div>
-
-      {result && (
-        <div className={`rounded-2xl p-6 space-y-4 border ${isLight ? "bg-white border-[#d8e2ef]" : "bg-[#121216] border-[#1f1f24]"}`}>
-          <h4 className={`text-xl font-semibold ${isLight ? "text-[#0f172a]" : "text-white"}`}>{result.headline || "Tailored Resume Draft"}</h4>
-          {result.professional_summary && (
-            <p className={`text-sm ${isLight ? "text-[#334155]" : "text-gray-300"}`}>{result.professional_summary}</p>
-          )}
-
-          <ResultList title="Changes Made" items={result.changes_made} />
-          <ResultList title="Tailored Experience Bullets" items={result.tailored_experience_bullets} />
-          <ResultList title="Tailored Skills" items={result.tailored_skills} inline />
-          <ResultList title="ATS Keywords" items={result.ats_keywords} inline />
-          <ResultList title="Missing Information" items={result.missing_information} warn />
-
-          <div>
-            <div className={`text-sm font-medium mb-2 ${isLight ? "text-[#0f172a]" : "text-gray-200"}`}>Tailored Resume (editable)</div>
-            <textarea
-              value={result.tailored_resume_text || ""}
-              onChange={(e) => setResult((prev) => ({ ...prev, tailored_resume_text: e.target.value }))}
-              rows={16}
-              className={`w-full rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-pink-500 border ${isLight ? "bg-white border-[#d8e2ef] text-[#0f172a]" : "bg-[#16161b] border-[#26262d] text-gray-200"}`}
-            />
-          </div>
-        </div>
-      )}
     </div>
   );
 }
 
-function ResultList({ title, items, inline = false, warn = false }) {
+function ResultList({ title, items, inline = false, warn = false, isLight = false }) {
   if (!Array.isArray(items) || items.length === 0) return null;
   return (
     <div>
-      <div className={`text-sm font-medium mb-2 ${warn ? "text-amber-300" : "text-gray-200"}`}>{title}</div>
+      <div className={`text-sm font-medium mb-2 ${warn ? "text-amber-300" : isLight ? "text-[#0f172a]" : "text-gray-200"}`}>{title}</div>
       {inline ? (
         <div className="flex flex-wrap gap-2">
           {items.map((item, idx) => (
-            <span key={`${title}-${idx}`} className="text-xs px-2 py-1 rounded bg-[#1e1e25] text-gray-300">
+            <span key={`${title}-${idx}`} className={`text-xs px-2 py-1 rounded ${isLight ? "bg-[#eef4ff] text-[#334155]" : "bg-[#1e1e25] text-gray-300"}`}>
               {item}
             </span>
           ))}
@@ -1513,7 +1613,7 @@ function ResultList({ title, items, inline = false, warn = false }) {
       ) : (
         <ul className="space-y-1">
           {items.map((item, idx) => (
-            <li key={`${title}-${idx}`} className={`text-sm ${warn ? "text-amber-200" : "text-gray-300"}`}>
+            <li key={`${title}-${idx}`} className={`text-sm ${warn ? "text-amber-200" : isLight ? "text-[#334155]" : "text-gray-300"}`}>
               • {item}
             </li>
           ))}
