@@ -1,6 +1,65 @@
 import React from "react";
 import { SignedIn, SignedOut, SignInButton, UserButton, useAuth } from "@clerk/clerk-react";
 
+const STALE_DAYS = 45;
+const VERY_FRESH_DAYS = 3;
+const FRESH_DAYS = 14;
+
+function toTimestamp(value) {
+  if (!value) return 0;
+  const ts = new Date(value).getTime();
+  return Number.isFinite(ts) ? ts : 0;
+}
+
+function normalizeLink(link) {
+  if (!link) return "";
+  return String(link).trim().replace(/\/+$/, "").toLowerCase();
+}
+
+function freshnessMeta(job) {
+  const ts = toTimestamp(job.postedDate || job.fetchedAt);
+  if (!ts) return { ageDays: 999, freshness: "Unknown", stale: true, freshnessScore: 0 };
+
+  const ageDays = Math.max(0, Math.floor((Date.now() - ts) / (1000 * 60 * 60 * 24)));
+  if (ageDays <= VERY_FRESH_DAYS) return { ageDays, freshness: "New", stale: false, freshnessScore: 100 };
+  if (ageDays <= FRESH_DAYS) return { ageDays, freshness: "Fresh", stale: false, freshnessScore: 80 };
+  if (ageDays <= STALE_DAYS) return { ageDays, freshness: "Recent", stale: false, freshnessScore: 55 };
+  return { ageDays, freshness: "Stale", stale: true, freshnessScore: 20 };
+}
+
+function dedupeAndEnhanceJobs(rawJobs) {
+  const unique = new Map();
+
+  rawJobs.forEach((job) => {
+    const linkKey = normalizeLink(job.applyLink);
+    const titleKey = String(job.title || "").trim().toLowerCase();
+    const companyKey = String(job.company || "").trim().toLowerCase();
+    const locationKey = String(job.location || "").trim().toLowerCase();
+    const dedupeKey = linkKey || `${companyKey}::${titleKey}::${locationKey}`;
+    if (!dedupeKey || dedupeKey === "::::") return;
+
+    const existing = unique.get(dedupeKey);
+    if (!existing) {
+      unique.set(dedupeKey, job);
+      return;
+    }
+
+    const existingTs = toTimestamp(existing.postedDate || existing.fetchedAt);
+    const nextTs = toTimestamp(job.postedDate || job.fetchedAt);
+    const existingScore = Number(existing.score || 0);
+    const nextScore = Number(job.score || 0);
+
+    if (nextTs > existingTs || (nextTs === existingTs && nextScore > existingScore)) {
+      unique.set(dedupeKey, job);
+    }
+  });
+
+  return Array.from(unique.values()).map((job) => ({
+    ...job,
+    ...freshnessMeta(job),
+  }));
+}
+
 export default function Dashboard() {
   const brandName = "ApplyPulse";
   const [jobs, setJobs] = React.useState([]);
@@ -29,6 +88,7 @@ export default function Dashboard() {
   const [resumeText, setResumeText] = React.useState("");
   const [resumeKeywords, setResumeKeywords] = React.useState([]);
   const [showFilters, setShowFilters] = React.useState(false);
+  const [hideStale, setHideStale] = React.useState(true);
   const [workspaceSearch, setWorkspaceSearch] = React.useState("");
   const { getToken, isSignedIn } = useAuth();
 
@@ -73,8 +133,9 @@ export default function Dashboard() {
     fetch("https://raw.githubusercontent.com/ishwaribangale/job-hunter/main/data/jobs.json")
       .then(res => res.json())
       .then(data => {
-        setJobs(data);
-        setFilteredJobs(data);
+        const cleaned = dedupeAndEnhanceJobs(Array.isArray(data) ? data : []);
+        setJobs(cleaned);
+        setFilteredJobs(cleaned);
       })
       .finally(() => setLoading(false));
   }, []);
@@ -130,6 +191,28 @@ export default function Dashboard() {
       .sort((a, b) => b[1] - a[1])
       .slice(0, 10)
       .map(([name]) => name);
+  }, [jobs]);
+
+  const sourceHealth = React.useMemo(() => {
+    const sourceMap = new Map();
+    jobs.forEach((job) => {
+      const source = job.source || "Unknown";
+      const row = sourceMap.get(source) || { source, total: 0, fresh: 0, stale: 0 };
+      row.total += 1;
+      if ((job.ageDays ?? 999) <= FRESH_DAYS) row.fresh += 1;
+      if (job.stale) row.stale += 1;
+      sourceMap.set(source, row);
+    });
+
+    return Array.from(sourceMap.values())
+      .map((row) => {
+        const freshRatio = row.total ? row.fresh / row.total : 0;
+        let status = "Failing";
+        if (row.total >= 10 && freshRatio >= 0.45) status = "Healthy";
+        else if (row.total >= 3 && freshRatio >= 0.2) status = "Partial";
+        return { ...row, status };
+      })
+      .sort((a, b) => b.total - a.total);
   }, [jobs]);
 
   /* ---------------- QUICK FILTERS ---------------- */
@@ -217,6 +300,10 @@ export default function Dashboard() {
       data = data.filter(j => (j.employment_type || "").toLowerCase().includes(target));
     }
 
+    if (hideStale) {
+      data = data.filter(j => !j.stale);
+    }
+
     // Apply resume matching scores if enabled
     if (resumeMatchEnabled && resumeText) {
       data = data.map(job => ({
@@ -228,7 +315,7 @@ export default function Dashboard() {
 
     setFilteredJobs(data);
     setCurrentPage(1); // Reset to page 1 when filters change
-  }, [jobs, searchQuery, sourceQuery, companyQuery, selectedRole, locationQuery, selectedEmploymentType, resumeMatchEnabled, resumeText]);
+  }, [jobs, searchQuery, sourceQuery, companyQuery, selectedRole, locationQuery, selectedEmploymentType, resumeMatchEnabled, resumeText, hideStale]);
 
   /* ---------------- SECTION FILTER ---------------- */
   const applicationsByJobId = React.useMemo(() => {
@@ -550,6 +637,12 @@ export default function Dashboard() {
 
   return (
     <div className="min-h-screen bg-[#0b0b0d] text-gray-100 flex">
+      <style>{`
+        @keyframes fadeInUp {
+          from { opacity: 0; transform: translateY(8px); }
+          to { opacity: 1; transform: translateY(0); }
+        }
+      `}</style>
       {/* SIDEBAR */}
       <aside className={`${sidebarOpen ? "w-72" : "w-14"} bg-[#121216] border-r border-[#1f1f24] transition-all`}>
         <div className="p-4 flex justify-between items-center">
@@ -692,6 +785,15 @@ export default function Dashboard() {
                 <option value="remote">Remote First</option>
                 {resumeMatchEnabled && <option value="matchScore">Match %</option>}
               </select>
+              <label className="text-xs text-gray-300 inline-flex items-center gap-2 px-3">
+                <input
+                  type="checkbox"
+                  checked={hideStale}
+                  onChange={(e) => setHideStale(e.target.checked)}
+                  className="accent-pink-500"
+                />
+                Hide Stale
+              </label>
             </div>
 
             {showFilters && (
@@ -822,6 +924,7 @@ export default function Dashboard() {
                     setSourceQuery("");
                     setCompanyQuery("");
                     setLocationQuery("");
+                    setHideStale(true);
                   }}
                   className="text-xs text-pink-400 hover:text-pink-300 underline"
                 >
@@ -868,6 +971,9 @@ export default function Dashboard() {
                   <MetricsBar metrics={metrics} />
                 </SignedIn>
               )}
+              {activeSection === "all" && sourceHealth.length > 0 && (
+                <SourceHealthBar rows={sourceHealth.slice(0, 8)} />
+              )}
               {displayJobs.length === 0 ? (
                 <div className="text-center py-12 text-gray-500">
                   <p className="text-lg mb-2">No jobs found matching your filters</p>
@@ -875,22 +981,24 @@ export default function Dashboard() {
                     onClick={() => {
                       setSearchQuery("");
                       setSelectedRole("all");
-                      setSelectedEmploymentType("all");
-                      setSourceQuery("");
-                      setCompanyQuery("");
-                      setLocationQuery("");
-                    }}
-                  className="text-pink-400 hover:text-pink-300 underline"
+                    setSelectedEmploymentType("all");
+                    setSourceQuery("");
+                    setCompanyQuery("");
+                    setLocationQuery("");
+                    setHideStale(true);
+                  }}
+                className="text-pink-400 hover:text-pink-300 underline"
                   >
                     Clear all filters
                   </button>
                 </div>
               ) : (
                 <>
-                  {paginatedJobs.map(job => (
+                  {paginatedJobs.map((job, index) => (
                     <JobCard
                       key={job.id}
                       job={job}
+                      index={index}
                       saved={savedJobs.includes(job.id)}
                       applied={applicationsByJobId.has(job.id)}
                       appliedDetails={applicationsByJobId.get(job.id)}
@@ -1009,6 +1117,27 @@ function MetricCard({ label, value }) {
   );
 }
 
+function SourceHealthBar({ rows }) {
+  const statusClasses = (status) => {
+    if (status === "Healthy") return "text-emerald-300 bg-emerald-900/20 border-emerald-700/40";
+    if (status === "Partial") return "text-amber-300 bg-amber-900/20 border-amber-700/40";
+    return "text-rose-300 bg-rose-900/20 border-rose-700/40";
+  };
+
+  return (
+    <div className="bg-[#15151a] border border-[#23232a] rounded-2xl p-4">
+      <div className="text-xs text-gray-500 mb-3">Source Health</div>
+      <div className="flex flex-wrap gap-2">
+        {rows.map((row) => (
+          <span key={row.source} className={`text-xs px-2 py-1 rounded border ${statusClasses(row.status)}`}>
+            {row.source}: {row.status}
+          </span>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 function PipelineBoard({ applications, onMoveStage }) {
   const stages = ["Interested", "Applied", "Interview", "Offer", "Rejected"];
   const [draggedAppId, setDraggedAppId] = React.useState(null);
@@ -1100,7 +1229,7 @@ function PipelineBoard({ applications, onMoveStage }) {
   );
 }
 
-function JobCard({ job, saved, applied, onSave, onApply, resumeMatchEnabled, appliedDetails, onUpdateNotes, onToggleDetails, isExpanded }) {
+function JobCard({ job, index, saved, applied, onSave, onApply, resumeMatchEnabled, appliedDetails, onUpdateNotes, onToggleDetails, isExpanded }) {
   const [notes, setNotes] = React.useState(appliedDetails?.notes || "");
   React.useEffect(() => {
     setNotes(appliedDetails?.notes || "");
@@ -1115,7 +1244,10 @@ function JobCard({ job, saved, applied, onSave, onApply, resumeMatchEnabled, app
   const initial = (job.company || "?").trim().charAt(0).toUpperCase();
   
   return (
-    <div className="bg-[#15151a] border border-[#23232a] rounded-2xl p-5 hover:border-[#2f2f39] transition-colors shadow-[0_6px_20px_rgba(0,0,0,0.25)]">
+    <div
+      className="bg-[#15151a] border border-[#23232a] rounded-2xl p-5 hover:border-[#2f2f39] hover:-translate-y-[1px] transition-all duration-300 shadow-[0_6px_20px_rgba(0,0,0,0.25)] animate-[fadeInUp_.35s_ease_forwards]"
+      style={{ animationDelay: `${Math.min(index, 8) * 40}ms` }}
+    >
       <div className="flex gap-5">
         {resumeMatchEnabled && job.matchScore !== undefined && (
           <div className="w-20 h-20 rounded-full border-4 border-pink-400 flex items-center justify-center flex-shrink-0">
@@ -1136,6 +1268,19 @@ function JobCard({ job, saved, applied, onSave, onApply, resumeMatchEnabled, app
               {pill && (
                 <span className="text-xs bg-emerald-900/30 text-emerald-300 px-2 py-1 rounded">{pill}</span>
               )}
+              <span
+                className={`text-xs px-2 py-1 rounded ${
+                  job.freshness === "New"
+                    ? "bg-pink-900/30 text-pink-300"
+                    : job.freshness === "Fresh"
+                    ? "bg-blue-900/30 text-blue-300"
+                    : job.freshness === "Recent"
+                    ? "bg-gray-700/60 text-gray-300"
+                    : "bg-rose-900/30 text-rose-300"
+                }`}
+              >
+                {job.freshness || "Unknown"}
+              </span>
             </div>
           </div>
           <div className="flex items-center gap-2 mb-1">
