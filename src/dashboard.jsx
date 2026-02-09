@@ -1,5 +1,5 @@
 import React from "react";
-import { SignedIn, SignedOut, SignInButton, UserButton, useAuth } from "@clerk/clerk-react";
+import { SignedIn, SignedOut, SignInButton, SignUpButton, UserButton, useAuth } from "@clerk/clerk-react";
 
 const STALE_DAYS = 45;
 const VERY_FRESH_DAYS = 3;
@@ -292,7 +292,47 @@ export default function Dashboard() {
   const [showFilters, setShowFilters] = React.useState(false);
   const [hideStale, setHideStale] = React.useState(true);
   const [workspaceSearch, setWorkspaceSearch] = React.useState("");
-  const { getToken, isSignedIn } = useAuth();
+  const [theme, setTheme] = React.useState(() => localStorage.getItem("app_theme") || "dark");
+  const [feedbackOpen, setFeedbackOpen] = React.useState(false);
+  const [feedbackText, setFeedbackText] = React.useState("");
+  const [feedbackEmail, setFeedbackEmail] = React.useState("");
+  const [feedbackSent, setFeedbackSent] = React.useState(false);
+  const [feedbackSubmitting, setFeedbackSubmitting] = React.useState(false);
+  const { getToken, isSignedIn, isLoaded } = useAuth();
+  const isLight = theme === "light";
+
+  React.useEffect(() => {
+    localStorage.setItem("app_theme", theme);
+  }, [theme]);
+
+  React.useEffect(() => {
+    if (!feedbackOpen) return;
+    const onEsc = (event) => {
+      if (event.key === "Escape") setFeedbackOpen(false);
+    };
+    window.addEventListener("keydown", onEsc);
+    return () => window.removeEventListener("keydown", onEsc);
+  }, [feedbackOpen]);
+
+  const submitFeedback = React.useCallback(async () => {
+    if (!feedbackText.trim()) return;
+    setFeedbackSubmitting(true);
+    try {
+      // lightweight client-side queue so feedback survives refresh
+      const queued = JSON.parse(localStorage.getItem("feedback_queue") || "[]");
+      queued.unshift({
+        text: feedbackText.trim(),
+        email: feedbackEmail.trim(),
+        at: new Date().toISOString(),
+      });
+      localStorage.setItem("feedback_queue", JSON.stringify(queued.slice(0, 100)));
+      setFeedbackSent(true);
+      setFeedbackText("");
+      setFeedbackEmail("");
+    } finally {
+      setFeedbackSubmitting(false);
+    }
+  }, [feedbackText, feedbackEmail]);
 
   const formatLabel = React.useCallback((value) => {
     if (!value) return "";
@@ -392,6 +432,30 @@ export default function Dashboard() {
       }
     },
     {
+      label: "India Only",
+      action: () => {
+        setSearchQuery("");
+        setSelectedRole("all");
+        setSelectedEmploymentType("all");
+        setSourceQuery("");
+        setCompanyQuery("");
+        setLocationQuery("");
+        setFilteredJobs(jobs.filter(j => (j.location || "").toLowerCase().includes("india")));
+      }
+    },
+    {
+      label: "Product Roles",
+      action: () => {
+        setSearchQuery("");
+        setSelectedRole("all");
+        setSelectedEmploymentType("all");
+        setSourceQuery("");
+        setCompanyQuery("");
+        setLocationQuery("");
+        setFilteredJobs(jobs.filter(j => (j.role || "").toLowerCase().includes("product") || (j.title || "").toLowerCase().includes("product")));
+      }
+    },
+    {
       label: "Full-time",
       action: () => {
         setSearchQuery("");
@@ -401,18 +465,6 @@ export default function Dashboard() {
         setCompanyQuery("");
         setLocationQuery("");
         setFilteredJobs(jobs.filter(j => j.employment_type === "Full-time"));
-      }
-    },
-    {
-      label: "Engineering",
-      action: () => {
-        setSearchQuery("");
-        setSelectedRole("all");
-        setSelectedEmploymentType("all");
-        setSourceQuery("");
-        setCompanyQuery("");
-        setLocationQuery("");
-        setFilteredJobs(jobs.filter(j => j.role === "Engineering"));
       }
     },
     {
@@ -691,8 +743,80 @@ export default function Dashboard() {
   }
 };
 
+  if (!isLoaded) {
+    return (
+      <div className="min-h-screen bg-[#0b0b0d] text-gray-100 flex items-center justify-center">
+        <div className="text-gray-400">Loading...</div>
+      </div>
+    );
+  }
+
+  if (!isSignedIn) {
+    return (
+      <div className={`min-h-screen p-5 md:p-8 ${isLight ? "bg-[#eef3fb] text-[#111827]" : "bg-[#090a0d] text-gray-100"}`}>
+        <div className={`mx-auto max-w-7xl min-h-[calc(100vh-3rem)] grid grid-cols-1 lg:grid-cols-2 rounded-3xl overflow-hidden border ${isLight ? "border-[#d5e0f0] bg-white" : "border-[#1e2230] bg-[#0f1320]"}`}>
+          <section className={`p-8 md:p-12 flex flex-col justify-between ${isLight ? "bg-white" : "bg-[#111522]"}`}>
+            <div>
+              <div className="flex items-center justify-between mb-8">
+                <div className="flex items-center gap-3">
+                  <div className="h-11 w-11 rounded-xl bg-pink-500/20 border border-pink-500/40 text-pink-400 flex items-center justify-center font-semibold">AP</div>
+                  <div className="text-2xl font-semibold">{brandName}</div>
+                </div>
+                <button
+                  onClick={() => setTheme((prev) => (prev === "dark" ? "light" : "dark"))}
+                  className={`px-3 py-1.5 rounded-lg text-sm border ${isLight ? "bg-[#f8fbff] border-[#d8e2ef] text-[#1f2937]" : "bg-[#181d2b] border-[#2b3142] text-gray-200"}`}
+                >
+                  {isLight ? "Dark Mode" : "Light Mode"}
+                </button>
+              </div>
+              <h1 className="text-4xl md:text-5xl font-semibold leading-tight">
+                Stop tab-hopping.
+                <br />
+                Start getting interviews.
+              </h1>
+              <p className={`text-base mt-4 max-w-xl ${isLight ? "text-[#475569]" : "text-gray-400"}`}>
+                Discover roles from verified hiring boards, track your pipeline, and apply with direct links from one workspace.
+              </p>
+              <div className="mt-8 grid grid-cols-2 gap-3 max-w-md">
+                <StatTile label="Verified Sources" value="100+" isLight={isLight} />
+                <StatTile label="Live Jobs" value="8.8k+" isLight={isLight} />
+                <StatTile label="Direct Apply" value="Yes" isLight={isLight} />
+                <StatTile label="Resume Match" value="Built-in" isLight={isLight} />
+              </div>
+            </div>
+            <div className="mt-10 flex items-center gap-3">
+              <SignInButton mode="modal">
+                <button className="px-6 py-3 rounded-xl bg-pink-500 text-[#111827] font-semibold hover:bg-pink-400 transition-colors">Sign In</button>
+              </SignInButton>
+              <SignUpButton mode="modal">
+                <button className={`px-6 py-3 rounded-xl border font-semibold ${isLight ? "border-[#cbd5e1] text-[#1f2937] hover:bg-[#f8fafc]" : "border-[#30384d] text-gray-200 hover:bg-[#1b2233]"} transition-colors`}>Create Free Account</button>
+              </SignUpButton>
+            </div>
+          </section>
+          <section className={`p-8 md:p-12 relative ${isLight ? "bg-gradient-to-br from-[#f4f8ff] to-[#eef2ff]" : "bg-gradient-to-br from-[#11162a] to-[#0f1120]"}`}>
+            <div className="absolute inset-0 pointer-events-none opacity-40" style={{ background: "radial-gradient(circle at 20% 15%, #ec489955 0, transparent 45%), radial-gradient(circle at 85% 85%, #3b82f655 0, transparent 38%)" }} />
+            <div className={`relative rounded-2xl border p-6 ${isLight ? "bg-white/80 border-[#dce6f6]" : "bg-[#0c1222]/80 border-[#26304a]"}`}>
+              <p className={`text-sm uppercase tracking-wider mb-2 ${isLight ? "text-[#64748b]" : "text-gray-400"}`}>Why candidates use {brandName}</p>
+              <h2 className="text-3xl font-semibold leading-tight">Find and manage your entire job search in one place.</h2>
+              <ul className={`mt-6 space-y-3 text-sm ${isLight ? "text-[#334155]" : "text-gray-300"}`}>
+                <li>Direct links to real applications, no dead-end listings.</li>
+                <li>Pipeline board to track Interested, Applied, Interview, Offer.</li>
+                <li>Fast filters for source, role, location, and company.</li>
+                <li>Resume matcher with confidence and skill-gap signals.</li>
+              </ul>
+              <div className={`mt-7 rounded-xl border p-4 ${isLight ? "bg-[#f8fbff] border-[#dbe7f8]" : "bg-[#11182c] border-[#2b3653]"}`}>
+                <p className={`text-xs ${isLight ? "text-[#64748b]" : "text-gray-400"}`}>Today’s outcome</p>
+                <p className="text-2xl font-semibold mt-1">12 relevant roles found in under 60 seconds</p>
+              </div>
+            </div>
+          </section>
+        </div>
+      </div>
+    );
+  }
+
   return (
-    <div className="min-h-screen bg-[#0b0b0d] text-gray-100 flex">
+    <div className={`min-h-screen flex ${isLight ? "bg-[#f3f6fb] text-[#0f172a]" : "bg-[#0b0b0d] text-gray-100"}`}>
       <style>{`
         @keyframes fadeInUp {
           from { opacity: 0; transform: translateY(8px); }
@@ -700,7 +824,7 @@ export default function Dashboard() {
         }
       `}</style>
       {/* SIDEBAR */}
-      <aside className={`${sidebarOpen ? "w-72" : "w-14"} bg-[#121216] border-r border-[#1f1f24] transition-all`}>
+      <aside className={`${sidebarOpen ? "w-72" : "w-14"} transition-all border-r ${isLight ? "bg-white border-[#dbe4f0]" : "bg-[#121216] border-[#1f1f24]"}`}>
         <div className="p-4 flex justify-between items-center">
           {sidebarOpen && (
             <div className="flex items-center gap-2">
@@ -710,7 +834,7 @@ export default function Dashboard() {
               <h1 className="text-xl font-semibold text-pink-300">{brandName}</h1>
             </div>
           )}
-          <button onClick={() => setSidebarOpen(!sidebarOpen)} className="text-pink-400">
+          <button onClick={() => setSidebarOpen(!sidebarOpen)} className={isLight ? "text-pink-600" : "text-pink-400"}>
             {sidebarOpen ? "✕" : "☰"}
           </button>
         </div>
@@ -719,22 +843,22 @@ export default function Dashboard() {
           <div className="px-4 space-y-6">
             {/* NAV */}
             <nav className="space-y-2">
-              <Nav label="Overview" active={activeSection === "all"} onClick={() => setActiveSection("all")} />
-              <Nav label="My Pipeline" active={activeSection === "pipeline"} onClick={() => setActiveSection("pipeline")} />
-              <Nav label="Saved" active={activeSection === "saved"} onClick={() => setActiveSection("saved")} />
-              <Nav label="Applied" active={activeSection === "applied"} onClick={() => setActiveSection("applied")} />
-              <Nav label="Resume Matches" active={activeSection === "resume"} onClick={() => setActiveSection("resume")} />
+              <Nav icon="▦" label="Overview" active={activeSection === "all"} onClick={() => setActiveSection("all")} />
+              <Nav icon="↻" label="My Pipeline" active={activeSection === "pipeline"} onClick={() => setActiveSection("pipeline")} />
+              <Nav icon="🔖" label="Saved" active={activeSection === "saved"} onClick={() => setActiveSection("saved")} />
+              <Nav icon="📄" label="My Applications" active={activeSection === "applied"} onClick={() => setActiveSection("applied")} />
+              <Nav icon="✦" label="CV Checker" active={activeSection === "resume"} onClick={() => setActiveSection("resume")} />
             </nav>
 
             {/* QUICK FILTERS */}
             <div>
-              <h4 className="text-xs uppercase text-gray-500 mb-2">Quick Filters</h4>
+              <h4 className={`text-xs uppercase mb-2 ${isLight ? "text-[#64748b]" : "text-gray-500"}`}>Quick Filters</h4>
               <div className="space-y-1">
                 {quickFilters.map(q => (
                   <button
                     key={q.label}
                     onClick={q.action}
-                    className="w-full text-left px-3 py-2 rounded bg-[#18181d] hover:bg-[#1f1f26] text-sm transition-colors"
+                    className={`w-full text-left px-3 py-2 rounded text-sm transition-colors ${isLight ? "bg-[#f3f7fd] hover:bg-[#e7eef8] text-[#1f2937]" : "bg-[#18181d] hover:bg-[#1f1f26] text-gray-100"}`}
                   >
                     {q.label}
                   </button>
@@ -743,9 +867,9 @@ export default function Dashboard() {
             </div>
 
             {/* RESUME MATCHER CARD */}
-            <div className="bg-[#1b121a] border border-[#2b1a24] rounded-lg p-4">
+            <div className={`rounded-lg p-4 border ${isLight ? "bg-[#fff1f8] border-[#f3c2d8]" : "bg-[#1b121a] border-[#2b1a24]"}`}>
               <h4 className="text-sm font-semibold text-pink-300 mb-1">Resume Matcher</h4>
-              <p className="text-xs text-gray-400 mb-3">
+              <p className={`text-xs mb-3 ${isLight ? "text-[#64748b]" : "text-gray-400"}`}>
                 Upload your resume to find best-fit roles
               </p>
               <button
@@ -762,7 +886,7 @@ export default function Dashboard() {
       {/* MAIN */}
       <main className="flex-1 flex flex-col">
         {/* TOP BAR */}
-        <header className="p-5 border-b border-[#1f1f24] bg-[#0f1014]">
+        <header className={`p-5 border-b ${isLight ? "bg-white border-[#dbe4f0]" : "bg-[#0f1014] border-[#1f1f24]"}`}>
           <div className="flex items-center gap-4">
             <div className="flex-1">
               <div className="relative">
@@ -771,20 +895,28 @@ export default function Dashboard() {
                   placeholder="Search across your workspace..."
                   value={workspaceSearch}
                   onChange={(e) => setWorkspaceSearch(e.target.value)}
-                  className="w-full bg-[#14151b] border border-[#26262d] rounded-xl px-4 py-3 text-sm text-gray-300 focus:outline-none focus:border-pink-500 transition-colors"
+                  className={`w-full border rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-pink-500 transition-colors ${isLight ? "bg-[#f7f9fc] border-[#d6e0ee] text-[#1f2937]" : "bg-[#14151b] border-[#26262d] text-gray-300"}`}
                 />
               </div>
             </div>
             <div className="flex items-center gap-3">
+              <button
+                onClick={() => setTheme((prev) => (prev === "dark" ? "light" : "dark"))}
+                className={`h-9 px-3 rounded-lg text-xs border transition-colors ${isLight ? "bg-[#f7f9fc] border-[#d6e0ee] text-[#1f2937]" : "bg-[#1b1b20] border-[#30303a] text-gray-200"}`}
+              >
+                {isLight ? "Dark" : "Light"}
+              </button>
+              <button
+                onClick={() => {
+                  setFeedbackOpen(true);
+                  setFeedbackSent(false);
+                }}
+                className={`h-9 px-3 rounded-lg text-xs border transition-colors ${isLight ? "bg-[#f7f9fc] border-[#d6e0ee] text-[#1f2937]" : "bg-[#1b1b20] border-[#30303a] text-gray-200"}`}
+              >
+                Feedback
+              </button>
               <button className="h-9 w-9 rounded-full bg-[#1b1b20] text-gray-300 hover:text-white transition-colors">?</button>
               <button className="h-9 w-9 rounded-full bg-[#1b1b20] text-gray-300 hover:text-white transition-colors">🔔</button>
-              <SignedOut>
-                <SignInButton mode="modal">
-                  <button className="px-4 py-2 rounded-lg bg-pink-500 text-gray-900 text-sm font-semibold hover:bg-pink-400 transition-colors">
-                    Sign in
-                  </button>
-                </SignInButton>
-              </SignedOut>
               <SignedIn>
                 <UserButton appearance={{ elements: { userButtonAvatarBox: "h-9 w-9" } }} />
               </SignedIn>
@@ -794,11 +926,11 @@ export default function Dashboard() {
 
         {/* FILTERS BAR */}
         {activeSection !== "resume" && activeSection !== "pipeline" && (
-          <div className="p-6 bg-[#0f1014] border-b border-[#1f1f24]">
+          <div className={`p-6 border-b ${isLight ? "bg-white border-[#dbe4f0]" : "bg-[#0f1014] border-[#1f1f24]"}`}>
             <div className="flex items-center justify-between gap-4 mb-4">
               <div>
-                <h2 className="text-2xl font-semibold text-white">Job Intelligence</h2>
-                <p className="text-sm text-gray-400">Find the jobs from 100+ verified companies.</p>
+                <h2 className={`text-2xl font-semibold ${isLight ? "text-[#0f172a]" : "text-white"}`}>Job Intelligence</h2>
+                <p className={`text-sm ${isLight ? "text-[#475569]" : "text-gray-400"}`}>Find the jobs from 100+ verified companies.</p>
               </div>
               <div className="flex items-center gap-2">
                 <button
@@ -901,16 +1033,28 @@ export default function Dashboard() {
                 </select>
 
                 <div className="lg:col-span-2">
-                  <select
-                    value={companyQuery || "__all__"}
-                    onChange={e => setCompanyQuery(e.target.value === "__all__" ? "" : e.target.value)}
-                    className="w-full bg-[#16161b] border border-[#26262d] rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-pink-500 transition-colors cursor-pointer"
-                  >
-                    <option value="__all__">All Companies</option>
-                    {companies.map(company => (
-                      <option key={company} value={company}>{company}</option>
-                    ))}
-                  </select>
+                  <div className="flex items-center gap-2">
+                    <input
+                      list="company-options"
+                      placeholder="Company"
+                      value={companyQuery}
+                      onChange={e => setCompanyQuery(e.target.value)}
+                      className="w-full bg-[#16161b] border border-[#26262d] rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-pink-500 transition-colors"
+                    />
+                    {companyQuery && (
+                      <button
+                        onClick={() => setCompanyQuery("")}
+                        className="px-2 py-2 text-xs rounded bg-[#1f1f25] border border-[#2a2a33] hover:border-pink-500"
+                      >
+                        Clear
+                      </button>
+                    )}
+                    <datalist id="company-options">
+                      {companies.map(company => (
+                        <option key={company} value={company} />
+                      ))}
+                    </datalist>
+                  </div>
                 </div>
               </div>
             )}
@@ -1085,22 +1229,80 @@ export default function Dashboard() {
           )}
         </section>
       </main>
+      {feedbackOpen && (
+        <div
+          className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4"
+          onClick={() => setFeedbackOpen(false)}
+        >
+          <div
+            className={`w-full max-w-lg rounded-2xl border p-6 ${isLight ? "bg-white border-[#dbe4f0]" : "bg-[#111522] border-[#26304a]"}`}
+            onClick={(event) => event.stopPropagation()}
+          >
+            <h3 className="text-xl font-semibold">Share feedback</h3>
+            <p className={`text-sm mt-1 ${isLight ? "text-[#64748b]" : "text-gray-400"}`}>Tell us what should be improved next.</p>
+            <div className="mt-4 space-y-3">
+              <textarea
+                value={feedbackText}
+                onChange={(e) => setFeedbackText(e.target.value)}
+                placeholder="What felt broken, slow, or missing?"
+                rows={5}
+                className={`w-full rounded-xl border px-3 py-2 text-sm focus:outline-none focus:border-pink-500 ${isLight ? "bg-[#f8fbff] border-[#dbe4f0]" : "bg-[#161b2a] border-[#2b3653]"}`}
+              />
+              <input
+                type="email"
+                value={feedbackEmail}
+                onChange={(e) => setFeedbackEmail(e.target.value)}
+                placeholder="Email (optional)"
+                className={`w-full rounded-xl border px-3 py-2 text-sm focus:outline-none focus:border-pink-500 ${isLight ? "bg-[#f8fbff] border-[#dbe4f0]" : "bg-[#161b2a] border-[#2b3653]"}`}
+              />
+              {feedbackSent && (
+                <div className="text-sm text-emerald-400">Thanks. Feedback saved.</div>
+              )}
+            </div>
+            <div className="mt-5 flex items-center justify-end gap-2">
+              <button
+                onClick={() => setFeedbackOpen(false)}
+                className={`px-4 py-2 rounded-lg border text-sm ${isLight ? "border-[#dbe4f0] hover:bg-[#f8fbff]" : "border-[#2b3653] hover:bg-[#161b2a]"}`}
+              >
+                Cancel
+              </button>
+              <button
+                onClick={submitFeedback}
+                disabled={!feedbackText.trim() || feedbackSubmitting}
+                className="px-4 py-2 rounded-lg text-sm font-semibold bg-pink-500 text-[#111827] hover:bg-pink-400 disabled:opacity-50"
+              >
+                {feedbackSubmitting ? "Sending..." : "Send Feedback"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
 
 /* ---------------- UI COMPONENTS ---------------- */
 
-function Nav({ label, active, onClick }) {
+function Nav({ icon, label, active, onClick }) {
   return (
     <button
       onClick={onClick}
-      className={`w-full text-left px-4 py-2 rounded transition-colors ${
+      className={`w-full text-left px-4 py-2 rounded transition-colors flex items-center gap-2 ${
         active ? "bg-[#231824] text-pink-300" : "text-gray-400 hover:bg-[#1b1b20]"
       }`}
     >
+      <span className="w-4 text-center">{icon || "•"}</span>
       {label}
     </button>
+  );
+}
+
+function StatTile({ label, value, isLight }) {
+  return (
+    <div className={`rounded-xl border px-3 py-3 ${isLight ? "bg-[#f8fbff] border-[#dbe7f8]" : "bg-[#151c2f] border-[#2b3653]"}`}>
+      <div className={`text-[11px] ${isLight ? "text-[#64748b]" : "text-gray-400"}`}>{label}</div>
+      <div className="text-base font-semibold mt-1">{value}</div>
+    </div>
   );
 }
 
@@ -1278,11 +1480,6 @@ function JobCard({ job, index, saved, applied, onSave, onApply, resumeMatchEnabl
           </div>
           <div className="flex items-center gap-2 mb-1">
             <h3 className="text-lg font-semibold text-white">{job.title}</h3>
-            {!applied && (
-              <span className="text-xs bg-pink-500/20 text-pink-300 px-2 py-0.5 rounded-full">
-                ✨ New
-              </span>
-            )}
           </div>
           <p className="text-gray-400 text-sm mb-2">{job.location} · {job.employment_type || "Full-time"} · {job.postedDate || job.fetchedAt || "Recently"}</p>
           
