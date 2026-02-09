@@ -756,7 +756,7 @@ export default function Dashboard() {
                   >
                     <option value="__all__">All Companies</option>
                     {companies.map(company => (
-                      <option key={company} value={company} />
+                      <option key={company} value={company}>{company}</option>
                     ))}
                   </select>
                 </div>
