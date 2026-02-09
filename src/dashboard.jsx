@@ -263,6 +263,41 @@ function computeMatch(job, resumeText) {
   return { matchScore, matchExplain: explain, matchConfidence: confidence };
 }
 
+function computeQuickPlatformMatch(job, resumeText) {
+  const resumeTokens = normalizeTerms(resumeText)
+    .map((token) => normalizePhrase(token))
+    .filter((token) => token && !STOPWORDS.has(token) && token.length > 2);
+  const uniqueResume = Array.from(new Set(resumeTokens)).slice(0, 120);
+
+  const jobText = [
+    job.title || "",
+    job.company || "",
+    job.role || "",
+    job.location || "",
+    (job.requirements?.skills || []).join(" "),
+    (job.requirements?.keywords || []).join(" "),
+  ].join(" ");
+
+  const jobTokenSet = new Set(
+    normalizeTerms(jobText)
+      .map((token) => normalizePhrase(token))
+      .filter(Boolean)
+  );
+
+  const hits = uniqueResume.filter((token) => jobTokenSet.has(token));
+  if (hits.length === 0) return null;
+
+  const base = Math.min(1, hits.length / Math.max(8, Math.min(uniqueResume.length, 35)));
+  const matchScore = Math.max(1, Math.min(99, Math.round(base * 100)));
+
+  return {
+    ...job,
+    matchScore,
+    matchConfidence: Math.min(95, 50 + hits.length * 5),
+    matchExplain: [{ label: "Keyword Match", hits: hits.slice(0, 6) }],
+  };
+}
+
 export default function Dashboard() {
   const brandName = "ApplyPulse";
   const [jobs, setJobs] = React.useState([]);
@@ -278,6 +313,9 @@ export default function Dashboard() {
 
   const [activeSection, setActiveSection] = React.useState("all");
   const [resumeMatchEnabled, setResumeMatchEnabled] = React.useState(false);
+  const [matcherResumeText, setMatcherResumeText] = React.useState("");
+  const [matcherResults, setMatcherResults] = React.useState([]);
+  const [matcherRunning, setMatcherRunning] = React.useState(false);
 
   const [savedJobs, setSavedJobs] = React.useState([]);
   const [sidebarOpen, setSidebarOpen] = React.useState(false);
@@ -629,6 +667,50 @@ export default function Dashboard() {
     alert("Please upload TXT. For PDF, paste text manually.");
   };
 
+  const handleMatcherResumeUpload = (event) => {
+    const file = event.target.files[0];
+    if (!file) return;
+    const fileType = file.type;
+    if (!(fileType === "text/plain" || file.name.endsWith(".txt"))) return;
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      setMatcherResumeText(String(e.target.result || ""));
+    };
+    reader.readAsText(file);
+  };
+
+  const runResumeMatcher = () => {
+    const text = matcherResumeText.trim();
+    if (!text) return;
+    setMatcherRunning(true);
+    setMatcherResults([]);
+
+    const batchSize = 150;
+    let index = 0;
+    const nextResults = [];
+
+    const processBatch = () => {
+      const end = Math.min(index + batchSize, jobs.length);
+      for (let i = index; i < end; i += 1) {
+        const matched = computeQuickPlatformMatch(jobs[i], text);
+        if (matched && matched.matchScore >= 12) nextResults.push(matched);
+      }
+      index = end;
+
+      if (index < jobs.length) {
+        setTimeout(processBatch, 0);
+        return;
+      }
+
+      nextResults.sort((a, b) => (b.matchScore || 0) - (a.matchScore || 0));
+      setMatcherResults(nextResults.slice(0, 300));
+      setResumeMatchEnabled(true);
+      setMatcherRunning(false);
+    };
+
+    processBatch();
+  };
+
   if (!isLoaded) {
     return (
       <div className="min-h-screen bg-[#0b0b0d] text-gray-100 flex items-center justify-center">
@@ -733,7 +815,8 @@ export default function Dashboard() {
               <Nav icon="↻" label="My Pipeline" active={activeSection === "pipeline"} onClick={() => setActiveSection("pipeline")} />
               <Nav icon="🔖" label="Saved" active={activeSection === "saved"} onClick={() => setActiveSection("saved")} />
               <Nav icon="📄" label="My Applications" active={activeSection === "applied"} onClick={() => setActiveSection("applied")} />
-              <Nav icon="✦" label="CV Checker" active={activeSection === "resume"} onClick={() => setActiveSection("resume")} />
+              <Nav icon="🧾" label="Resume Matcher" active={activeSection === "resume_matcher"} onClick={() => setActiveSection("resume_matcher")} />
+              <Nav icon="✦" label="JD Tailor (AI)" active={activeSection === "jd_tailor"} onClick={() => setActiveSection("jd_tailor")} />
             </nav>
 
             {/* RESUME MATCHER CARD */}
@@ -743,7 +826,7 @@ export default function Dashboard() {
                 Upload your resume to find best-fit roles
               </p>
               <button
-                onClick={() => setActiveSection("resume")}
+                onClick={() => setActiveSection("resume_matcher")}
                 className="w-full bg-pink-500 text-gray-900 py-1.5 rounded text-sm font-semibold hover:bg-pink-400 transition-colors"
               >
                 See Your Fit →
@@ -784,7 +867,7 @@ export default function Dashboard() {
         </header>
 
         {/* FILTERS BAR */}
-        {activeSection !== "resume" && activeSection !== "pipeline" && (
+        {activeSection !== "resume_matcher" && activeSection !== "jd_tailor" && activeSection !== "pipeline" && (
           <div className={`p-6 border-b ${isLight ? "bg-white border-[#dbe4f0]" : "bg-[#0f1014] border-[#1f1f24]"}`}>
             <div className="flex items-center justify-between gap-4 mb-4">
               <div>
@@ -799,7 +882,7 @@ export default function Dashboard() {
                   Filters
                 </button>
                 <button
-                  onClick={() => setActiveSection("resume")}
+                  onClick={() => setActiveSection("jd_tailor")}
                   className="bg-pink-500 text-gray-900 rounded-xl px-4 py-2 text-sm font-semibold hover:bg-pink-400 transition-colors"
                 >
                   AI Match
@@ -992,8 +1075,67 @@ export default function Dashboard() {
 
         {/* CONTENT */}
         <section className="flex-1 overflow-y-auto p-6">
-          {activeSection === "resume" ? (
-            <ResumeMatchScreen 
+          {activeSection === "resume_matcher" ? (
+            <div className="space-y-6">
+              <div className={`rounded-2xl p-6 border ${isLight ? "bg-white border-[#d8e2ef]" : "bg-[#121216] border-[#1f1f24]"}`}>
+                <h3 className="text-2xl font-bold text-pink-300 mb-2">Resume Matcher</h3>
+                <p className={`mb-4 ${isLight ? "text-[#475569]" : "text-gray-400"}`}>
+                  Upload or paste your resume. We will rank matching jobs from this platform only.
+                </p>
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                  <div>
+                    <label className={`text-xs ${isLight ? "text-[#64748b]" : "text-gray-400"}`}>Upload resume (.txt)</label>
+                    <input type="file" accept=".txt" onChange={handleMatcherResumeUpload} className={`mt-2 text-sm ${isLight ? "text-[#0f172a]" : "text-gray-300"}`} />
+                  </div>
+                  <div>
+                    <label className={`text-xs ${isLight ? "text-[#64748b]" : "text-gray-400"}`}>Or paste resume text</label>
+                    <textarea
+                      value={matcherResumeText}
+                      onChange={(e) => setMatcherResumeText(e.target.value)}
+                      rows={6}
+                      className={`w-full mt-2 rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-pink-500 border ${isLight ? "bg-white border-[#d8e2ef] text-[#0f172a]" : "bg-[#16161b] border-[#26262d] text-gray-200"}`}
+                      placeholder="Paste resume text..."
+                    />
+                  </div>
+                </div>
+                <div className="mt-4 flex items-center gap-3">
+                  <button
+                    onClick={runResumeMatcher}
+                    disabled={matcherRunning || !matcherResumeText.trim()}
+                    className="px-4 py-2 rounded-lg bg-pink-500 text-gray-900 text-sm font-semibold hover:bg-pink-400 disabled:opacity-60"
+                  >
+                    {matcherRunning ? "Matching..." : "Find Matching Jobs"}
+                  </button>
+                  <span className={`text-xs ${isLight ? "text-[#64748b]" : "text-gray-500"}`}>
+                    {matcherResults.length ? `${matcherResults.length} matches found` : "No matches yet"}
+                  </span>
+                </div>
+              </div>
+
+              {matcherResults.length > 0 && (
+                <div className="space-y-4">
+                  {matcherResults.slice(0, 60).map((job, index) => (
+                    <JobCard
+                      key={`matcher-${job.id}-${index}`}
+                      job={job}
+                      index={index}
+                      saved={savedJobs.includes(job.id)}
+                      applied={applicationsByJobId.has(job.id)}
+                      appliedDetails={applicationsByJobId.get(job.id)}
+                      isExpanded={expandedJob === job.id}
+                      onSave={toggleSaveJob}
+                      onApply={markJobAsApplied}
+                      onUpdateNotes={(appId, notes) => updateApplication(appId, { notes })}
+                      onToggleDetails={(id) => setExpandedJob(expandedJob === id ? null : id)}
+                      resumeMatchEnabled={true}
+                      isLight={isLight}
+                    />
+                  ))}
+                </div>
+              )}
+            </div>
+          ) : activeSection === "jd_tailor" ? (
+            <ResumeTailorScreen
               onMatch={() => setResumeMatchEnabled(true)}
               onFileUpload={handleResumeUpload}
               authFetch={authFetch}
@@ -1173,7 +1315,7 @@ function StatTile({ label, value, isLight }) {
   );
 }
 
-function ResumeMatchScreen({ onMatch, onFileUpload, authFetch, resumeText, onResumeTextChange, isLight }) {
+function ResumeTailorScreen({ onMatch, onFileUpload, authFetch, resumeText, onResumeTextChange, isLight }) {
   const [jobDescription, setJobDescription] = React.useState("");
   const [profile, setProfile] = React.useState({
     name: "",
