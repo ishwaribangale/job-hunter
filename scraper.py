@@ -10,6 +10,7 @@ import os
 import json
 import re
 import time
+import hashlib
 import requests
 from datetime import datetime
 from urllib.parse import urlparse, urljoin, unquote
@@ -672,6 +673,26 @@ class JobScraper:
         except Exception:
             return ""
 
+    def _clean_job_title(self, title: str) -> str:
+        if not title:
+            return ""
+        cleaned = re.sub(r"\s+", " ", str(title)).strip()
+        generic = {
+            "apply",
+            "apply now",
+            "details",
+            "view details",
+            "read more",
+            "learn more",
+            "job opening",
+            "open position",
+            "career",
+            "careers",
+        }
+        if cleaned.lower() in generic:
+            return ""
+        return cleaned
+
     def _extract_jobposting_jsonld(self, soup: BeautifulSoup):
         jobs = []
         for script in soup.find_all("script", type="application/ld+json"):
@@ -1286,22 +1307,25 @@ class JobScraper:
                     continue
                 seen.add(full_url)
 
-                title = a.get_text(strip=True)
-                if not title or len(title) < 3:
+                title = self._clean_job_title(a.get_text(" ", strip=True))
+                if not title:
                     parent = a.find_parent()
                     if parent:
-                        h = parent.find(["h2", "h3", "h4", "span"])
+                        h = parent.find(["h1", "h2", "h3", "h4", "h5", "span"])
                         if h:
-                            title = h.get_text(strip=True)
-                if not title or len(title) < 3:
+                            title = self._clean_job_title(h.get_text(" ", strip=True))
+                if not title:
+                    title = self._title_from_url(full_url)
+                if not title:
                     continue
 
                 valid.append((title, full_url))
 
             print(f"  ✓ Brainstorm Force: {len(valid)} jobs")
             for title, full_url in valid:
+                stable_id = hashlib.md5(full_url.encode("utf-8")).hexdigest()[:16]
                 self.add({
-                    "id": f"brainstormforce_{hash(full_url)}",
+                    "id": f"brainstormforce_{stable_id}",
                     "title": title,
                     "company": company_name,
                     "location": "Remote",

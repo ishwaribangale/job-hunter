@@ -50,6 +50,55 @@ function normalizeLink(link) {
   return String(link).trim().replace(/\/+$/, "").toLowerCase();
 }
 
+const GENERIC_JOB_TITLES = new Set([
+  "apply",
+  "apply now",
+  "details",
+  "view details",
+  "job opening",
+  "open position",
+  "career",
+  "careers",
+  "role",
+  "position",
+]);
+
+function prettifySlugTitle(slug) {
+  if (!slug) return "";
+  const words = slug
+    .split(/[-_]+/g)
+    .map((word) => word.trim())
+    .filter(Boolean)
+    .map((word) => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase());
+
+  return words
+    .join(" ")
+    .replace(/\bUi\b/g, "UI")
+    .replace(/\bUx\b/g, "UX")
+    .replace(/\bQa\b/g, "QA")
+    .replace(/\bRnd\b/g, "R&D");
+}
+
+function deriveDisplayTitle(title, applyLink) {
+  const current = String(title || "").trim();
+  if (current && !GENERIC_JOB_TITLES.has(current.toLowerCase())) return current;
+
+  if (!applyLink) return current || "Job Opening";
+  try {
+    const parsed = new URL(String(applyLink));
+    const segments = parsed.pathname.split("/").filter(Boolean);
+    const ignored = new Set(["jobs", "job", "careers", "career", "join", "positions", "position", "opening", "openings"]);
+    let slug = segments[segments.length - 1] || "";
+    if (ignored.has(slug.toLowerCase()) && segments.length > 1) {
+      slug = segments[segments.length - 2] || slug;
+    }
+    const derived = prettifySlugTitle(slug);
+    return derived || current || "Job Opening";
+  } catch {
+    return current || "Job Opening";
+  }
+}
+
 function freshnessMeta(job) {
   const ts = toTimestamp(job.postedDate || job.fetchedAt);
   if (!ts) return { ageDays: 999, freshness: "Unknown", stale: true, freshnessScore: 0 };
@@ -65,8 +114,9 @@ function dedupeAndEnhanceJobs(rawJobs) {
   const unique = new Map();
 
   rawJobs.forEach((job) => {
+    const displayTitle = deriveDisplayTitle(job.title, job.applyLink);
     const linkKey = normalizeLink(job.applyLink);
-    const titleKey = String(job.title || "").trim().toLowerCase();
+    const titleKey = String(displayTitle || "").trim().toLowerCase();
     const companyKey = String(job.company || "").trim().toLowerCase();
     const locationKey = String(job.location || "").trim().toLowerCase();
     const dedupeKey = linkKey || `${companyKey}::${titleKey}::${locationKey}`;
@@ -74,7 +124,7 @@ function dedupeAndEnhanceJobs(rawJobs) {
 
     const existing = unique.get(dedupeKey);
     if (!existing) {
-      unique.set(dedupeKey, job);
+      unique.set(dedupeKey, { ...job, title: displayTitle });
       return;
     }
 
@@ -84,7 +134,7 @@ function dedupeAndEnhanceJobs(rawJobs) {
     const nextScore = Number(job.score || 0);
 
     if (nextTs > existingTs || (nextTs === existingTs && nextScore > existingScore)) {
-      unique.set(dedupeKey, job);
+      unique.set(dedupeKey, { ...job, title: displayTitle });
     }
   });
 
