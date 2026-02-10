@@ -1609,6 +1609,92 @@ function ATSResumePreview({ model }) {
   );
 }
 
+function ATSResumeEditor({ model, onChange, isLight }) {
+  if (!model) return null;
+
+  const inputClass = `w-full rounded-lg px-3 py-2 text-sm border focus:outline-none focus:border-pink-500 ${
+    isLight ? "bg-white border-[#d8e2ef] text-[#0f172a]" : "bg-[#16161b] border-[#26262d] text-gray-200"
+  }`;
+
+  const listToMultiline = (items) => (Array.isArray(items) ? items.join("\n") : "");
+  const multilineToList = (value) =>
+    String(value || "")
+      .split("\n")
+      .map((line) => normalizeText(line))
+      .filter(Boolean);
+  const commaToList = (value) =>
+    String(value || "")
+      .split(",")
+      .map((item) => normalizeText(item))
+      .filter(Boolean);
+
+  return (
+    <div className={`rounded-xl p-4 border ${isLight ? "bg-[#f8fbff] border-[#d8e2ef]" : "bg-[#16161b] border-[#26262d]"}`}>
+      <div className={`text-sm font-semibold mb-3 ${isLight ? "text-[#0f172a]" : "text-gray-100"}`}>Edit Resume Draft</div>
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+        <input
+          value={model.name || ""}
+          onChange={(e) => onChange({ name: e.target.value })}
+          placeholder="Name"
+          className={inputClass}
+        />
+        <input
+          value={model.roleTitle || ""}
+          onChange={(e) => onChange({ roleTitle: e.target.value })}
+          placeholder="Target title"
+          className={inputClass}
+        />
+        <input
+          value={model.email || ""}
+          onChange={(e) => onChange({ email: e.target.value })}
+          placeholder="Email"
+          className={inputClass}
+        />
+        <input
+          value={model.phone || ""}
+          onChange={(e) => onChange({ phone: e.target.value })}
+          placeholder="Phone"
+          className={inputClass}
+        />
+        <input
+          value={model.company || ""}
+          onChange={(e) => onChange({ company: e.target.value })}
+          placeholder="Company"
+          className={`md:col-span-2 ${inputClass}`}
+        />
+        <textarea
+          value={model.summary || ""}
+          onChange={(e) => onChange({ summary: e.target.value })}
+          rows={4}
+          placeholder="Professional summary"
+          className={`md:col-span-2 ${inputClass}`}
+        />
+        <textarea
+          value={listToMultiline(model.experienceBullets)}
+          onChange={(e) => onChange({ experienceBullets: multilineToList(e.target.value) })}
+          rows={7}
+          placeholder="Experience bullets (one per line)"
+          className={`md:col-span-2 ${inputClass}`}
+        />
+        <textarea
+          value={Array.isArray(model.skills) ? model.skills.join(", ") : ""}
+          onChange={(e) => onChange({ skills: commaToList(e.target.value) })}
+          rows={3}
+          placeholder="Skills (comma separated)"
+          className={inputClass}
+        />
+        <textarea
+          value={Array.isArray(model.keywords) ? model.keywords.join(", ") : ""}
+          onChange={(e) => onChange({ keywords: commaToList(e.target.value) })}
+          rows={3}
+          placeholder="ATS keywords (comma separated)"
+          className={inputClass}
+        />
+      </div>
+    </div>
+  );
+}
+
 function ResumeTailorScreen({ onMatch, onFileUpload, authFetch, resumeText, onResumeTextChange, isLight }) {
   const [step, setStep] = React.useState(1);
   const [jobDescription, setJobDescription] = React.useState("");
@@ -1623,10 +1709,23 @@ function ResumeTailorScreen({ onMatch, onFileUpload, authFetch, resumeText, onRe
   const [error, setError] = React.useState("");
   const [loading, setLoading] = React.useState(false);
   const [result, setResult] = React.useState(null);
+  const [editableResumeModel, setEditableResumeModel] = React.useState(null);
   const atsResumeModel = React.useMemo(
     () => (result ? buildAtsResumeModel({ result, manual, resumeText }) : null),
     [result, manual, resumeText]
   );
+  const activeResumeModel = editableResumeModel || atsResumeModel;
+
+  React.useEffect(() => {
+    if (!editableResumeModel) return;
+    setResult((prev) => {
+      if (!prev) return prev;
+      return {
+        ...prev,
+        tailored_resume_text: composeAtsResumeText(editableResumeModel),
+      };
+    });
+  }, [editableResumeModel]);
 
   const goNextFromStep1 = () => {
     if (!jobDescription.trim()) {
@@ -1693,6 +1792,15 @@ function ResumeTailorScreen({ onMatch, onFileUpload, authFetch, resumeText, onRe
         nextResult.tailored_resume_text = composeAtsResumeText(fallbackModel);
       }
       setResult(nextResult);
+      setEditableResumeModel(
+        nextResult
+          ? buildAtsResumeModel({
+              result: nextResult,
+              manual,
+              resumeText: mode === "import" ? resumeText : buildManualResumeText(),
+            })
+          : null
+      );
       onMatch();
       setStep(4);
     } catch (e) {
@@ -1844,12 +1952,13 @@ function ResumeTailorScreen({ onMatch, onFileUpload, authFetch, resumeText, onRe
                 <button
                   onClick={() => {
                     try {
-                      if (!atsResumeModel) return;
-                      downloadTextFile(atsResumeModel);
+                      if (!activeResumeModel) return;
+                      downloadTextFile(activeResumeModel);
                     } catch (e) {
                       setError(e?.message || "Failed to download TXT.");
                     }
                   }}
+                  disabled={!activeResumeModel}
                   className={`px-3 py-2 rounded-lg text-sm border ${isLight ? "border-[#d8e2ef]" : "border-[#26262d]"}`}
                 >
                   Download TXT
@@ -1857,12 +1966,13 @@ function ResumeTailorScreen({ onMatch, onFileUpload, authFetch, resumeText, onRe
                 <button
                   onClick={() => {
                     try {
-                      if (!atsResumeModel) return;
-                      downloadAtsPdf(atsResumeModel);
+                      if (!activeResumeModel) return;
+                      downloadAtsPdf(activeResumeModel);
                     } catch (e) {
                       setError(e?.message || "Failed to download PDF.");
                     }
                   }}
+                  disabled={!activeResumeModel}
                   className="px-4 py-2 rounded-lg bg-pink-500 text-gray-900 text-sm font-semibold hover:bg-pink-400"
                 >
                   Download PDF
@@ -1870,7 +1980,20 @@ function ResumeTailorScreen({ onMatch, onFileUpload, authFetch, resumeText, onRe
               </div>
             </div>
 
-            {atsResumeModel && <ATSResumePreview model={atsResumeModel} />}
+            {activeResumeModel && (
+              <ATSResumeEditor
+                model={activeResumeModel}
+                isLight={isLight}
+                onChange={(patch) =>
+                  setEditableResumeModel((prev) => ({
+                    ...(prev || {}),
+                    ...patch,
+                  }))
+                }
+              />
+            )}
+
+            {activeResumeModel && <ATSResumePreview model={activeResumeModel} />}
 
             <div className={`rounded-xl p-4 border ${isLight ? "bg-[#f8fbff] border-[#d8e2ef]" : "bg-[#16161b] border-[#26262d]"}`}>
               <div className={`text-sm font-semibold mb-2 ${isLight ? "text-[#0f172a]" : "text-gray-100"}`}>Tailor Notes</div>
@@ -1892,6 +2015,7 @@ function ResumeTailorScreen({ onMatch, onFileUpload, authFetch, resumeText, onRe
                   setStep(1);
                   setResult(null);
                   setMode("");
+                  setEditableResumeModel(null);
                   setError("");
                 }}
                 className="px-4 py-2 rounded-lg bg-pink-500 text-gray-900 text-sm font-semibold hover:bg-pink-400"
