@@ -1347,6 +1347,268 @@ function StatTile({ label, value, isLight }) {
   );
 }
 
+function normalizeText(value) {
+  return String(value || "").replace(/\s+/g, " ").trim();
+}
+
+function uniqueItems(items, max = 12) {
+  const seen = new Set();
+  const out = [];
+  for (const item of items || []) {
+    const normalized = normalizeText(item);
+    if (!normalized) continue;
+    const key = normalized.toLowerCase();
+    if (seen.has(key)) continue;
+    seen.add(key);
+    out.push(normalized);
+    if (out.length >= max) break;
+  }
+  return out;
+}
+
+function extractEmail(text) {
+  const match = String(text || "").match(/[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}/i);
+  return match ? match[0] : "";
+}
+
+function extractPhone(text) {
+  const match = String(text || "").match(/(\+?\d[\d\s-]{8,}\d)/);
+  return match ? match[1].replace(/\s+/g, " ").trim() : "";
+}
+
+function extractLikelyName(text) {
+  const lines = String(text || "")
+    .split("\n")
+    .map((line) => line.trim())
+    .filter(Boolean)
+    .slice(0, 6);
+
+  for (const line of lines) {
+    if (line.length < 3 || line.length > 60) continue;
+    if (/\d/.test(line)) continue;
+    if (line.includes("@")) continue;
+    if (/summary|experience|education|skills|resume/i.test(line)) continue;
+    return line;
+  }
+  return "";
+}
+
+function inferRoleTitle(headline) {
+  const text = normalizeText(headline);
+  if (!text) return "Professional Resume";
+  return text.replace(/\s*\|\s*.*$/, "").trim();
+}
+
+function buildAtsResumeModel({ result, manual, resumeText }) {
+  const baseText = String(resumeText || "");
+  const contactEmail = normalizeText(manual?.email) || extractEmail(baseText);
+  const contactPhone = normalizeText(manual?.phone) || extractPhone(baseText);
+  const candidateName = normalizeText(manual?.name) || extractLikelyName(baseText) || "Candidate Name";
+  const currentCompany = normalizeText(manual?.company);
+  const roleTitle = inferRoleTitle(result?.headline);
+
+  const experienceBullets = uniqueItems(result?.tailored_experience_bullets, 10);
+  const skills = uniqueItems(result?.tailored_skills, 18);
+  const keywords = uniqueItems(result?.ats_keywords, 18);
+  const changes = uniqueItems(result?.changes_made, 8);
+  const missing = uniqueItems(result?.missing_information, 8);
+
+  return {
+    name: candidateName,
+    roleTitle,
+    email: contactEmail,
+    phone: contactPhone,
+    company: currentCompany,
+    summary: normalizeText(result?.professional_summary) || normalizeText(manual?.highlights),
+    experienceBullets,
+    skills,
+    keywords,
+    changes,
+    missing,
+  };
+}
+
+function composeAtsResumeText(model) {
+  const lines = [];
+  lines.push(model.name);
+  lines.push(model.roleTitle);
+
+  const contact = [model.email, model.phone].filter(Boolean).join(" | ");
+  if (contact) lines.push(contact);
+  lines.push("");
+
+  if (model.summary) {
+    lines.push("PROFESSIONAL SUMMARY");
+    lines.push(model.summary);
+    lines.push("");
+  }
+
+  if (model.experienceBullets.length > 0) {
+    lines.push("EXPERIENCE HIGHLIGHTS");
+    model.experienceBullets.forEach((item) => lines.push(`- ${item}`));
+    lines.push("");
+  }
+
+  if (model.skills.length > 0) {
+    lines.push("CORE SKILLS");
+    lines.push(model.skills.join(", "));
+    lines.push("");
+  }
+
+  if (model.keywords.length > 0) {
+    lines.push("ATS KEYWORDS");
+    lines.push(model.keywords.join(", "));
+    lines.push("");
+  }
+
+  if (model.missing.length > 0) {
+    lines.push("MISSING INFORMATION");
+    model.missing.forEach((item) => lines.push(`- ${item}`));
+    lines.push("");
+  }
+
+  return lines.join("\n").trim();
+}
+
+function downloadAtsPdf(model) {
+  const jsPDF = window?.jspdf?.jsPDF;
+  if (!jsPDF) {
+    throw new Error("PDF export library not loaded. Refresh and try again.");
+  }
+
+  const doc = new jsPDF({ unit: "pt", format: "a4" });
+  const pageWidth = doc.internal.pageSize.getWidth();
+  const pageHeight = doc.internal.pageSize.getHeight();
+  const margin = 48;
+  const contentWidth = pageWidth - margin * 2;
+  let y = margin;
+
+  const ensureSpace = (height = 16) => {
+    if (y + height <= pageHeight - margin) return;
+    doc.addPage();
+    y = margin;
+  };
+
+  const writeWrapped = (text, { size = 11, bold = false, gap = 15 } = {}) => {
+    const normalized = normalizeText(text);
+    if (!normalized) return;
+    doc.setFont("helvetica", bold ? "bold" : "normal");
+    doc.setFontSize(size);
+    const lines = doc.splitTextToSize(normalized, contentWidth);
+    for (const line of lines) {
+      ensureSpace(gap);
+      doc.text(line, margin, y);
+      y += gap;
+    }
+  };
+
+  const writeHeading = (text) => {
+    ensureSpace(20);
+    y += 4;
+    writeWrapped(text, { size: 12, bold: true, gap: 16 });
+    y += 2;
+  };
+
+  writeWrapped(model.name, { size: 20, bold: true, gap: 22 });
+  writeWrapped(model.roleTitle, { size: 12, bold: true, gap: 16 });
+  const contactLine = [model.email, model.phone].filter(Boolean).join(" | ");
+  if (contactLine) writeWrapped(contactLine, { size: 10, gap: 14 });
+  y += 8;
+
+  if (model.summary) {
+    writeHeading("PROFESSIONAL SUMMARY");
+    writeWrapped(model.summary, { size: 11, gap: 15 });
+    y += 4;
+  }
+
+  if (model.experienceBullets.length > 0) {
+    writeHeading("EXPERIENCE HIGHLIGHTS");
+    if (model.company) writeWrapped(model.company, { size: 11, bold: true, gap: 15 });
+    for (const bullet of model.experienceBullets) {
+      writeWrapped(`- ${bullet}`, { size: 11, gap: 15 });
+    }
+    y += 4;
+  }
+
+  if (model.skills.length > 0) {
+    writeHeading("CORE SKILLS");
+    writeWrapped(model.skills.join(", "), { size: 11, gap: 15 });
+    y += 4;
+  }
+
+  if (model.keywords.length > 0) {
+    writeHeading("ATS KEYWORDS");
+    writeWrapped(model.keywords.join(", "), { size: 10, gap: 14 });
+    y += 4;
+  }
+
+  const safeName = model.name.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "") || "tailored-resume";
+  doc.save(`${safeName}-ats-resume.pdf`);
+}
+
+function downloadTextFile(model) {
+  const text = composeAtsResumeText(model);
+  const blob = new Blob([text], { type: "text/plain;charset=utf-8" });
+  const href = URL.createObjectURL(blob);
+  const anchor = document.createElement("a");
+  const safeName = model.name.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "") || "tailored-resume";
+  anchor.href = href;
+  anchor.download = `${safeName}-ats-resume.txt`;
+  document.body.appendChild(anchor);
+  anchor.click();
+  anchor.remove();
+  URL.revokeObjectURL(href);
+}
+
+function ATSResumePreview({ model }) {
+  return (
+    <div className="mx-auto max-w-[840px] rounded-xl border border-[#e2e8f0] bg-white text-[#0f172a] shadow-sm">
+      <div className="px-8 py-7 border-b border-[#e2e8f0]">
+        <h2 className="text-2xl font-bold tracking-tight">{model.name}</h2>
+        <p className="text-sm mt-1 text-[#334155]">{model.roleTitle}</p>
+        <p className="text-xs mt-2 text-[#475569]">{[model.email, model.phone].filter(Boolean).join(" | ") || "Add contact details"}</p>
+      </div>
+
+      <div className="px-8 py-6 space-y-6">
+        {model.summary && (
+          <section>
+            <h3 className="text-xs font-semibold tracking-[0.14em] text-[#475569]">PROFESSIONAL SUMMARY</h3>
+            <p className="text-sm leading-6 mt-2">{model.summary}</p>
+          </section>
+        )}
+
+        {model.experienceBullets.length > 0 && (
+          <section>
+            <h3 className="text-xs font-semibold tracking-[0.14em] text-[#475569]">EXPERIENCE HIGHLIGHTS</h3>
+            {model.company && <p className="text-sm font-semibold mt-2">{model.company}</p>}
+            <ul className="mt-2 space-y-2">
+              {model.experienceBullets.map((item, index) => (
+                <li key={`exp-${index}`} className="text-sm leading-6 list-disc ml-5">
+                  {item}
+                </li>
+              ))}
+            </ul>
+          </section>
+        )}
+
+        {model.skills.length > 0 && (
+          <section>
+            <h3 className="text-xs font-semibold tracking-[0.14em] text-[#475569]">CORE SKILLS</h3>
+            <p className="text-sm leading-6 mt-2">{model.skills.join(", ")}</p>
+          </section>
+        )}
+
+        {model.keywords.length > 0 && (
+          <section>
+            <h3 className="text-xs font-semibold tracking-[0.14em] text-[#475569]">ATS KEYWORDS</h3>
+            <p className="text-sm leading-6 mt-2 text-[#334155]">{model.keywords.join(", ")}</p>
+          </section>
+        )}
+      </div>
+    </div>
+  );
+}
+
 function ResumeTailorScreen({ onMatch, onFileUpload, authFetch, resumeText, onResumeTextChange, isLight }) {
   const [step, setStep] = React.useState(1);
   const [jobDescription, setJobDescription] = React.useState("");
@@ -1361,6 +1623,10 @@ function ResumeTailorScreen({ onMatch, onFileUpload, authFetch, resumeText, onRe
   const [error, setError] = React.useState("");
   const [loading, setLoading] = React.useState(false);
   const [result, setResult] = React.useState(null);
+  const atsResumeModel = React.useMemo(
+    () => (result ? buildAtsResumeModel({ result, manual, resumeText }) : null),
+    [result, manual, resumeText]
+  );
 
   const goNextFromStep1 = () => {
     if (!jobDescription.trim()) {
@@ -1417,7 +1683,16 @@ function ResumeTailorScreen({ onMatch, onFileUpload, authFetch, resumeText, onRe
           },
         }),
       });
-      setResult(payload.result || null);
+      const nextResult = payload.result ? { ...payload.result } : null;
+      if (nextResult && !normalizeText(nextResult.tailored_resume_text)) {
+        const fallbackModel = buildAtsResumeModel({
+          result: nextResult,
+          manual,
+          resumeText: mode === "import" ? resumeText : buildManualResumeText(),
+        });
+        nextResult.tailored_resume_text = composeAtsResumeText(fallbackModel);
+      }
+      setResult(nextResult);
       onMatch();
       setStep(4);
     } catch (e) {
@@ -1561,32 +1836,63 @@ function ResumeTailorScreen({ onMatch, onFileUpload, authFetch, resumeText, onRe
 
         {step === 4 && result && (
           <div className="space-y-4">
-            <h4 className={`text-xl font-semibold ${isLight ? "text-[#0f172a]" : "text-white"}`}>{result.headline || "Tailored Resume Draft"}</h4>
-            {result.professional_summary && (
-              <p className={`text-sm ${isLight ? "text-[#334155]" : "text-gray-300"}`}>{result.professional_summary}</p>
-            )}
-            <ResultList title="Changes Made" items={result.changes_made} isLight={isLight} />
-            <ResultList title="Tailored Experience Bullets" items={result.tailored_experience_bullets} isLight={isLight} />
-            <ResultList title="Tailored Skills" items={result.tailored_skills} inline isLight={isLight} />
-            <ResultList title="ATS Keywords" items={result.ats_keywords} inline isLight={isLight} />
-            <ResultList title="Missing Information" items={result.missing_information} warn isLight={isLight} />
-
-            <div>
-              <div className={`text-sm font-medium mb-2 ${isLight ? "text-[#0f172a]" : "text-gray-200"}`}>Tailored Resume (editable)</div>
-              <textarea
-                value={result.tailored_resume_text || ""}
-                onChange={(e) => setResult((prev) => ({ ...prev, tailored_resume_text: e.target.value }))}
-                rows={16}
-                className={`w-full rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-pink-500 border ${isLight ? "bg-white border-[#d8e2ef] text-[#0f172a]" : "bg-[#16161b] border-[#26262d] text-gray-200"}`}
-              />
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <h4 className={`text-xl font-semibold ${isLight ? "text-[#0f172a]" : "text-white"}`}>
+                ATS Resume Preview
+              </h4>
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => {
+                    try {
+                      if (!atsResumeModel) return;
+                      downloadTextFile(atsResumeModel);
+                    } catch (e) {
+                      setError(e?.message || "Failed to download TXT.");
+                    }
+                  }}
+                  className={`px-3 py-2 rounded-lg text-sm border ${isLight ? "border-[#d8e2ef]" : "border-[#26262d]"}`}
+                >
+                  Download TXT
+                </button>
+                <button
+                  onClick={() => {
+                    try {
+                      if (!atsResumeModel) return;
+                      downloadAtsPdf(atsResumeModel);
+                    } catch (e) {
+                      setError(e?.message || "Failed to download PDF.");
+                    }
+                  }}
+                  className="px-4 py-2 rounded-lg bg-pink-500 text-gray-900 text-sm font-semibold hover:bg-pink-400"
+                >
+                  Download PDF
+                </button>
+              </div>
             </div>
 
-            <div className="flex justify-end">
+            {atsResumeModel && <ATSResumePreview model={atsResumeModel} />}
+
+            <div className={`rounded-xl p-4 border ${isLight ? "bg-[#f8fbff] border-[#d8e2ef]" : "bg-[#16161b] border-[#26262d]"}`}>
+              <div className={`text-sm font-semibold mb-2 ${isLight ? "text-[#0f172a]" : "text-gray-100"}`}>Tailor Notes</div>
+              <ResultList title="Changes Made" items={result.changes_made} isLight={isLight} />
+              <ResultList title="Tailored Skills" items={result.tailored_skills} inline isLight={isLight} />
+              <ResultList title="ATS Keywords" items={result.ats_keywords} inline isLight={isLight} />
+              <ResultList title="Missing Information" items={result.missing_information} warn isLight={isLight} />
+            </div>
+
+            <div className="flex justify-between items-center">
+              <button
+                onClick={() => setStep(2)}
+                className={`px-4 py-2 rounded-lg text-sm border ${isLight ? "border-[#d8e2ef]" : "border-[#26262d]"}`}
+              >
+                Back
+              </button>
               <button
                 onClick={() => {
                   setStep(1);
                   setResult(null);
                   setMode("");
+                  setError("");
                 }}
                 className="px-4 py-2 rounded-lg bg-pink-500 text-gray-900 text-sm font-semibold hover:bg-pink-400"
               >
@@ -1596,7 +1902,7 @@ function ResumeTailorScreen({ onMatch, onFileUpload, authFetch, resumeText, onRe
           </div>
         )}
 
-        {error && step !== 4 && <div className="mt-4 text-sm text-rose-400">{error}</div>}
+        {error && <div className="mt-4 text-sm text-rose-400">{error}</div>}
       </div>
     </div>
   );
