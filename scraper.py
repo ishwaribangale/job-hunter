@@ -198,6 +198,27 @@ class JobScraper:
         
         # NEW: Load existing jobs at startup
         self._load_existing_jobs()
+
+    def _is_aggregator_domain(self, url: str) -> bool:
+        try:
+            host = (urlparse(url).netloc or "").lower()
+        except Exception:
+            return False
+        blocked = {
+            "adzuna.co.uk",
+            "www.adzuna.co.uk",
+            "adzuna.com",
+            "www.adzuna.com",
+            "indeed.com",
+            "www.indeed.com",
+            "linkedin.com",
+            "www.linkedin.com",
+            "glassdoor.com",
+            "www.glassdoor.com",
+            "naukri.com",
+            "www.naukri.com",
+        }
+        return host in blocked
     
     def _load_existing_jobs(self):
         """Load existing jobs from jobs.json to avoid re-fetching requirements"""
@@ -1995,6 +2016,9 @@ class JobScraper:
     def scrape_generic(self, company_name, url):
         """Comprehensive generic scraper with Playwright fallback"""
         headers = {**HEADERS, "Accept": "text/html"}
+        if self._is_aggregator_domain(url):
+            print("  ⚠ Generic skipped: aggregator domain")
+            return
     
         try:
             r = requests.get(url, headers=headers, timeout=10)
