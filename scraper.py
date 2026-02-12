@@ -886,9 +886,14 @@ class JobScraper:
 
         # Pull explicit CXS endpoints if present in HTML.
         if html_text:
+            normalized_html = html_text.replace("\\/", "/")
             for match in re.findall(r'https?://[^"\'\s<>]+/wday/cxs/[^"\'\s<>]+/jobs', html_text, re.I):
                 add_endpoint(match)
             for match in re.findall(r'/wday/cxs/[^"\'\s<>]+/jobs', html_text, re.I):
+                add_endpoint(f"https://{host}{match}")
+            for match in re.findall(r'https?://[^"\'\s<>]+/wday/cxs/[^"\'\s<>]+/jobs', normalized_html, re.I):
+                add_endpoint(match)
+            for match in re.findall(r'/wday/cxs/[^"\'\s<>]+/jobs', normalized_html, re.I):
                 add_endpoint(f"https://{host}{match}")
 
         if host:
@@ -905,7 +910,7 @@ class JobScraper:
                 if token not in sites:
                     sites.append(token)
             if not sites:
-                sites = ["External", "Careers", "Jobs"]
+                sites = ["External", "external", "Careers", "careers", "Jobs", "external_experienced"]
 
             locales = []
             for token in path_parts[:3]:
@@ -971,6 +976,66 @@ class JobScraper:
             seen.add(key)
             deduped.append(item)
         return deduped
+
+    def _extract_workday_jobs_from_html(self, html_text: str, base_url: str):
+        jobs = []
+        if not html_text:
+            return jobs
+
+        try:
+            soup = BeautifulSoup(html_text, "html.parser")
+        except Exception:
+            return jobs
+
+        seen = set()
+        for a in soup.find_all("a", href=True):
+            href = (a.get("href") or "").strip()
+            if not href:
+                continue
+
+            href_lower = href.lower()
+            if "/job/" not in href_lower and "/jobs/" not in href_lower:
+                continue
+            if href_lower.rstrip("/") in {"/job", "/jobs"}:
+                continue
+
+            full_url = href if href.startswith("http") else urljoin(base_url, href)
+            if full_url in seen:
+                continue
+            seen.add(full_url)
+
+            title = self._clean_job_title(a.get_text(" ", strip=True))
+            if not title:
+                parent = a.find_parent()
+                if parent:
+                    title_node = (
+                        parent.find(attrs={"data-automation-id": "jobTitle"})
+                        or parent.find(["h1", "h2", "h3", "h4", "strong", "span"])
+                    )
+                    if title_node:
+                        title = self._clean_job_title(title_node.get_text(" ", strip=True))
+            if not title:
+                title = self._title_from_url(full_url)
+            if not title:
+                continue
+
+            location = "Various"
+            card = a.find_parent("li") or a.find_parent("article") or a.find_parent("div")
+            if card:
+                text_blob = " ".join(card.stripped_strings).lower()
+                for marker in ["remote", "india", "bangalore", "hyderabad", "pune", "mumbai", "delhi", "chennai"]:
+                    if marker in text_blob:
+                        location = "Remote" if marker == "remote" else marker.title()
+                        break
+
+            jobs.append({
+                "title": title,
+                "externalPath": full_url,
+                "location": location,
+                "job_id": hashlib.md5(full_url.encode("utf-8")).hexdigest()[:16],
+            })
+
+        return jobs
 
     def _validate_kula_job_detail(self, full_url: str, slug: str):
         try:
@@ -1463,31 +1528,61 @@ class JobScraper:
 
     def scrape_kula(self, company_name, slug):
         """Kula careers page scraper with strict detail-page validation"""
-        url = f"https://careers.kula.ai/{slug}"
         headers = {**HEADERS, "Accept": "text/html"}
+        slug_candidates = []
+        for candidate in [
+            slug,
+            (slug or "").replace("-", ""),
+            (slug or "").replace("_", "-"),
+            (slug or "").replace("-", "_"),
+        ]:
+            cleaned = (candidate or "").strip("/")
+            if cleaned and cleaned not in slug_candidates:
+                slug_candidates.append(cleaned)
 
         try:
-            r = requests.get(url, headers=headers, timeout=10)
-            if r.status_code != 200:
-                print(f"  ⚠ Kula HTTP {r.status_code}")
+            active_slug = None
+            active_url = None
+            last_status = None
+
+            for candidate in slug_candidates:
+                candidate_url = f"https://careers.kula.ai/{candidate}"
+                r = requests.get(candidate_url, headers=headers, timeout=10)
+                last_status = r.status_code
+                if r.status_code == 200:
+                    active_slug = candidate
+                    active_url = candidate_url
+                    break
+
+            if not active_slug or not active_url:
+                print(f"  ⚠ Kula HTTP {last_status}")
                 return
+            if active_slug != slug:
+                print(f"  ↪ Kula slug fallback: {slug} -> {active_slug}")
 
             soup = BeautifulSoup(r.text, "html.parser")
             candidates = []
             seen = set()
+            slug_markers = {
+                active_slug.lower(),
+                active_slug.lower().replace("-", ""),
+                active_slug.lower().replace("_", "-"),
+                active_slug.lower().replace("-", "_"),
+            }
+            root_paths = {f"/{s}" for s in slug_markers}
 
             for a in soup.find_all("a", href=True):
                 href = (a.get("href") or "").strip()
                 if not href:
                     continue
-                full_url = href if href.startswith("http") else urljoin(url, href)
+                full_url = href if href.startswith("http") else urljoin(active_url, href)
                 parsed = urlparse(full_url)
                 if parsed.netloc != "careers.kula.ai":
                     continue
                 path = parsed.path.lower()
-                if path.rstrip("/") in {f"/{slug.lower()}"}:
+                if path.rstrip("/") in root_paths:
                     continue
-                if not (f"/{slug.lower()}/" in path or "/job" in path or re.search(r"/\d+/?$", path)):
+                if not (any(f"/{marker}/" in path for marker in slug_markers) or "/job" in path or re.search(r"/\d+/?$", path)):
                     continue
                 if full_url in seen:
                     continue
@@ -1496,7 +1591,7 @@ class JobScraper:
 
             valid = []
             for full_url in candidates:
-                validated = self._validate_kula_job_detail(full_url, slug)
+                validated = self._validate_kula_job_detail(full_url, active_slug)
                 if not validated:
                     continue
                 valid.append(validated)
@@ -1505,7 +1600,7 @@ class JobScraper:
             for title, full_url, location in valid:
                 stable_id = hashlib.md5(full_url.encode("utf-8")).hexdigest()[:16]
                 self.add({
-                    "id": f"kula_{slug}_{stable_id}",
+                    "id": f"kula_{active_slug}_{stable_id}",
                     "title": title,
                     "company": company_name,
                     "location": location or "Various",
@@ -1639,83 +1734,171 @@ class JobScraper:
     def scrape_workday(self, company_name, career_url):
         """Workday scraper with endpoint discovery + multi-pattern API calls"""
         try:
-            page = requests.get(career_url, headers=HEADERS, timeout=12, allow_redirects=True)
-            final_url = page.url
+            landing = requests.get(career_url, headers=HEADERS, timeout=12, allow_redirects=True)
+            final_url = landing.url
             host = urlparse(final_url).netloc
-            endpoints = self._discover_workday_api_urls(career_url, final_url, page.text)
-            if not endpoints:
-                print("  ⚠ Workday: no API endpoint discovered")
-                return
 
             all_jobs = []
             seen_urls = set()
+            attempt_logs = []
+            payload_shapes = [
+                {"appliedFacets": {}, "limit": 50, "offset": 0, "searchText": ""},
+                {"appliedFacets": {}, "limit": 50, "offset": 0},
+                {"limit": 50, "offset": 0, "searchText": ""},
+                {"limit": 50, "offset": 0},
+            ]
 
-            for api_url in endpoints[:12]:
-                got_any = False
-                for method in ("POST", "GET"):
-                    offset = 0
-                    limit = 50
-                    pages = 0
-                    while pages < 20:
-                        pages += 1
-                        headers = {
-                            **HEADERS,
-                            "Accept": "application/json",
-                            "Referer": final_url,
-                            "Origin": f"https://{host}",
-                        }
-                        payload = {"appliedFacets": {}, "limit": limit, "offset": offset, "searchText": ""}
+            def add_workday_posting(title, ext_path, location, job_id=""):
+                if not ext_path or not title:
+                    return
+                apply_url = ext_path if ext_path.startswith("http") else urljoin(f"https://{host}", ext_path)
+                if apply_url in seen_urls:
+                    return
+                seen_urls.add(apply_url)
+                resolved_job_id = job_id or hashlib.md5(apply_url.encode("utf-8")).hexdigest()[:16]
+                all_jobs.append({
+                    "id": f"workday_{resolved_job_id}",
+                    "title": title,
+                    "company": company_name,
+                    "location": location or "Various",
+                    "source": f"{company_name} (Workday)",
+                    "applyLink": apply_url,
+                    "postedDate": self.now(),
+                })
 
-                        if method == "POST":
-                            headers["Content-Type"] = "application/json"
-                            resp = requests.post(api_url, headers=headers, json=payload, timeout=15)
-                        else:
-                            resp = requests.get(api_url, headers=headers, params={"limit": limit, "offset": offset}, timeout=15)
+            # 1) HTML fallback (some Workday boards render jobs server-side)
+            for posting in self._extract_workday_jobs_from_html(landing.text, final_url):
+                add_workday_posting(
+                    posting.get("title", ""),
+                    posting.get("externalPath", ""),
+                    posting.get("location", "Various"),
+                    posting.get("job_id", ""),
+                )
 
-                        if resp.status_code != 200:
-                            break
-                        try:
-                            data = resp.json()
-                        except Exception:
-                            break
+            # 2) API discovery + multi-pattern payloads
+            endpoints = self._discover_workday_api_urls(career_url, final_url, landing.text)
+            if endpoints:
+                for api_url in endpoints[:16]:
+                    got_any = False
+                    for method in ("POST", "GET"):
+                        offset = 0
+                        limit = 50
+                        pages = 0
+                        while pages < 25:
+                            pages += 1
+                            headers = {
+                                **HEADERS,
+                                "Accept": "application/json",
+                                "Referer": final_url,
+                                "Origin": f"https://{host}",
+                            }
 
-                        postings = self._extract_workday_postings(data)
-                        if not postings:
-                            break
+                            resp = None
+                            if method == "POST":
+                                headers["Content-Type"] = "application/json"
+                                for shape in payload_shapes:
+                                    payload = dict(shape)
+                                    payload["offset"] = offset
+                                    payload["limit"] = limit
+                                    try:
+                                        resp = requests.post(api_url, headers=headers, json=payload, timeout=15)
+                                    except Exception as e:
+                                        attempt_logs.append(f"POST {api_url} error: {e}")
+                                        resp = None
+                                        continue
+                                    if resp.status_code == 200:
+                                        break
+                                    attempt_logs.append(f"POST {api_url} -> {resp.status_code}")
+                                    resp = None
+                                if resp is None:
+                                    break
+                            else:
+                                try:
+                                    resp = requests.get(api_url, headers=headers, params={"limit": limit, "offset": offset}, timeout=15)
+                                except Exception as e:
+                                    attempt_logs.append(f"GET {api_url} error: {e}")
+                                    break
+                                if resp.status_code != 200:
+                                    attempt_logs.append(f"GET {api_url} -> {resp.status_code}")
+                                    break
 
-                        got_any = True
-                        batch_new = 0
-                        for posting in postings:
-                            ext_path = posting.get("externalPath", "")
-                            title = posting.get("title", "")
-                            if not ext_path or not title:
-                                continue
+                            try:
+                                data = resp.json()
+                            except Exception:
+                                attempt_logs.append(f"{method} {api_url} -> non-json")
+                                break
 
-                            apply_url = ext_path if ext_path.startswith("http") else urljoin(f"https://{host}", ext_path)
-                            if apply_url in seen_urls:
-                                continue
-                            seen_urls.add(apply_url)
-                            batch_new += 1
+                            postings = self._extract_workday_postings(data)
+                            if not postings:
+                                attempt_logs.append(f"{method} {api_url} -> 200 empty offset={offset}")
+                                break
 
-                            job_id = posting.get("job_id") or hashlib.md5(apply_url.encode("utf-8")).hexdigest()[:16]
-                            all_jobs.append({
-                                "id": f"workday_{job_id}",
-                                "title": title,
-                                "company": company_name,
-                                "location": posting.get("location") or "Various",
-                                "source": f"{company_name} (Workday)",
-                                "applyLink": apply_url,
-                                "postedDate": self.now(),
-                            })
+                            got_any = True
+                            before = len(all_jobs)
+                            for posting in postings:
+                                add_workday_posting(
+                                    posting.get("title", ""),
+                                    posting.get("externalPath", ""),
+                                    posting.get("location", "Various"),
+                                    posting.get("job_id", ""),
+                                )
+                            if len(all_jobs) == before:
+                                break
+                            offset += limit
 
-                        if batch_new == 0:
-                            break
-                        offset += limit
+                    if got_any:
+                        break
 
-                if got_any:
-                    break
+            # 3) Playwright network fallback for boards that only expose jobs client-side
+            if not all_jobs:
+                try:
+                    from playwright.sync_api import sync_playwright
+                    with sync_playwright() as p:
+                        browser = p.chromium.launch(headless=True, args=["--no-sandbox"])
+                        pw_page = browser.new_page(user_agent=HEADERS.get("User-Agent", "Mozilla/5.0"))
+                        payloads = []
+
+                        def handle_response(resp):
+                            try:
+                                if "wday/cxs" not in (resp.url or ""):
+                                    return
+                                ctype = (resp.headers.get("content-type") or "").lower()
+                                if "application/json" not in ctype:
+                                    return
+                                if resp.status != 200:
+                                    return
+                                payloads.append(resp.json())
+                            except Exception:
+                                return
+
+                        pw_page.on("response", handle_response)
+                        pw_page.goto(final_url, wait_until="domcontentloaded", timeout=60000)
+                        pw_page.wait_for_timeout(4000)
+                        html_after_js = pw_page.content()
+                        browser.close()
+
+                    for posting in self._extract_workday_jobs_from_html(html_after_js, final_url):
+                        add_workday_posting(
+                            posting.get("title", ""),
+                            posting.get("externalPath", ""),
+                            posting.get("location", "Various"),
+                            posting.get("job_id", ""),
+                        )
+                    for payload in payloads:
+                        for posting in self._extract_workday_postings(payload):
+                            add_workday_posting(
+                                posting.get("title", ""),
+                                posting.get("externalPath", ""),
+                                posting.get("location", "Various"),
+                                posting.get("job_id", ""),
+                            )
+                except Exception as e:
+                    attempt_logs.append(f"playwright fallback error: {e}")
 
             print(f"  ✓ Workday: {len(all_jobs)} jobs")
+            if not all_jobs and attempt_logs:
+                for line in attempt_logs[:6]:
+                    print(f"  ⚠ {line}")
             for job in all_jobs:
                 self.add(job)
         except Exception as e:
@@ -1776,7 +1959,20 @@ class JobScraper:
                         return
 
                 page.on("response", handle_response)
-                page.goto(career_url, wait_until="networkidle", timeout=45000)
+                nav_error = None
+                for wait_mode, nav_timeout in [("domcontentloaded", 35000), ("load", 50000)]:
+                    try:
+                        page.goto(career_url, wait_until=wait_mode, timeout=nav_timeout)
+                        nav_error = None
+                        break
+                    except Exception as e:
+                        nav_error = e
+                        continue
+                if nav_error is not None:
+                    context.close()
+                    browser.close()
+                    print(f"  ⚠ Darwinbox navigation failed: {nav_error}")
+                    return
                 page.wait_for_timeout(3000)
 
                 # Try to extract job links from DOM as fallback
