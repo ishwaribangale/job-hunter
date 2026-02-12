@@ -835,14 +835,65 @@ class JobScraper:
 
     def _extract_darwinbox_jobs(self, payload, career_url):
         results = []
+        title_keys = [
+            "jobTitle", "title", "positionName", "designation", "name",
+            "jobName", "roleName", "openingTitle", "jdTitle",
+        ]
+        id_keys = [
+            "jobId", "id", "openingId", "positionId", "requisitionId",
+            "reqId", "jobReqId", "jdId", "jobCode", "referenceId",
+            "careerJobId", "postingId",
+        ]
+        url_keys = [
+            "jobUrl", "jobLink", "applyUrl", "detailUrl", "jobApplyUrl",
+            "url", "careerPageUrl", "externalUrl", "publicUrl",
+            "jobDetailUrl", "applyLink", "redirectUrl",
+        ]
+        location_keys = [
+            "location", "locationName", "city", "jobLocation",
+            "locations", "workLocation", "jobCity",
+        ]
+
+        def pick_value(obj, keys):
+            for key in keys:
+                value = obj.get(key)
+                if value not in (None, "", [], {}):
+                    return value
+            return None
+
+        def normalize_location(value):
+            if isinstance(value, str):
+                return value.strip() or "Various"
+            if isinstance(value, dict):
+                return (
+                    value.get("name")
+                    or value.get("city")
+                    or value.get("locationName")
+                    or "Various"
+                )
+            if isinstance(value, list):
+                parts = []
+                for item in value:
+                    if isinstance(item, str):
+                        parts.append(item.strip())
+                    elif isinstance(item, dict):
+                        parts.append(
+                            item.get("name")
+                            or item.get("city")
+                            or item.get("locationName")
+                            or ""
+                        )
+                parts = [p for p in parts if p]
+                return ", ".join(parts) if parts else "Various"
+            return "Various"
 
         def walk(obj):
             if isinstance(obj, dict):
                 # Heuristic for job-like dicts
-                title = obj.get("jobTitle") or obj.get("title") or obj.get("positionName") or obj.get("designation")
-                job_id = obj.get("jobId") or obj.get("id")
-                location = obj.get("location") or obj.get("locationName") or obj.get("city")
-                url = obj.get("jobUrl") or obj.get("jobLink") or obj.get("applyUrl") or obj.get("detailUrl") or obj.get("jobApplyUrl")
+                title = pick_value(obj, title_keys)
+                job_id = pick_value(obj, id_keys)
+                location = normalize_location(pick_value(obj, location_keys))
+                url = pick_value(obj, url_keys)
 
                 if title and (url or job_id):
                     if not url and job_id:
@@ -852,6 +903,15 @@ class JobScraper:
                     full_url = urljoin(career_url, str(url)) if url else ""
                     clean_title = self._clean_job_title(title) or self._title_from_url(full_url) or "Job Opening"
                     results.append((clean_title, full_url, location or "Various"))
+
+                # Some Darwinbox payloads carry a raw route/path in nested "link"/"path" keys.
+                if not title:
+                    maybe_path = pick_value(obj, ["path", "link", "href"])
+                    if maybe_path and isinstance(maybe_path, str) and "/job/" in maybe_path.lower():
+                        full_url = urljoin(career_url, maybe_path)
+                        guessed_title = self._title_from_url(full_url)
+                        if guessed_title:
+                            results.append((guessed_title, full_url, location or "Various"))
 
                 for v in obj.values():
                     walk(v)
@@ -1942,7 +2002,7 @@ class JobScraper:
                         req_body = req.post_data or ""
                         is_api = req.resource_type in {"xhr", "fetch"} or "application/json" in ct
 
-                        if "darwinbox.in" in url_lower and any(k in url_lower for k in ["job", "career", "opening", "position", "candidate"]):
+                        if "darwinbox.in" in url_lower:
                             if DARWINBOX_DEBUG:
                                 api_hits.append((response.status, resp_url))
 
@@ -1952,9 +2012,12 @@ class JobScraper:
                                     seen_api_calls.add(key)
                                     api_calls.append((req_method, resp_url, req_headers, req_body))
 
-                            if response.status == 200 and "application/json" in ct:
-                                data = response.json()
-                                job_payloads.append(data)
+                            if response.status == 200 and ("application/json" in ct or "candidateapi" in url_lower):
+                                try:
+                                    data = response.json()
+                                    job_payloads.append(data)
+                                except Exception:
+                                    pass
                     except Exception:
                         return
 
@@ -2039,9 +2102,13 @@ class JobScraper:
                             "Referer": career_url,
                             "Origin": f"https://{urlparse(career_url).netloc}",
                         }
-                        for key in ["authorization", "x-csrf-token", "x-requested-with", "content-type"]:
-                            value = req_headers.get(key)
-                            if value:
+                        for key, value in req_headers.items():
+                            lower_key = (key or "").lower()
+                            if lower_key in {"host", "connection", "content-length", "accept-encoding"}:
+                                continue
+                            if lower_key.startswith("x-") or lower_key in {
+                                "authorization", "content-type", "accept-language", "referer", "origin"
+                            }:
                                 replay_headers[key] = value
 
                         if method == "POST":
@@ -2051,14 +2118,17 @@ class JobScraper:
 
                         if resp.status_code != 200:
                             continue
-                        ctype = (resp.headers.get("content-type") or "").lower()
-                        if "application/json" not in ctype:
-                            continue
                         try:
                             payload = resp.json()
-                            json_jobs.extend(self._extract_darwinbox_jobs(payload, career_url))
                         except Exception:
-                            continue
+                            body = (resp.text or "").strip()
+                            if not body.startswith("{") and not body.startswith("["):
+                                continue
+                            try:
+                                payload = json.loads(body)
+                            except Exception:
+                                continue
+                        json_jobs.extend(self._extract_darwinbox_jobs(payload, career_url))
                 except Exception:
                     pass
 
@@ -2093,6 +2163,14 @@ class JobScraper:
                     continue
                 seen_urls.add(full_url)
                 combined.append((title, full_url, "Various"))
+
+            if DARWINBOX_DEBUG and not combined and job_payloads:
+                print("  [Darwinbox Debug] No jobs extracted. Payload top-level keys:")
+                for payload in job_payloads[:5]:
+                    if isinstance(payload, dict):
+                        print(f"   - {list(payload.keys())[:12]}")
+                    else:
+                        print(f"   - {type(payload).__name__}")
 
             print(f"  ✓ Darwinbox: {len(combined)} jobs")
             for title, full_url, location in combined:
