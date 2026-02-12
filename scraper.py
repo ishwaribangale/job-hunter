@@ -43,6 +43,9 @@ from roles import infer_role
 from scoring import score_job
 
 SCRAPE_MODE = "VOLUME"  # VOLUME | INTELLIGENCE
+ZERO_JOB_DISABLE_THRESHOLD = int(os.getenv("ZERO_JOB_DISABLE_THRESHOLD", "3"))
+AUTO_DISABLE_RUNS = int(os.getenv("AUTO_DISABLE_RUNS", "2"))
+SOURCE_HEALTH_FILE = os.getenv("SOURCE_HEALTH_FILE", "data/source_health.json")
 
 
 # ===================================================================
@@ -195,6 +198,8 @@ class JobScraper:
         self.requirements_fetched = 0  # NEW: Counter for tracking
         self.requirements_reused = 0   # NEW: Counter for tracking
         self.requirements_skipped = 0  # NEW: Counter for tracking
+        self.source_health_path = SOURCE_HEALTH_FILE
+        self.source_health = self._load_source_health()
         
         # NEW: Load existing jobs at startup
         self._load_existing_jobs()
@@ -219,6 +224,66 @@ class JobScraper:
             "www.naukri.com",
         }
         return host in blocked
+
+    def _load_source_health(self):
+        try:
+            if not os.path.exists(self.source_health_path):
+                return {}
+            with open(self.source_health_path, "r", encoding="utf-8") as f:
+                data = json.load(f)
+            return data if isinstance(data, dict) else {}
+        except Exception:
+            return {}
+
+    def _save_source_health(self):
+        try:
+            parent = os.path.dirname(self.source_health_path)
+            if parent:
+                os.makedirs(parent, exist_ok=True)
+            with open(self.source_health_path, "w", encoding="utf-8") as f:
+                json.dump(self.source_health, f, indent=2, ensure_ascii=False)
+        except Exception as e:
+            print(f"  ⚠ Could not save source health: {e}")
+
+    def _source_auto_disable_eligible(self, ats: str) -> bool:
+        return (ats or "").lower() in {"", "generic", "workday", "darwinbox", "kula"}
+
+    def _source_is_disabled(self, company_name: str) -> bool:
+        state = self.source_health.get(company_name, {})
+        return int(state.get("disabled_runs_remaining", 0)) > 0
+
+    def _consume_source_skip(self, company_name: str):
+        state = self.source_health.get(company_name, {})
+        remaining = max(0, int(state.get("disabled_runs_remaining", 0)) - 1)
+        state["disabled_runs_remaining"] = remaining
+        state["last_skipped_at"] = self.now()
+        self.source_health[company_name] = state
+
+    def _record_source_result(self, company_name: str, found: int, eligible: bool):
+        state = self.source_health.get(company_name, {})
+        state["last_checked_at"] = self.now()
+        state["last_found"] = int(found)
+
+        if found > 0:
+            state["consecutive_zero"] = 0
+            state["disabled_runs_remaining"] = 0
+            state["last_success_at"] = self.now()
+            self.source_health[company_name] = state
+            return
+
+        if not eligible:
+            self.source_health[company_name] = state
+            return
+
+        consecutive = int(state.get("consecutive_zero", 0)) + 1
+        state["consecutive_zero"] = consecutive
+        if consecutive >= ZERO_JOB_DISABLE_THRESHOLD:
+            state["disabled_runs_remaining"] = max(
+                int(state.get("disabled_runs_remaining", 0)),
+                AUTO_DISABLE_RUNS,
+            )
+            state["auto_disabled_at"] = self.now()
+        self.source_health[company_name] = state
     
     def _load_existing_jobs(self):
         """Load existing jobs from jobs.json to avoid re-fetching requirements"""
@@ -629,12 +694,16 @@ class JobScraper:
                 (r'apply\.workable\.com/([^/?&]+)', "workable"),
                 (r'careers\.kula\.ai/([^/?&]+)', "kula"),
                 (r'([^.]+)\.darwinbox\.in/.*/careers', "darwinbox"),
-                (r'myworkdayjobs\.com/([^/?&]+)', "workday"),
+                (r'([a-z0-9-]+\.wd\d+\.myworkdayjobs\.com(?:/[^?#]*)?)', "workday"),
+                (r'([a-z0-9-]+\.myworkdayjobs\.com(?:/[^?#]*)?)', "workday"),
+                (r'(wday/cxs/[^/]+/[^/]+(?:/[a-z]{2}(?:-[A-Z]{2})?)?/jobs)', "workday"),
             ]
             
             for pattern, ats_name in url_checks:
                 match = re.search(pattern, final_url, re.I)
                 if match:
+                    if ats_name == "workday":
+                        return ("workday", None, final_url)
                     return (ats_name, match.group(1), final_url)
             
             # Content-based detection (embedded ATS)
@@ -647,6 +716,9 @@ class JobScraper:
                 (r'apply\.workable\.com/([^"\'&/<>]+)', "workable"),
                 (r'careers\.kula\.ai/([^"\'&/<>]+)', "kula"),
                 (r'([^.]+)\.darwinbox\.in/.*/careers', "darwinbox"),
+                (r'([a-z0-9-]+\.wd\d+\.myworkdayjobs\.com(?:/[^"\'\s<>]*)?)', "workday"),
+                (r'([a-z0-9-]+\.myworkdayjobs\.com(?:/[^"\'\s<>]*)?)', "workday"),
+                (r'(wday/cxs/[^/]+/[^/]+(?:/[a-z]{2}(?:-[A-Z]{2})?)?/jobs)', "workday"),
             ]
             
             for pattern, ats_name in content_checks:
@@ -655,15 +727,19 @@ class JobScraper:
                     slug = match.group(1).strip()
                     # Clean slug
                     slug = re.sub(r'["\'\s].*$', '', slug)
+                    if ats_name == "workday":
+                        return ("workday", None, final_url)
                     return (ats_name, slug, final_url)
             
             # Link-based detection
             soup = BeautifulSoup(r.text, "html.parser")
             for link in soup.find_all('a', href=True, limit=100):
                 href = link.get('href', '')
-                for pattern, ats_name in url_checks[:3]:  # Skip workday
+                for pattern, ats_name in url_checks:
                     match = re.search(pattern, href, re.I)
                     if match:
+                        if ats_name == "workday":
+                            return ("workday", None, final_url)
                         return (ats_name, match.group(1), final_url)
             
             return ("generic", None, final_url)
@@ -773,7 +849,9 @@ class JobScraper:
                         # Best-effort URL construction
                         base = career_url.rstrip("/")
                         url = f"{base}/job/{job_id}"
-                    results.append((title, url, location or "Various"))
+                    full_url = urljoin(career_url, str(url)) if url else ""
+                    clean_title = self._clean_job_title(title) or self._title_from_url(full_url) or "Job Opening"
+                    results.append((clean_title, full_url, location or "Various"))
 
                 for v in obj.values():
                     walk(v)
@@ -792,6 +870,148 @@ class JobScraper:
             seen.add(url)
             deduped.append((title, url, location))
         return deduped
+
+    def _discover_workday_api_urls(self, career_url: str, final_url: str, html_text: str):
+        parsed = urlparse(final_url or career_url)
+        host = parsed.netloc
+        path_parts = [p for p in parsed.path.split("/") if p]
+        endpoints = []
+        seen = set()
+
+        def add_endpoint(u):
+            if not u or u in seen:
+                return
+            seen.add(u)
+            endpoints.append(u)
+
+        # Pull explicit CXS endpoints if present in HTML.
+        if html_text:
+            for match in re.findall(r'https?://[^"\'\s<>]+/wday/cxs/[^"\'\s<>]+/jobs', html_text, re.I):
+                add_endpoint(match)
+            for match in re.findall(r'/wday/cxs/[^"\'\s<>]+/jobs', html_text, re.I):
+                add_endpoint(f"https://{host}{match}")
+
+        if host:
+            tenant = host.split(".")[0]
+
+            # Site candidates from path (skip locale tokens like en-US).
+            sites = []
+            locale_pattern = re.compile(r"^[a-z]{2}(?:-[A-Z]{2})?$")
+            for token in path_parts[:4]:
+                if locale_pattern.match(token):
+                    continue
+                if token.lower() in {"candidate", "candidatev2", "main", "job", "jobs", "career", "careers"}:
+                    continue
+                if token not in sites:
+                    sites.append(token)
+            if not sites:
+                sites = ["External", "Careers", "Jobs"]
+
+            locales = []
+            for token in path_parts[:3]:
+                if locale_pattern.match(token):
+                    locales.append(token)
+            if not locales:
+                locales = ["en-US"]
+
+            for site in sites:
+                add_endpoint(f"https://{host}/wday/cxs/{tenant}/{site}/jobs")
+                for loc in locales:
+                    add_endpoint(f"https://{host}/wday/cxs/{tenant}/{site}/{loc}/jobs")
+
+        return endpoints
+
+    def _extract_workday_postings(self, payload):
+        results = []
+
+        def walk(obj):
+            if isinstance(obj, dict):
+                title = obj.get("title") or obj.get("postedWorkerTitle") or obj.get("jobTitle")
+                ext_path = obj.get("externalPath") or obj.get("jobPath") or obj.get("url")
+                location = obj.get("locationsText") or obj.get("location") or obj.get("locationName")
+                job_id = obj.get("id")
+                bullet = obj.get("bulletFields")
+                if not job_id and isinstance(bullet, list) and bullet and isinstance(bullet[0], dict):
+                    job_id = bullet[0].get("id")
+
+                # Workday location can be object/list; normalize it.
+                if isinstance(location, dict):
+                    location = location.get("city") or location.get("name") or "Various"
+                elif isinstance(location, list):
+                    vals = []
+                    for item in location:
+                        if isinstance(item, dict):
+                            vals.append(item.get("city") or item.get("name") or "")
+                        elif isinstance(item, str):
+                            vals.append(item)
+                    location = ", ".join([v for v in vals if v]) or "Various"
+
+                if title and ext_path:
+                    results.append({
+                        "title": self._clean_job_title(title) or title,
+                        "externalPath": str(ext_path),
+                        "location": location or "Various",
+                        "job_id": str(job_id or ""),
+                    })
+
+                for value in obj.values():
+                    walk(value)
+            elif isinstance(obj, list):
+                for value in obj:
+                    walk(value)
+
+        walk(payload)
+
+        deduped = []
+        seen = set()
+        for item in results:
+            key = f"{item.get('externalPath')}::{item.get('title')}".lower()
+            if key in seen:
+                continue
+            seen.add(key)
+            deduped.append(item)
+        return deduped
+
+    def _validate_kula_job_detail(self, full_url: str, slug: str):
+        try:
+            r = requests.get(full_url, headers=HEADERS, timeout=12, allow_redirects=True)
+            if r.status_code != 200:
+                return None
+
+            final_url = r.url
+            parsed = urlparse(final_url)
+            path = parsed.path.strip("/")
+            root_path = slug.strip("/")
+            if path == root_path:
+                return None
+
+            soup = BeautifulSoup(r.text, "html.parser")
+            title = ""
+            h1 = soup.find("h1")
+            if h1:
+                title = self._clean_job_title(h1.get_text(" ", strip=True))
+            if not title:
+                og = soup.find("meta", attrs={"property": "og:title"})
+                if og and og.get("content"):
+                    title = self._clean_job_title(og.get("content", ""))
+            if not title:
+                title = self._title_from_url(final_url)
+            if not title:
+                return None
+
+            body_text = soup.get_text(" ", strip=True).lower()
+            signals = ["job description", "responsibilities", "requirements", "apply", "location"]
+            if sum(1 for s in signals if s in body_text) < 2:
+                return None
+
+            location = "Various"
+            for marker in ["remote", "india", "bangalore", "pune", "hyderabad", "mumbai"]:
+                if marker in body_text:
+                    location = "Remote" if marker == "remote" else marker.title()
+                    break
+            return (title, final_url, location)
+        except Exception:
+            return None
 
     def _find_job_urls_in_sitemap(self, base_url: str, limit: int = 50):
         sitemap_urls = []
@@ -1242,7 +1462,7 @@ class JobScraper:
             print(f"  ❌ Workable: {e}")
 
     def scrape_kula(self, company_name, slug):
-        """Kula careers page scraper"""
+        """Kula careers page scraper with strict detail-page validation"""
         url = f"https://careers.kula.ai/{slug}"
         headers = {**HEADERS, "Accept": "text/html"}
 
@@ -1253,45 +1473,42 @@ class JobScraper:
                 return
 
             soup = BeautifulSoup(r.text, "html.parser")
-            links = []
+            candidates = []
+            seen = set()
 
             for a in soup.find_all("a", href=True):
-                href = a.get("href", "")
-                if "kula.ai" in href or href.startswith("/"):
-                    if any(x in href for x in ["/job", "/jobs", "/positions"]):
-                        links.append(a)
-                    # Kula job detail pages often look like /<slug>/<id>
-                    if re.search(r"/\\d+/?$", href):
-                        links.append(a)
+                href = (a.get("href") or "").strip()
+                if not href:
+                    continue
+                full_url = href if href.startswith("http") else urljoin(url, href)
+                parsed = urlparse(full_url)
+                if parsed.netloc != "careers.kula.ai":
+                    continue
+                path = parsed.path.lower()
+                if path.rstrip("/") in {f"/{slug.lower()}"}:
+                    continue
+                if not (f"/{slug.lower()}/" in path or "/job" in path or re.search(r"/\d+/?$", path)):
+                    continue
+                if full_url in seen:
+                    continue
+                seen.add(full_url)
+                candidates.append(full_url)
 
-            seen = set()
             valid = []
-            for a in links:
-                href = a.get("href", "")
-                if not href or href in seen:
+            for full_url in candidates:
+                validated = self._validate_kula_job_detail(full_url, slug)
+                if not validated:
                     continue
-                seen.add(href)
-
-                title = a.get_text(strip=True)
-                if not title or len(title) < 3:
-                    parent = a.find_parent()
-                    if parent:
-                        h = parent.find(["h2", "h3", "h4", "span"])
-                        if h:
-                            title = h.get_text(strip=True)
-                if not title or len(title) < 3:
-                    continue
-
-                full_url = href if href.startswith("http") else f"https://careers.kula.ai{href}"
-                valid.append((title, full_url))
+                valid.append(validated)
 
             print(f"  ✓ Kula: {len(valid)} jobs")
-            for title, full_url in valid:
+            for title, full_url, location in valid:
+                stable_id = hashlib.md5(full_url.encode("utf-8")).hexdigest()[:16]
                 self.add({
-                    "id": f"kula_{slug}_{hash(full_url)}",
+                    "id": f"kula_{slug}_{stable_id}",
                     "title": title,
                     "company": company_name,
-                    "location": "Various",
+                    "location": location or "Various",
                     "source": f"{company_name} (Kula)",
                     "applyLink": full_url,
                     "postedDate": self.now(),
@@ -1420,60 +1637,92 @@ class JobScraper:
             print(f"  ❌ rtCamp: {e}")
 
     def scrape_workday(self, company_name, career_url):
-        """Workday scraper using public CXS endpoint"""
+        """Workday scraper with endpoint discovery + multi-pattern API calls"""
         try:
-            parsed = urlparse(career_url)
-            host = parsed.netloc
-            path_parts = [p for p in parsed.path.split("/") if p]
-            site = path_parts[0] if path_parts else "External"
-            tenant = host.split(".")[0]
+            page = requests.get(career_url, headers=HEADERS, timeout=12, allow_redirects=True)
+            final_url = page.url
+            host = urlparse(final_url).netloc
+            endpoints = self._discover_workday_api_urls(career_url, final_url, page.text)
+            if not endpoints:
+                print("  ⚠ Workday: no API endpoint discovered")
+                return
 
-            api_url = f"https://{host}/wday/cxs/{tenant}/{site}/jobs"
-            headers = {**HEADERS, "Accept": "application/json"}
+            all_jobs = []
+            seen_urls = set()
 
-            offset = 0
-            limit = 50
-            total = None
+            for api_url in endpoints[:12]:
+                got_any = False
+                for method in ("POST", "GET"):
+                    offset = 0
+                    limit = 50
+                    pages = 0
+                    while pages < 20:
+                        pages += 1
+                        headers = {
+                            **HEADERS,
+                            "Accept": "application/json",
+                            "Referer": final_url,
+                            "Origin": f"https://{host}",
+                        }
+                        payload = {"appliedFacets": {}, "limit": limit, "offset": offset, "searchText": ""}
 
-            while True:
-                params = {"offset": offset, "limit": limit}
-                r = requests.get(api_url, headers=headers, params=params, timeout=12)
-                if r.status_code != 200:
-                    print(f"  ⚠ Workday HTTP {r.status_code}")
-                    return
+                        if method == "POST":
+                            headers["Content-Type"] = "application/json"
+                            resp = requests.post(api_url, headers=headers, json=payload, timeout=15)
+                        else:
+                            resp = requests.get(api_url, headers=headers, params={"limit": limit, "offset": offset}, timeout=15)
 
-                data = r.json()
-                jobs = data.get("jobPostings", []) if isinstance(data, dict) else []
-                if total is None:
-                    total = data.get("total", len(jobs))
+                        if resp.status_code != 200:
+                            break
+                        try:
+                            data = resp.json()
+                        except Exception:
+                            break
 
-                for j in jobs:
-                    title = j.get("title", "")
-                    location = j.get("locationsText", "Various")
-                    ext_path = j.get("externalPath") or j.get("jobPath") or ""
-                    if not title:
-                        continue
-                    apply_url = f"https://{host}{ext_path}" if ext_path.startswith("/") else career_url
+                        postings = self._extract_workday_postings(data)
+                        if not postings:
+                            break
 
-                    job_id = j.get("bulletFields", [{}])[0].get("id") or j.get("id") or hash(apply_url)
-                    self.add({
-                        "id": f"workday_{tenant}_{job_id}",
-                        "title": title,
-                        "company": company_name,
-                        "location": location or "Various",
-                        "source": f"{company_name} (Workday)",
-                        "applyLink": apply_url,
-                        "postedDate": self.now(),
-                    })
+                        got_any = True
+                        batch_new = 0
+                        for posting in postings:
+                            ext_path = posting.get("externalPath", "")
+                            title = posting.get("title", "")
+                            if not ext_path or not title:
+                                continue
 
-                offset += limit
-                if total is not None and offset >= total:
+                            apply_url = ext_path if ext_path.startswith("http") else urljoin(f"https://{host}", ext_path)
+                            if apply_url in seen_urls:
+                                continue
+                            seen_urls.add(apply_url)
+                            batch_new += 1
+
+                            job_id = posting.get("job_id") or hashlib.md5(apply_url.encode("utf-8")).hexdigest()[:16]
+                            all_jobs.append({
+                                "id": f"workday_{job_id}",
+                                "title": title,
+                                "company": company_name,
+                                "location": posting.get("location") or "Various",
+                                "source": f"{company_name} (Workday)",
+                                "applyLink": apply_url,
+                                "postedDate": self.now(),
+                            })
+
+                        if batch_new == 0:
+                            break
+                        offset += limit
+
+                if got_any:
                     break
+
+            print(f"  ✓ Workday: {len(all_jobs)} jobs")
+            for job in all_jobs:
+                self.add(job)
         except Exception as e:
             print(f"  ❌ Workday: {e}")
 
     def scrape_darwinbox(self, company_name, career_url):
-        """Darwinbox scraper using Playwright to extract job links"""
+        """Darwinbox scraper with API interception + cookie/header replay"""
         headers = {**HEADERS, "Accept": "text/html"}
 
         try:
@@ -1492,22 +1741,37 @@ class JobScraper:
 
             with sync_playwright() as p:
                 browser = p.chromium.launch(headless=True, args=["--no-sandbox"])
-                page = browser.new_page()
+                context = browser.new_context(user_agent=HEADERS.get("User-Agent", "Mozilla/5.0"))
+                page = context.new_page()
                 job_payloads = []
                 api_hits = []
+                api_calls = []
+                seen_api_calls = set()
 
                 def handle_response(response):
                     try:
                         ct = response.headers.get("content-type", "")
-                        url = response.url.lower()
-                        if "application/json" in ct and "darwinbox.in" in url:
-                            if any(k in url for k in ["job", "career", "opening", "position", "candidate"]):
-                                status = response.status
-                                if DARWINBOX_DEBUG:
-                                    api_hits.append((status, response.url))
-                                if status == 200:
-                                    data = response.json()
-                                    job_payloads.append(data)
+                        resp_url = response.url
+                        url_lower = resp_url.lower()
+                        req = response.request
+                        req_method = (req.method or "GET").upper()
+                        req_headers = req.headers or {}
+                        req_body = req.post_data or ""
+                        is_api = req.resource_type in {"xhr", "fetch"} or "application/json" in ct
+
+                        if "darwinbox.in" in url_lower and any(k in url_lower for k in ["job", "career", "opening", "position", "candidate"]):
+                            if DARWINBOX_DEBUG:
+                                api_hits.append((response.status, resp_url))
+
+                            if is_api:
+                                key = f"{req_method}::{resp_url}::{req_body}"
+                                if key not in seen_api_calls:
+                                    seen_api_calls.add(key)
+                                    api_calls.append((req_method, resp_url, req_headers, req_body))
+
+                            if response.status == 200 and "application/json" in ct:
+                                data = response.json()
+                                job_payloads.append(data)
                     except Exception:
                         return
 
@@ -1553,6 +1817,56 @@ class JobScraper:
                 for payload in job_payloads:
                     json_jobs.extend(self._extract_darwinbox_jobs(payload, career_url))
 
+                # Replay intercepted API calls with browser session cookies/headers.
+                try:
+                    session = requests.Session()
+                    for c in context.cookies():
+                        session.cookies.set(
+                            c.get("name", ""),
+                            c.get("value", ""),
+                            domain=c.get("domain"),
+                            path=c.get("path", "/"),
+                        )
+
+                    replay_count = 0
+                    for hit in api_calls:
+                        if len(hit) != 4:
+                            continue
+                        method, api_url, req_headers, req_body = hit
+                        if replay_count >= 30:
+                            break
+                        replay_count += 1
+
+                        replay_headers = {
+                            "Accept": "application/json, text/plain, */*",
+                            "User-Agent": HEADERS.get("User-Agent", "Mozilla/5.0"),
+                            "Referer": career_url,
+                            "Origin": f"https://{urlparse(career_url).netloc}",
+                        }
+                        for key in ["authorization", "x-csrf-token", "x-requested-with", "content-type"]:
+                            value = req_headers.get(key)
+                            if value:
+                                replay_headers[key] = value
+
+                        if method == "POST":
+                            resp = session.post(api_url, headers=replay_headers, data=req_body or None, timeout=15)
+                        else:
+                            resp = session.get(api_url, headers=replay_headers, timeout=15)
+
+                        if resp.status_code != 200:
+                            continue
+                        ctype = (resp.headers.get("content-type") or "").lower()
+                        if "application/json" not in ctype:
+                            continue
+                        try:
+                            payload = resp.json()
+                            json_jobs.extend(self._extract_darwinbox_jobs(payload, career_url))
+                        except Exception:
+                            continue
+                except Exception:
+                    pass
+
+                context.close()
                 browser.close()
 
             if DARWINBOX_DEBUG:
@@ -1561,6 +1875,7 @@ class JobScraper:
                     print(f"   - {status} {url}")
                 if not api_hits:
                     print("   - No JSON API responses captured")
+                print(f"  [Darwinbox Debug] API calls replayed candidates: {len(api_calls)}")
                 if job_payloads:
                     print(f"  [Darwinbox Debug] Payloads captured: {len(job_payloads)}")
                 else:
@@ -1570,12 +1885,14 @@ class JobScraper:
             seen_urls = set()
 
             for title, full_url, location in json_jobs:
+                title = self._clean_job_title(title) or self._title_from_url(full_url) or "Job Opening"
                 if full_url in seen_urls:
                     continue
                 seen_urls.add(full_url)
                 combined.append((title, full_url, location))
 
             for title, full_url in valid:
+                title = self._clean_job_title(title) or self._title_from_url(full_url) or "Job Opening"
                 if full_url in seen_urls:
                     continue
                 seen_urls.add(full_url)
@@ -1583,8 +1900,9 @@ class JobScraper:
 
             print(f"  ✓ Darwinbox: {len(combined)} jobs")
             for title, full_url, location in combined:
+                stable_id = hashlib.md5(full_url.encode("utf-8")).hexdigest()[:16]
                 self.add({
-                    "id": f"darwinbox_{hash(full_url)}",
+                    "id": f"darwinbox_{stable_id}",
                     "title": title,
                     "company": company_name,
                     "location": location or "Various",
@@ -1912,12 +2230,22 @@ class JobScraper:
             url = company.get("career_url", "")
             ats = (company.get("ats") or "").lower()
             slug = company.get("slug", "")
+            auto_disable_eligible = self._source_auto_disable_eligible(ats)
             start_count = len(self.jobs)
             error = None
 
             print(f"\n[{name}]")
             if url:
                 print(f"  URL: {url}")
+            if auto_disable_eligible and self._source_is_disabled(name):
+                remaining = int(self.source_health.get(name, {}).get("disabled_runs_remaining", 0))
+                print(f"  ⚠ Auto-disabled for stability (remaining skips: {remaining})")
+                self._consume_source_skip(name)
+                self.company_results[name] = {
+                    "found": 0,
+                    "error": "auto-disabled",
+                }
+                continue
 
             try:
                 if ats == "greenhouse" and slug:
@@ -2004,6 +2332,7 @@ class JobScraper:
 
             end_count = len(self.jobs)
             found = max(0, end_count - start_count)
+            self._record_source_result(name, found, auto_disable_eligible)
             self.company_results[name] = {
                 "found": found,
                 "error": error,
@@ -2274,6 +2603,15 @@ class JobScraper:
                 print(f"\n[0-JOB COMPANIES]")
                 for name in zero_job:
                     print(f"  - {name}")
+            disabled_sources = [
+                n for n, state in self.source_health.items()
+                if int(state.get("disabled_runs_remaining", 0)) > 0
+            ]
+            if disabled_sources:
+                print(f"\n[AUTO-DISABLED SOURCES]")
+                for name in sorted(disabled_sources):
+                    remaining = int(self.source_health.get(name, {}).get("disabled_runs_remaining", 0))
+                    print(f"  - {name} (remaining skips: {remaining})")
 
     def save(self):
         os.makedirs("data", exist_ok=True)
@@ -2285,6 +2623,7 @@ class JobScraper:
                 ensure_ascii=False,
             )
         print(f"\n✓ Saved → data/jobs.json ({len(self.jobs)} jobs)")
+        self._save_source_health()
 
 
 if __name__ == "__main__":
