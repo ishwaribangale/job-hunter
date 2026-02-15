@@ -1,5 +1,5 @@
 import React from "react";
-import { SignedIn, SignedOut, SignInButton, SignUpButton, UserButton, useAuth } from "@clerk/clerk-react";
+import { SignedIn, SignedOut, SignInButton, SignUpButton, useAuth, useClerk, useUser } from "@clerk/clerk-react";
 
 const STALE_DAYS = 45;
 const VERY_FRESH_DAYS = 3;
@@ -349,7 +349,7 @@ function computeQuickPlatformMatch(job, resumeText) {
 }
 
 export default function Dashboard() {
-  const brandName = "ApplyPulse";
+  const brandName = "RoleFry";
   const [jobs, setJobs] = React.useState([]);
   const [filteredJobs, setFilteredJobs] = React.useState([]);
   const [loading, setLoading] = React.useState(true);
@@ -358,14 +358,16 @@ export default function Dashboard() {
   const [selectedRole, setSelectedRole] = React.useState("all");
   const [selectedEmploymentType, setSelectedEmploymentType] = React.useState("all");
   const [sourceQuery, setSourceQuery] = React.useState("");
-  const [companyQuery, setCompanyQuery] = React.useState("");
+  const [selectedCompany, setSelectedCompany] = React.useState("all");
   const [locationQuery, setLocationQuery] = React.useState("");
 
-  const [activeSection, setActiveSection] = React.useState("all");
+  const [activeSection, setActiveSection] = React.useState("overview");
   const [resumeMatchEnabled, setResumeMatchEnabled] = React.useState(false);
   const [matcherResumeText, setMatcherResumeText] = React.useState("");
   const [matcherResults, setMatcherResults] = React.useState([]);
   const [matcherRunning, setMatcherRunning] = React.useState(false);
+  const [matcherStep, setMatcherStep] = React.useState("input");
+  const [matcherStatusText, setMatcherStatusText] = React.useState("");
 
   const [savedJobs, setSavedJobs] = React.useState([]);
   const [sidebarOpen, setSidebarOpen] = React.useState(false);
@@ -385,7 +387,10 @@ export default function Dashboard() {
   const [feedbackEmail, setFeedbackEmail] = React.useState("");
   const [feedbackSent, setFeedbackSent] = React.useState(false);
   const [feedbackSubmitting, setFeedbackSubmitting] = React.useState(false);
+  const [accountMenuOpen, setAccountMenuOpen] = React.useState(false);
   const { getToken, isSignedIn, isLoaded } = useAuth();
+  const { user } = useUser();
+  const { signOut, openUserProfile } = useClerk();
   const isLight = theme === "light";
 
   React.useEffect(() => {
@@ -400,6 +405,25 @@ export default function Dashboard() {
     window.addEventListener("keydown", onEsc);
     return () => window.removeEventListener("keydown", onEsc);
   }, [feedbackOpen]);
+
+  React.useEffect(() => {
+    if (!accountMenuOpen) return;
+    const onClickOutside = (event) => {
+      const target = event.target;
+      if (!(target instanceof HTMLElement)) return;
+      if (target.closest("[data-account-menu]")) return;
+      setAccountMenuOpen(false);
+    };
+    const onEsc = (event) => {
+      if (event.key === "Escape") setAccountMenuOpen(false);
+    };
+    document.addEventListener("mousedown", onClickOutside);
+    window.addEventListener("keydown", onEsc);
+    return () => {
+      document.removeEventListener("mousedown", onClickOutside);
+      window.removeEventListener("keydown", onEsc);
+    };
+  }, [accountMenuOpen]);
 
   const submitFeedback = React.useCallback(async () => {
     if (!feedbackText.trim()) return;
@@ -523,8 +547,8 @@ export default function Dashboard() {
       data = data.filter(j => j.source?.toLowerCase().includes(sourceQuery.toLowerCase()));
     }
 
-    if (companyQuery) {
-      data = data.filter(j => j.company?.toLowerCase().includes(companyQuery.toLowerCase()));
+    if (selectedCompany !== "all") {
+      data = data.filter(j => j.company === selectedCompany);
     }
 
     if (selectedRole !== "all") {
@@ -546,7 +570,7 @@ export default function Dashboard() {
 
     setFilteredJobs(data);
     setCurrentPage(1); // Reset to page 1 when filters change
-  }, [jobs, searchQuery, sourceQuery, companyQuery, selectedRole, locationQuery, selectedEmploymentType, hideStale]);
+  }, [jobs, searchQuery, sourceQuery, selectedCompany, selectedRole, locationQuery, selectedEmploymentType, hideStale]);
 
   /* ---------------- SECTION FILTER ---------------- */
   const applicationsByJobId = React.useMemo(() => {
@@ -563,6 +587,59 @@ export default function Dashboard() {
     if (activeSection === "top") return filteredJobs.filter(j => j.matchScore >= 75);
     return filteredJobs;
   }, [filteredJobs, activeSection, savedJobs, applicationsByJobId]);
+
+  const matcherKeywords = React.useMemo(() => {
+    const words = [];
+    matcherResults.forEach((job) => {
+      (job.matchExplain || []).forEach((entry) => {
+        (entry.hits || []).forEach((hit) => {
+          const normalized = String(hit || "").trim();
+          if (normalized && normalized.length <= 40 && !/aligned|partial|fit|\d+%/i.test(normalized)) {
+            words.push(normalized);
+          }
+        });
+      });
+    });
+    return Array.from(new Set(words.map((w) => w.toLowerCase())))
+      .map((lower) => words.find((w) => w.toLowerCase() === lower))
+      .filter(Boolean)
+      .slice(0, 20);
+  }, [matcherResults]);
+
+  const overviewMetrics = React.useMemo(() => {
+    const totalLive = jobs.filter((job) => !job.stale).length;
+    const companyCount = new Set(jobs.map((job) => job.company).filter(Boolean)).size;
+    const stageCounts = applications.reduce(
+      (acc, app) => {
+        const stage = String(app.stage || "").toLowerCase();
+        if (stage === "applied") acc.applied += 1;
+        if (stage === "interview") acc.interview += 1;
+        if (stage === "offer") acc.offer += 1;
+        if (stage === "interested") acc.interested += 1;
+        return acc;
+      },
+      { interested: 0, applied: 0, interview: 0, offer: 0 }
+    );
+    const matchRate = stageCounts.applied > 0 ? Math.round((stageCounts.interview / stageCounts.applied) * 100) : 0;
+    return {
+      totalLive,
+      companyCount,
+      savedCount: savedJobs.length,
+      matchedCount: matcherResults.length,
+      ...stageCounts,
+      matchRate,
+    };
+  }, [applications, jobs, matcherResults.length, savedJobs.length]);
+
+  const recentApplications = React.useMemo(() => {
+    return [...applications]
+      .sort((a, b) => {
+        const aTs = toTimestamp(a.updated_at || a.created_at || a.applied_date);
+        const bTs = toTimestamp(b.updated_at || b.created_at || b.applied_date);
+        return bTs - aTs;
+      })
+      .slice(0, 8);
+  }, [applications]);
 
   /* ---------------- SORT JOBS ---------------- */
   const sortedJobs = React.useMemo(() => {
@@ -713,7 +790,11 @@ export default function Dashboard() {
     const file = event.target.files[0];
     if (!file) return;
     extractTextFromResumeFile(file)
-      .then((text) => setMatcherResumeText(text))
+      .then((text) => {
+        setMatcherResumeText(text);
+        setMatcherStep("input");
+        setMatcherStatusText("");
+      })
       .catch((error) => {
         console.error("Matcher resume parse failed", error);
         alert(error.message || "Unable to parse resume file.");
@@ -765,6 +846,8 @@ export default function Dashboard() {
     const text = matcherResumeText.trim();
     if (!text) return;
     setMatcherRunning(true);
+    setMatcherStep("loading");
+    setMatcherStatusText("Scanning jobs and extracting keyword overlap...");
     setMatcherResults([]);
 
     const batchSize = 150;
@@ -778,6 +861,7 @@ export default function Dashboard() {
         if (matched && matched.matchScore >= 12) nextResults.push(matched);
       }
       index = end;
+      setMatcherStatusText(`Checking jobs ${Math.min(index, jobs.length)} / ${jobs.length}...`);
 
       if (index < jobs.length) {
         setTimeout(processBatch, 0);
@@ -788,6 +872,8 @@ export default function Dashboard() {
       setMatcherResults(nextResults.slice(0, 300));
       setResumeMatchEnabled(true);
       setMatcherRunning(false);
+      setMatcherStep("results");
+      setMatcherStatusText(`Found ${nextResults.length} matching jobs.`);
     };
 
     processBatch();
@@ -809,7 +895,7 @@ export default function Dashboard() {
             <div>
               <div className="flex items-center justify-between mb-8">
                 <div className="flex items-center gap-3">
-                  <div className="h-11 w-11 rounded-xl bg-pink-500/20 border border-pink-500/40 text-pink-400 flex items-center justify-center font-semibold">AP</div>
+                  <BrandMark size="lg" />
                   <div className="text-2xl font-semibold">{brandName}</div>
                 </div>
                 <button
@@ -878,10 +964,8 @@ export default function Dashboard() {
         <div className="p-4 flex justify-between items-center">
           {sidebarOpen && (
             <div className="flex items-center gap-2">
-              <div className="h-8 w-8 rounded-lg bg-pink-500/20 border border-pink-500/30 text-pink-300 flex items-center justify-center text-sm font-semibold">
-                AP
-              </div>
-              <h1 className="text-xl font-semibold text-pink-300">{brandName}</h1>
+              <BrandMark />
+              <h1 className={`text-xl font-semibold ${isLight ? "text-[#b42373]" : "text-pink-300"}`}>{brandName}</h1>
             </div>
           )}
           <button onClick={() => setSidebarOpen(!sidebarOpen)} className={isLight ? "text-pink-600" : "text-pink-400"}>
@@ -893,17 +977,18 @@ export default function Dashboard() {
           <div className="px-4 space-y-6">
             {/* NAV */}
             <nav className="space-y-2">
-              <Nav icon="▦" label="Overview" active={activeSection === "all"} onClick={() => setActiveSection("all")} />
-              <Nav icon="↻" label="My Pipeline" active={activeSection === "pipeline"} onClick={() => setActiveSection("pipeline")} />
-              <Nav icon="🔖" label="Saved" active={activeSection === "saved"} onClick={() => setActiveSection("saved")} />
-              <Nav icon="📄" label="My Applications" active={activeSection === "applied"} onClick={() => setActiveSection("applied")} />
-              <Nav icon="🧾" label="Resume Matcher" active={activeSection === "resume_matcher"} onClick={() => setActiveSection("resume_matcher")} />
-              <Nav icon="✦" label="JD Tailor (AI)" active={activeSection === "jd_tailor"} onClick={() => setActiveSection("jd_tailor")} />
+              <Nav icon="▦" label="Overview" active={activeSection === "overview"} onClick={() => setActiveSection("overview")} isLight={isLight} />
+              <Nav icon="🔥" label="Role Feed" active={activeSection === "all"} onClick={() => setActiveSection("all")} isLight={isLight} />
+              <Nav icon="↻" label="My Pipeline" active={activeSection === "pipeline"} onClick={() => setActiveSection("pipeline")} isLight={isLight} />
+              <Nav icon="🔖" label="Saved" active={activeSection === "saved"} onClick={() => setActiveSection("saved")} isLight={isLight} />
+              <Nav icon="📄" label="My Applications" active={activeSection === "applied"} onClick={() => setActiveSection("applied")} isLight={isLight} />
+              <Nav icon="🧾" label="Resume Matcher" active={activeSection === "resume_matcher"} onClick={() => setActiveSection("resume_matcher")} isLight={isLight} />
+              <Nav icon="✦" label="JD Tailor (AI)" active={activeSection === "jd_tailor"} onClick={() => setActiveSection("jd_tailor")} isLight={isLight} />
             </nav>
 
             {/* RESUME MATCHER CARD */}
             <div className={`rounded-lg p-4 border ${isLight ? "bg-[#fff1f8] border-[#f3c2d8]" : "bg-[#1b121a] border-[#2b1a24]"}`}>
-              <h4 className="text-sm font-semibold text-pink-300 mb-1">Resume Matcher</h4>
+              <h4 className={`text-sm font-semibold mb-1 ${isLight ? "text-[#b42373]" : "text-pink-300"}`}>Resume Matcher</h4>
               <p className={`text-xs mb-3 ${isLight ? "text-[#64748b]" : "text-gray-400"}`}>
                 Upload your resume to find best-fit roles
               </p>
@@ -939,22 +1024,70 @@ export default function Dashboard() {
               >
                 Feedback
               </button>
-              <button className="h-9 w-9 rounded-full bg-[#1b1b20] text-gray-300 hover:text-white transition-colors">?</button>
-              <button className="h-9 w-9 rounded-full bg-[#1b1b20] text-gray-300 hover:text-white transition-colors">🔔</button>
               <SignedIn>
-                <UserButton appearance={{ elements: { userButtonAvatarBox: "h-9 w-9" } }} />
+                <div className="relative" data-account-menu>
+                  <button
+                    onClick={() => setAccountMenuOpen((prev) => !prev)}
+                    className={`h-9 w-9 rounded-full border flex items-center justify-center text-sm font-semibold transition-colors ${
+                      isLight
+                        ? "bg-white border-[#d6e0ee] text-[#0f172a] hover:border-pink-400"
+                        : "bg-[#1b1b20] border-[#30303a] text-gray-100 hover:border-pink-500"
+                    }`}
+                  >
+                    {String(user?.firstName || user?.primaryEmailAddress?.emailAddress || "U")
+                      .trim()
+                      .charAt(0)
+                      .toUpperCase()}
+                  </button>
+                  {accountMenuOpen && (
+                    <div
+                      className={`absolute right-0 mt-2 w-64 rounded-xl border shadow-xl z-20 ${
+                        isLight ? "bg-white border-[#dbe4f0]" : "bg-[#121216] border-[#26262d]"
+                      }`}
+                    >
+                      <div className={`px-4 py-3 border-b ${isLight ? "border-[#e2e8f0]" : "border-[#26262d]"}`}>
+                        <div className={`text-sm font-semibold ${isLight ? "text-[#0f172a]" : "text-gray-100"}`}>
+                          {user?.fullName || "Account"}
+                        </div>
+                        <div className={`text-xs mt-1 ${isLight ? "text-[#64748b]" : "text-gray-400"}`}>
+                          {user?.primaryEmailAddress?.emailAddress || ""}
+                        </div>
+                      </div>
+                      <button
+                        onClick={() => {
+                          setAccountMenuOpen(false);
+                          if (typeof openUserProfile === "function") {
+                            openUserProfile();
+                          }
+                        }}
+                        className={`w-full text-left px-4 py-2 text-sm ${isLight ? "hover:bg-[#f8fbff]" : "hover:bg-[#1a1a20]"}`}
+                      >
+                        Manage account
+                      </button>
+                      <button
+                        onClick={() => {
+                          setAccountMenuOpen(false);
+                          signOut();
+                        }}
+                        className={`w-full text-left px-4 py-2 text-sm ${isLight ? "hover:bg-[#f8fbff]" : "hover:bg-[#1a1a20]"}`}
+                      >
+                        Sign out
+                      </button>
+                    </div>
+                  )}
+                </div>
               </SignedIn>
             </div>
           </div>
         </header>
 
         {/* FILTERS BAR */}
-        {activeSection !== "resume_matcher" && activeSection !== "jd_tailor" && activeSection !== "pipeline" && (
+        {(activeSection === "all" || activeSection === "saved" || activeSection === "applied" || activeSection === "top") && (
           <div className={`p-6 border-b ${isLight ? "bg-white border-[#dbe4f0]" : "bg-[#0f1014] border-[#1f1f24]"}`}>
             <div className="flex items-center justify-between gap-4 mb-4">
               <div>
-                <h2 className={`text-2xl font-semibold ${isLight ? "text-[#0f172a]" : "text-white"}`}>Job Intelligence</h2>
-                <p className={`text-sm ${isLight ? "text-[#475569]" : "text-gray-400"}`}>Find the jobs from 100+ verified companies.</p>
+                <h2 className={`text-2xl font-semibold ${isLight ? "text-[#0f172a]" : "text-white"}`}>Role Feed</h2>
+                <p className={`text-sm ${isLight ? "text-[#475569]" : "text-gray-400"}`}>Stop getting fried by 20 tabs. Track verified roles and apply links in one place.</p>
               </div>
               <div className="flex items-center gap-2">
                 <button
@@ -1005,18 +1138,16 @@ export default function Dashboard() {
             {showFilters && (
               <div className="mt-4 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-6 gap-4">
                 <div>
-                  <input
-                    list="source-options"
-                    placeholder="Source"
+                  <select
                     value={sourceQuery}
                     onChange={e => setSourceQuery(e.target.value)}
-                    className={`w-full rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-pink-500 transition-colors border ${isLight ? "bg-white border-[#d8e2ef] text-[#0f172a]" : "bg-[#16161b] border-[#26262d] text-gray-100"}`}
-                  />
-                  <datalist id="source-options">
+                    className={`w-full rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-pink-500 cursor-pointer transition-colors border ${isLight ? "bg-white border-[#d8e2ef] text-[#0f172a]" : "bg-[#16161b] border-[#26262d] text-gray-100"}`}
+                  >
+                    <option value="">All Sources</option>
                     {sources.map(source => (
-                      <option key={source} value={source} />
+                      <option key={source} value={source}>{formatLabel(source)}</option>
                     ))}
-                  </datalist>
+                  </select>
                 </div>
 
                 <select
@@ -1057,28 +1188,16 @@ export default function Dashboard() {
                 </select>
 
                 <div className="lg:col-span-2">
-                  <div className="flex items-center gap-2">
-                    <input
-                      list="company-options"
-                      placeholder="Company"
-                      value={companyQuery}
-                      onChange={e => setCompanyQuery(e.target.value)}
-                      className={`w-full rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-pink-500 transition-colors border ${isLight ? "bg-white border-[#d8e2ef] text-[#0f172a]" : "bg-[#16161b] border-[#26262d] text-gray-100"}`}
-                    />
-                    {companyQuery && (
-                      <button
-                        onClick={() => setCompanyQuery("")}
-                        className={`px-2 py-2 text-xs rounded border hover:border-pink-500 ${isLight ? "bg-white border-[#d8e2ef] text-[#0f172a]" : "bg-[#1f1f25] border-[#2a2a33] text-gray-100"}`}
-                      >
-                        Clear
-                      </button>
-                    )}
-                    <datalist id="company-options">
-                      {companies.map(company => (
-                        <option key={company} value={company} />
-                      ))}
-                    </datalist>
-                  </div>
+                  <select
+                    value={selectedCompany}
+                    onChange={e => setSelectedCompany(e.target.value)}
+                    className={`w-full rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-pink-500 cursor-pointer transition-colors border ${isLight ? "bg-white border-[#d8e2ef] text-[#0f172a]" : "bg-[#16161b] border-[#26262d] text-gray-100"}`}
+                  >
+                    <option value="all">All Companies</option>
+                    {companies.map(company => (
+                      <option key={company} value={company}>{company}</option>
+                    ))}
+                  </select>
                 </div>
               </div>
             )}
@@ -1088,9 +1207,9 @@ export default function Dashboard() {
               {topCompanies.map(name => (
                 <button
                   key={name}
-                  onClick={() => setCompanyQuery(name)}
+                  onClick={() => setSelectedCompany((prev) => (prev === name ? "all" : name))}
                   className={`px-3 py-1 rounded-full text-xs border transition-colors ${
-                    companyQuery === name
+                    selectedCompany === name
                       ? "bg-pink-500 text-gray-900 border-pink-400"
                       : isLight
                       ? "bg-white text-[#334155] border-[#d8e2ef] hover:border-pink-500"
@@ -1103,36 +1222,36 @@ export default function Dashboard() {
             </div>
 
             {/* Active Filters Display */}
-            {(searchQuery || sourceQuery || companyQuery || selectedRole !== "all" || locationQuery || selectedEmploymentType !== "all") && (
+            {(searchQuery || sourceQuery || selectedCompany !== "all" || selectedRole !== "all" || locationQuery || selectedEmploymentType !== "all") && (
               <div className="mt-4 flex flex-wrap gap-2 items-center">
                 <span className="text-xs text-gray-500">Active filters:</span>
                 {searchQuery && (
-                  <span className="text-xs bg-pink-900/30 text-pink-300 px-2 py-1 rounded">
+                  <span className={`text-xs px-2 py-1 rounded ${isLight ? "bg-[#fee9f4] text-[#b42373]" : "bg-pink-900/30 text-pink-300"}`}>
                     Search: "{searchQuery}"
                   </span>
                 )}
                 {sourceQuery && (
-                  <span className="text-xs bg-pink-900/30 text-pink-300 px-2 py-1 rounded">
+                  <span className={`text-xs px-2 py-1 rounded ${isLight ? "bg-[#fee9f4] text-[#b42373]" : "bg-pink-900/30 text-pink-300"}`}>
                     Source: {sourceQuery}
                   </span>
                 )}
-                {companyQuery && (
-                  <span className="text-xs bg-pink-900/30 text-pink-300 px-2 py-1 rounded">
-                    Company: {companyQuery}
+                {selectedCompany !== "all" && (
+                  <span className={`text-xs px-2 py-1 rounded ${isLight ? "bg-[#fee9f4] text-[#b42373]" : "bg-pink-900/30 text-pink-300"}`}>
+                    Company: {selectedCompany}
                   </span>
                 )}
                 {selectedRole !== "all" && (
-                  <span className="text-xs bg-pink-900/30 text-pink-300 px-2 py-1 rounded">
+                  <span className={`text-xs px-2 py-1 rounded ${isLight ? "bg-[#fee9f4] text-[#b42373]" : "bg-pink-900/30 text-pink-300"}`}>
                     Role: {formatLabel(selectedRole)}
                   </span>
                 )}
                 {locationQuery && (
-                  <span className="text-xs bg-pink-900/30 text-pink-300 px-2 py-1 rounded">
+                  <span className={`text-xs px-2 py-1 rounded ${isLight ? "bg-[#fee9f4] text-[#b42373]" : "bg-pink-900/30 text-pink-300"}`}>
                     Location: {locationQuery}
                   </span>
                 )}
                 {selectedEmploymentType !== "all" && (
-                  <span className="text-xs bg-pink-900/30 text-pink-300 px-2 py-1 rounded">
+                  <span className={`text-xs px-2 py-1 rounded ${isLight ? "bg-[#fee9f4] text-[#b42373]" : "bg-pink-900/30 text-pink-300"}`}>
                     Type: {formatLabel(selectedEmploymentType)}
                   </span>
                 )}
@@ -1142,7 +1261,7 @@ export default function Dashboard() {
                     setSelectedRole("all");
                     setSelectedEmploymentType("all");
                     setSourceQuery("");
-                    setCompanyQuery("");
+                    setSelectedCompany("all");
                     setLocationQuery("");
                     setHideStale(true);
                   }}
@@ -1157,12 +1276,57 @@ export default function Dashboard() {
 
         {/* CONTENT */}
         <section className="flex-1 overflow-y-auto p-6">
-          {activeSection === "resume_matcher" ? (
+          {activeSection === "overview" ? (
+            <div className="space-y-5">
+              <div className={`rounded-2xl border p-6 ${isLight ? "bg-white border-[#d8e2ef]" : "bg-[#121216] border-[#1f1f24]"}`}>
+                <h3 className={`text-2xl font-semibold ${isLight ? "text-[#0f172a]" : "text-white"}`}>Overview</h3>
+                <p className={`mt-1 text-sm ${isLight ? "text-[#64748b]" : "text-gray-400"}`}>
+                  Real usage metrics from your current data.
+                </p>
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-6 gap-4">
+                <MetricCard label="Live Jobs" value={overviewMetrics.totalLive} isLight={isLight} />
+                <MetricCard label="Companies" value={overviewMetrics.companyCount} isLight={isLight} />
+                <MetricCard label="Saved" value={overviewMetrics.savedCount} isLight={isLight} />
+                <MetricCard label="Applied" value={overviewMetrics.applied} isLight={isLight} />
+                <MetricCard label="Interview" value={overviewMetrics.interview} isLight={isLight} />
+                <MetricCard label="Offer" value={overviewMetrics.offer} isLight={isLight} />
+              </div>
+              <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
+                <div className={`rounded-2xl border p-5 ${isLight ? "bg-white border-[#d8e2ef]" : "bg-[#121216] border-[#1f1f24]"}`}>
+                  <h4 className={`text-lg font-semibold ${isLight ? "text-[#0f172a]" : "text-white"}`}>Conversion Snapshot</h4>
+                  <div className="mt-4 grid grid-cols-2 gap-3">
+                    <MetricCard label="Interested" value={overviewMetrics.interested} isLight={isLight} compact />
+                    <MetricCard label="Interview Rate" value={`${overviewMetrics.matchRate}%`} isLight={isLight} compact />
+                    <MetricCard label="Resume Matches" value={overviewMetrics.matchedCount} isLight={isLight} compact />
+                    <MetricCard label="Total Tracked" value={applications.length} isLight={isLight} compact />
+                  </div>
+                </div>
+                <div className={`rounded-2xl border p-5 ${isLight ? "bg-white border-[#d8e2ef]" : "bg-[#121216] border-[#1f1f24]"}`}>
+                  <h4 className={`text-lg font-semibold ${isLight ? "text-[#0f172a]" : "text-white"}`}>Recent Pipeline Activity</h4>
+                  {recentApplications.length === 0 ? (
+                    <p className={`mt-3 text-sm ${isLight ? "text-[#64748b]" : "text-gray-400"}`}>No application activity yet.</p>
+                  ) : (
+                    <div className="mt-3 space-y-2">
+                      {recentApplications.map((app) => (
+                        <div key={app.id} className={`rounded-lg border px-3 py-2 text-sm ${isLight ? "bg-[#f8fbff] border-[#dbe4f0]" : "bg-[#16161b] border-[#26262d]"}`}>
+                          <div className={`font-medium ${isLight ? "text-[#0f172a]" : "text-gray-100"}`}>{app.title}</div>
+                          <div className={`${isLight ? "text-[#64748b]" : "text-gray-400"}`}>
+                            {app.company} · {app.stage || "Applied"}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+          ) : activeSection === "resume_matcher" ? (
             <div className="space-y-6">
               <div className={`rounded-2xl p-6 border ${isLight ? "bg-white border-[#d8e2ef]" : "bg-[#121216] border-[#1f1f24]"}`}>
                 <h3 className="text-2xl font-bold text-pink-300 mb-2">Resume Matcher</h3>
                 <p className={`mb-4 ${isLight ? "text-[#475569]" : "text-gray-400"}`}>
-                  Upload or paste your resume. We will rank matching jobs from this platform only.
+                  Step 1: Upload or paste your resume. We only match against jobs in this platform.
                 </p>
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
                   <div>
@@ -1173,7 +1337,10 @@ export default function Dashboard() {
                     <label className={`text-xs ${isLight ? "text-[#64748b]" : "text-gray-400"}`}>Or paste resume text</label>
                     <textarea
                       value={matcherResumeText}
-                      onChange={(e) => setMatcherResumeText(e.target.value)}
+                      onChange={(e) => {
+                        setMatcherResumeText(e.target.value);
+                        if (matcherStep !== "input") setMatcherStep("input");
+                      }}
                       rows={6}
                       className={`w-full mt-2 rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-pink-500 border ${isLight ? "bg-white border-[#d8e2ef] text-[#0f172a]" : "bg-[#16161b] border-[#26262d] text-gray-200"}`}
                       placeholder="Paste resume text..."
@@ -1192,9 +1359,46 @@ export default function Dashboard() {
                     {matcherResults.length ? `${matcherResults.length} matches found` : "No matches yet"}
                   </span>
                 </div>
+                {matcherStep === "loading" && (
+                  <div className={`mt-5 rounded-xl border p-4 flex items-center gap-3 ${isLight ? "bg-[#f8fbff] border-[#dbe4f0]" : "bg-[#16161b] border-[#26262d]"}`}>
+                    <div className="h-5 w-5 rounded-full border-2 border-pink-500 border-t-transparent animate-spin" />
+                    <div className={`text-sm ${isLight ? "text-[#334155]" : "text-gray-300"}`}>{matcherStatusText || "Matching jobs..."}</div>
+                  </div>
+                )}
+                {matcherStep === "results" && (
+                  <div className={`mt-5 rounded-xl border p-4 ${isLight ? "bg-[#f8fbff] border-[#dbe4f0]" : "bg-[#16161b] border-[#26262d]"}`}>
+                    <div className={`text-sm font-semibold ${isLight ? "text-[#0f172a]" : "text-gray-100"}`}>Step 3: Matching complete</div>
+                    <div className={`mt-1 text-sm ${isLight ? "text-[#64748b]" : "text-gray-400"}`}>
+                      {matcherStatusText || `${matcherResults.length} matches found.`}
+                    </div>
+                    {matcherKeywords.length > 0 && (
+                      <div className="mt-3">
+                        <div className={`text-xs mb-2 ${isLight ? "text-[#64748b]" : "text-gray-400"}`}>Matched keywords</div>
+                        <div className="flex flex-wrap gap-2">
+                          {matcherKeywords.map((kw) => (
+                            <span key={kw} className={`text-xs px-2 py-1 rounded-full ${isLight ? "bg-[#eef4ff] text-[#334155]" : "bg-[#1e1e25] text-gray-300"}`}>
+                              {kw}
+                            </span>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                    <div className="mt-4">
+                      <button
+                        onClick={() => {
+                          setResumeText(matcherResumeText);
+                          setActiveSection("jd_tailor");
+                        }}
+                        className="px-4 py-2 rounded-lg bg-pink-500 text-gray-900 text-sm font-semibold hover:bg-pink-400"
+                      >
+                        Tailor Resume for a JD
+                      </button>
+                    </div>
+                  </div>
+                )}
               </div>
 
-              {matcherResults.length > 0 && (
+              {matcherStep === "results" && matcherResults.length > 0 && (
                 <div className="space-y-4">
                   {matcherResults.slice(0, 60).map((job, index) => (
                     <JobCard
@@ -1235,9 +1439,9 @@ export default function Dashboard() {
                 />
               </SignedIn>
               <SignedOut>
-                <div className="max-w-xl mx-auto text-center bg-[#121216] border border-[#1f1f24] rounded-2xl p-10">
-                  <h3 className="text-2xl font-bold text-pink-300 mb-2">Sign in to track applications</h3>
-                  <p className="text-gray-400 mb-6">
+                <div className={`max-w-xl mx-auto text-center rounded-2xl p-10 border ${isLight ? "bg-white border-[#d8e2ef]" : "bg-[#121216] border-[#1f1f24]"}`}>
+                  <h3 className={`text-2xl font-bold mb-2 ${isLight ? "text-[#b42373]" : "text-pink-300"}`}>Sign in to track applications</h3>
+                  <p className={`mb-6 ${isLight ? "text-[#64748b]" : "text-gray-400"}`}>
                     Your pipeline is saved per account.
                   </p>
                   <SignInButton mode="modal">
@@ -1257,13 +1461,13 @@ export default function Dashboard() {
                     onClick={() => {
                       setSearchQuery("");
                       setSelectedRole("all");
-                    setSelectedEmploymentType("all");
-                    setSourceQuery("");
-                    setCompanyQuery("");
-                    setLocationQuery("");
-                    setHideStale(true);
-                  }}
-                className="text-pink-400 hover:text-pink-300 underline"
+                      setSelectedEmploymentType("all");
+                      setSourceQuery("");
+                      setSelectedCompany("all");
+                      setLocationQuery("");
+                      setHideStale(true);
+                    }}
+                    className="text-pink-400 hover:text-pink-300 underline"
                   >
                     Clear all filters
                   </button>
@@ -1296,19 +1500,23 @@ export default function Dashboard() {
                       <button
                         disabled={currentPage === 1}
                         onClick={() => setCurrentPage(p => p - 1)}
-                        className="px-4 py-2 bg-gray-800 rounded disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-700 transition-colors"
+                        className={`px-4 py-2 rounded disabled:opacity-50 disabled:cursor-not-allowed transition-colors ${
+                          isLight ? "bg-white border border-[#d8e2ef] text-[#334155] hover:border-pink-400" : "bg-gray-800 hover:bg-gray-700"
+                        }`}
                       >
                         ← Previous
                       </button>
                       
-                      <span className="text-gray-400">
+                      <span className={isLight ? "text-[#64748b]" : "text-gray-400"}>
                         Page {currentPage} of {totalPages}
                       </span>
                       
                       <button
                         disabled={currentPage === totalPages}
                         onClick={() => setCurrentPage(p => p + 1)}
-                        className="px-4 py-2 bg-gray-800 rounded disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-700 transition-colors"
+                        className={`px-4 py-2 rounded disabled:opacity-50 disabled:cursor-not-allowed transition-colors ${
+                          isLight ? "bg-white border border-[#d8e2ef] text-[#334155] hover:border-pink-400" : "bg-gray-800 hover:bg-gray-700"
+                        }`}
                       >
                         Next →
                       </button>
@@ -1374,12 +1582,36 @@ export default function Dashboard() {
 
 /* ---------------- UI COMPONENTS ---------------- */
 
-function Nav({ icon, label, active, onClick }) {
+function BrandMark({ size = "md" }) {
+  const sizeClass = size === "lg" ? "h-11 w-11 rounded-xl text-base" : "h-8 w-8 rounded-lg text-xs";
+  return (
+    <div className={`relative ${sizeClass} bg-gradient-to-br from-pink-500/30 via-fuchsia-500/20 to-orange-400/30 border border-pink-400/40 text-pink-200 flex items-center justify-center font-semibold`}>
+      RF
+    </div>
+  );
+}
+
+function MetricCard({ label, value, isLight, compact = false }) {
+  return (
+    <div className={`rounded-xl border ${compact ? "px-3 py-2" : "px-4 py-4"} ${isLight ? "bg-white border-[#d8e2ef]" : "bg-[#121216] border-[#1f1f24]"}`}>
+      <div className={`text-xs ${isLight ? "text-[#64748b]" : "text-gray-400"}`}>{label}</div>
+      <div className={`font-semibold mt-1 ${compact ? "text-xl" : "text-2xl"} ${isLight ? "text-[#0f172a]" : "text-white"}`}>{value}</div>
+    </div>
+  );
+}
+
+function Nav({ icon, label, active, onClick, isLight }) {
   return (
     <button
       onClick={onClick}
-      className={`w-full text-left px-4 py-2 rounded transition-colors flex items-center gap-2 ${
-        active ? "bg-[#231824] text-pink-300" : "text-gray-400 hover:bg-[#1b1b20]"
+      className={`w-full text-left px-4 py-2 rounded border transition-colors flex items-center gap-2 ${
+        active
+          ? isLight
+            ? "bg-[#fee9f4] text-[#b42373] border-[#f7c4df]"
+            : "bg-[#231824] text-pink-300 border-[#3a2332]"
+          : isLight
+          ? "bg-transparent text-[#475569] border-transparent hover:bg-[#f8fbff] hover:border-[#d8e2ef]"
+          : "text-gray-400 border-transparent hover:bg-[#1b1b20] hover:border-[#2a2a33]"
       }`}
     >
       <span className="w-4 text-center">{icon || "•"}</span>
@@ -2128,8 +2360,8 @@ function PipelineBoard({ applications, onMoveStage, isLight }) {
   return (
     <div className="space-y-4">
       <div>
-        <h3 className="text-xl font-semibold text-white">Application Pipeline</h3>
-        <p className="text-sm text-gray-400">Move applications across stages as you progress.</p>
+        <h3 className={`text-xl font-semibold ${isLight ? "text-[#0f172a]" : "text-white"}`}>Application Pipeline</h3>
+        <p className={`text-sm ${isLight ? "text-[#64748b]" : "text-gray-400"}`}>Move applications across stages as you progress.</p>
       </div>
       <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-4">
         {stages.map(stage => (
@@ -2147,13 +2379,19 @@ function PipelineBoard({ applications, onMoveStage, isLight }) {
               setDraggedAppId(null);
               setDragOverStage("");
             }}
-            className={`bg-[#121216] border rounded-2xl p-3 min-h-[240px] transition-colors ${
-              dragOverStage === stage ? "border-pink-500/70 bg-[#16131a]" : "border-[#1f1f24]"
+            className={`border rounded-2xl p-3 min-h-[240px] transition-colors ${
+              dragOverStage === stage
+                ? isLight
+                  ? "border-pink-400 bg-[#fff4fa]"
+                  : "border-pink-500/70 bg-[#16131a]"
+                : isLight
+                ? "bg-white border-[#d8e2ef]"
+                : "bg-[#121216] border-[#1f1f24]"
             }`}
           >
             <div className="flex items-center justify-between mb-3">
-              <span className="text-sm font-semibold text-white">{stage}</span>
-              <span className="text-xs text-gray-500">{grouped[stage]?.length || 0}</span>
+              <span className={`text-sm font-semibold ${isLight ? "text-[#0f172a]" : "text-white"}`}>{stage}</span>
+              <span className={`text-xs ${isLight ? "text-[#64748b]" : "text-gray-500"}`}>{grouped[stage]?.length || 0}</span>
             </div>
             <div className="space-y-3">
               {(grouped[stage] || []).map(app => (
@@ -2165,23 +2403,29 @@ function PipelineBoard({ applications, onMoveStage, isLight }) {
                     setDraggedAppId(null);
                     setDragOverStage("");
                   }}
-                  className="bg-[#15151a] border border-[#23232a] rounded-xl p-3 cursor-grab active:cursor-grabbing"
+                  className={`rounded-xl p-3 cursor-grab active:cursor-grabbing border ${
+                    isLight ? "bg-[#f8fbff] border-[#d8e2ef]" : "bg-[#15151a] border-[#23232a]"
+                  }`}
                 >
-                  <div className="text-sm font-semibold text-white">{app.title}</div>
-                  <div className="text-xs text-gray-400 mt-1">{app.company}</div>
-                  <div className="text-xs text-gray-500 mt-1">{app.location || "Location"}</div>
+                  <div className={`text-sm font-semibold ${isLight ? "text-[#0f172a]" : "text-white"}`}>{app.title}</div>
+                  <div className={`text-xs mt-1 ${isLight ? "text-[#475569]" : "text-gray-400"}`}>{app.company}</div>
+                  <div className={`text-xs mt-1 ${isLight ? "text-[#64748b]" : "text-gray-500"}`}>{app.location || "Location"}</div>
                   <div className="flex items-center gap-2 mt-3">
                     <button
                       disabled={stageIndex(stage) === 0}
                       onClick={() => onMoveStage(app.id, stages[stageIndex(stage) - 1])}
-                      className="px-2 py-1 text-xs rounded bg-[#1e1e25] text-gray-300 disabled:opacity-40"
+                      className={`px-2 py-1 text-xs rounded disabled:opacity-40 ${
+                        isLight ? "bg-white border border-[#d8e2ef] text-[#475569]" : "bg-[#1e1e25] text-gray-300"
+                      }`}
                     >
                       ←
                     </button>
                     <button
                       disabled={stageIndex(stage) === stages.length - 1}
                       onClick={() => onMoveStage(app.id, stages[stageIndex(stage) + 1])}
-                      className="px-2 py-1 text-xs rounded bg-[#1e1e25] text-gray-300 disabled:opacity-40"
+                      className={`px-2 py-1 text-xs rounded disabled:opacity-40 ${
+                        isLight ? "bg-white border border-[#d8e2ef] text-[#475569]" : "bg-[#1e1e25] text-gray-300"
+                      }`}
                     >
                       →
                     </button>
@@ -2189,7 +2433,7 @@ function PipelineBoard({ applications, onMoveStage, isLight }) {
                 </div>
               ))}
               {grouped[stage]?.length === 0 && (
-                <div className="text-xs text-gray-500">No applications</div>
+                <div className={`text-xs ${isLight ? "text-[#94a3b8]" : "text-gray-500"}`}>No applications</div>
               )}
             </div>
           </div>
@@ -2306,7 +2550,11 @@ function JobCard({ job, index, saved, applied, onSave, onApply, resumeMatchEnabl
           <button
             onClick={() => onSave(job.id)}
             className={`h-9 w-9 rounded-lg transition-colors ${
-              saved ? "bg-pink-500/20 text-pink-300" : "bg-[#1e1e25] text-gray-400 hover:bg-[#26262f]"
+              saved
+                ? "bg-pink-500/20 text-pink-300"
+                : isLight
+                ? "bg-[#f8fbff] border border-[#d8e2ef] text-[#64748b] hover:border-pink-400"
+                : "bg-[#1e1e25] text-gray-400 hover:bg-[#26262f]"
             }`}
             title={saved ? "Unsave job" : "Save job"}
           >
@@ -2322,7 +2570,9 @@ function JobCard({ job, index, saved, applied, onSave, onApply, resumeMatchEnabl
           {applied && (
             <button
               onClick={() => onToggleDetails(job.id)}
-              className="px-3 py-1.5 rounded bg-gray-800 text-gray-300 text-sm hover:bg-gray-700 transition-colors"
+              className={`px-3 py-1.5 rounded text-sm transition-colors ${
+                isLight ? "bg-[#f8fbff] border border-[#d8e2ef] text-[#334155] hover:border-pink-400" : "bg-gray-800 text-gray-300 hover:bg-gray-700"
+              }`}
             >
               {isExpanded ? "Hide ▲" : "Details ▼"}
             </button>
@@ -2331,11 +2581,11 @@ function JobCard({ job, index, saved, applied, onSave, onApply, resumeMatchEnabl
       </div>
       
       {/* Expanded Details */}
-          {applied && isExpanded && appliedDetails && (
-        <div className="mt-4 pt-4 border-t border-gray-800 space-y-3">
+      {applied && isExpanded && appliedDetails && (
+        <div className={`mt-4 pt-4 border-t space-y-3 ${isLight ? "border-[#d8e2ef]" : "border-gray-800"}`}>
           <div>
-            <p className="text-xs text-gray-500 mb-1">Applied on:</p>
-            <p className="text-sm text-gray-300">
+            <p className={`text-xs mb-1 ${isLight ? "text-[#64748b]" : "text-gray-500"}`}>Applied on:</p>
+            <p className={`text-sm ${isLight ? "text-[#334155]" : "text-gray-300"}`}>
               {new Date(appliedDetails.applied_date || appliedDetails.appliedDate || new Date().toISOString()).toLocaleDateString('en-US', { 
                 year: 'numeric', month: 'long', day: 'numeric' 
               })}
@@ -2344,24 +2594,24 @@ function JobCard({ job, index, saved, applied, onSave, onApply, resumeMatchEnabl
           
           {job.requirements && (
             <div>
-              <p className="text-xs text-gray-500 mb-2">Job Requirements:</p>
-              <div className="bg-gray-800/50 rounded p-3 text-sm space-y-2">
+              <p className={`text-xs mb-2 ${isLight ? "text-[#64748b]" : "text-gray-500"}`}>Job Requirements:</p>
+              <div className={`rounded p-3 text-sm space-y-2 ${isLight ? "bg-[#f8fbff] border border-[#d8e2ef]" : "bg-gray-800/50"}`}>
                 {job.requirements.skills && job.requirements.skills.length > 0 && (
                   <div>
-                    <span className="text-gray-400">Skills:</span>
-                    <span className="text-gray-300 ml-2">{job.requirements.skills.join(", ")}</span>
+                    <span className={isLight ? "text-[#64748b]" : "text-gray-400"}>Skills:</span>
+                    <span className={`ml-2 ${isLight ? "text-[#334155]" : "text-gray-300"}`}>{job.requirements.skills.join(", ")}</span>
                   </div>
                 )}
                 {job.requirements.experience_years > 0 && (
                   <div>
-                    <span className="text-gray-400">Experience:</span>
-                    <span className="text-gray-300 ml-2">{job.requirements.experience_years} years</span>
+                    <span className={isLight ? "text-[#64748b]" : "text-gray-400"}>Experience:</span>
+                    <span className={`ml-2 ${isLight ? "text-[#334155]" : "text-gray-300"}`}>{job.requirements.experience_years} years</span>
                   </div>
                 )}
                 {job.requirements.education && job.requirements.education !== 'not_specified' && (
                   <div>
-                    <span className="text-gray-400">Education:</span>
-                    <span className="text-gray-300 ml-2 capitalize">{job.requirements.education}</span>
+                    <span className={isLight ? "text-[#64748b]" : "text-gray-400"}>Education:</span>
+                    <span className={`ml-2 capitalize ${isLight ? "text-[#334155]" : "text-gray-300"}`}>{job.requirements.education}</span>
                   </div>
                 )}
               </div>
@@ -2369,13 +2619,15 @@ function JobCard({ job, index, saved, applied, onSave, onApply, resumeMatchEnabl
           )}
           
           <div>
-            <p className="text-xs text-gray-500 mb-1">Your Notes:</p>
+            <p className={`text-xs mb-1 ${isLight ? "text-[#64748b]" : "text-gray-500"}`}>Your Notes:</p>
             <textarea
               value={notes}
               onChange={(e) => setNotes(e.target.value)}
               onBlur={() => onUpdateNotes(appliedDetails.id, notes)}
               placeholder="Add notes about your application..."
-              className="w-full bg-gray-800 border border-gray-700 rounded px-3 py-2 text-sm text-gray-300 focus:outline-none focus:border-pink-500 resize-none"
+              className={`w-full rounded px-3 py-2 text-sm focus:outline-none focus:border-pink-500 resize-none ${
+                isLight ? "bg-[#f8fbff] border border-[#d8e2ef] text-[#334155]" : "bg-gray-800 border border-gray-700 text-gray-300"
+              }`}
               rows={3}
             />
           </div>
