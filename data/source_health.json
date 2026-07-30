@@ -1,976 +1,976 @@
 {
   "PhonePe": {
-    "last_checked_at": "2026-07-30T10:32:15.991051",
-    "last_found": 67,
+    "last_checked_at": "2026-07-30T14:18:57.122028",
+    "last_found": 68,
     "consecutive_zero": 0,
     "disabled_runs_remaining": 0,
-    "last_success_at": "2026-07-30T10:32:15.991066"
+    "last_success_at": "2026-07-30T14:18:57.122043"
   },
   "PayPay India": {
-    "last_checked_at": "2026-07-30T10:32:16.468460",
+    "last_checked_at": "2026-07-30T14:18:57.677293",
     "last_found": 9,
     "consecutive_zero": 0,
     "disabled_runs_remaining": 0,
-    "last_success_at": "2026-07-30T10:32:16.468468"
+    "last_success_at": "2026-07-30T14:18:57.677307"
   },
   "RevX": {
-    "last_checked_at": "2026-07-30T10:32:16.956538",
+    "last_checked_at": "2026-07-30T14:18:58.162852",
     "last_found": 1,
     "consecutive_zero": 0,
     "disabled_runs_remaining": 0,
-    "last_success_at": "2026-07-30T10:32:16.956546"
+    "last_success_at": "2026-07-30T14:18:58.162868"
   },
   "Zinnia": {
-    "last_checked_at": "2026-07-30T10:32:17.429543",
-    "last_found": 9,
-    "consecutive_zero": 0,
-    "disabled_runs_remaining": 0,
-    "last_success_at": "2026-07-30T10:32:17.429554"
-  },
-  "Netradyne": {
-    "last_checked_at": "2026-07-30T10:32:17.910581",
-    "last_found": 1,
-    "consecutive_zero": 0,
-    "disabled_runs_remaining": 0,
-    "last_success_at": "2026-07-30T10:32:17.910597"
-  },
-  "Samsara": {
-    "last_checked_at": "2026-07-30T10:32:18.391349",
-    "last_found": 310,
-    "consecutive_zero": 0,
-    "disabled_runs_remaining": 0,
-    "last_success_at": "2026-07-30T10:32:18.391364"
-  },
-  "Slice": {
-    "last_checked_at": "2026-07-30T10:32:18.873347",
-    "last_found": 1,
-    "consecutive_zero": 0,
-    "disabled_runs_remaining": 0,
-    "last_success_at": "2026-07-30T10:32:18.873356"
-  },
-  "Groww": {
-    "last_checked_at": "2026-07-30T10:32:19.354474",
-    "last_found": 10,
-    "consecutive_zero": 0,
-    "disabled_runs_remaining": 0,
-    "last_success_at": "2026-07-30T10:32:19.354487"
-  },
-  "Pitchbookdata": {
-    "last_checked_at": "2026-07-30T10:32:19.832325",
-    "last_found": 43,
-    "consecutive_zero": 0,
-    "disabled_runs_remaining": 0,
-    "last_success_at": "2026-07-30T10:32:19.832334"
-  },
-  "Anthropic": {
-    "last_checked_at": "2026-07-30T10:32:20.321647",
-    "last_found": 402,
-    "consecutive_zero": 0,
-    "disabled_runs_remaining": 0,
-    "last_success_at": "2026-07-30T10:32:20.321658"
-  },
-  "OneTrust": {
-    "last_checked_at": "2026-07-30T10:32:20.817355",
-    "last_found": 89,
-    "consecutive_zero": 0,
-    "disabled_runs_remaining": 0,
-    "last_success_at": "2026-07-30T10:32:20.817363"
-  },
-  "Airbnb": {
-    "last_checked_at": "2026-07-30T10:32:21.295593",
-    "last_found": 188,
-    "consecutive_zero": 0,
-    "disabled_runs_remaining": 0,
-    "last_success_at": "2026-07-30T10:32:21.295606"
-  },
-  "Dropbox": {
-    "last_checked_at": "2026-07-30T10:32:21.771450",
-    "last_found": 28,
-    "consecutive_zero": 0,
-    "disabled_runs_remaining": 0,
-    "last_success_at": "2026-07-30T10:32:21.771459"
-  },
-  "Stripe": {
-    "last_checked_at": "2026-07-30T10:32:22.254735",
-    "last_found": 1,
-    "consecutive_zero": 0,
-    "disabled_runs_remaining": 0,
-    "last_success_at": "2026-07-30T10:32:22.254743"
-  },
-  "Lyft": {
-    "last_checked_at": "2026-07-30T10:32:22.738865",
-    "last_found": 162,
-    "consecutive_zero": 0,
-    "disabled_runs_remaining": 0,
-    "last_success_at": "2026-07-30T10:32:22.738872"
-  },
-  "Betterment": {
-    "last_checked_at": "2026-07-30T10:32:23.226402",
-    "last_found": 1,
-    "consecutive_zero": 0,
-    "disabled_runs_remaining": 0,
-    "last_success_at": "2026-07-30T10:32:23.226412"
-  },
-  "Instacart": {
-    "last_checked_at": "2026-07-30T10:32:23.704595",
-    "last_found": 1,
-    "consecutive_zero": 0,
-    "disabled_runs_remaining": 0,
-    "last_success_at": "2026-07-30T10:32:23.704603"
-  },
-  "GoDaddy": {
-    "last_checked_at": "2026-07-30T10:32:24.178176",
-    "last_found": 1,
-    "consecutive_zero": 0,
-    "disabled_runs_remaining": 0,
-    "last_success_at": "2026-07-30T10:32:24.178186"
-  },
-  "Webflow": {
-    "last_checked_at": "2026-07-30T10:32:24.661342",
-    "last_found": 22,
-    "consecutive_zero": 0,
-    "disabled_runs_remaining": 0,
-    "last_success_at": "2026-07-30T10:32:24.661349"
-  },
-  "Netlify": {
-    "last_checked_at": "2026-07-30T10:32:25.134424",
-    "last_found": 5,
-    "consecutive_zero": 0,
-    "disabled_runs_remaining": 0,
-    "last_success_at": "2026-07-30T10:32:25.134433"
-  },
-  "Postman": {
-    "last_checked_at": "2026-07-30T10:32:25.605354",
-    "last_found": 107,
-    "consecutive_zero": 0,
-    "disabled_runs_remaining": 0,
-    "last_success_at": "2026-07-30T10:32:25.605360"
-  },
-  "Mercury": {
-    "last_checked_at": "2026-07-30T10:32:26.074970",
-    "last_found": 57,
-    "consecutive_zero": 0,
-    "disabled_runs_remaining": 0,
-    "last_success_at": "2026-07-30T10:32:26.074979"
-  },
-  "Zapier": {
-    "last_checked_at": "2026-07-30T10:32:26.640505",
-    "last_found": 14,
-    "consecutive_zero": 0,
-    "disabled_runs_remaining": 0,
-    "last_success_at": "2026-07-30T10:32:26.640521"
-  },
-  "Ramp": {
-    "last_checked_at": "2026-07-30T10:32:27.251808",
-    "last_found": 123,
-    "consecutive_zero": 0,
-    "disabled_runs_remaining": 0,
-    "last_success_at": "2026-07-30T10:32:27.251817"
-  },
-  "Notion": {
-    "last_checked_at": "2026-07-30T10:32:27.854978",
-    "last_found": 116,
-    "consecutive_zero": 0,
-    "disabled_runs_remaining": 0,
-    "last_success_at": "2026-07-30T10:32:27.854988"
-  },
-  "Linear": {
-    "last_checked_at": "2026-07-30T10:32:28.392168",
-    "last_found": 23,
-    "consecutive_zero": 0,
-    "disabled_runs_remaining": 0,
-    "last_success_at": "2026-07-30T10:32:28.392177"
-  },
-  "Supabase": {
-    "last_checked_at": "2026-07-30T10:32:28.955361",
-    "last_found": 56,
-    "consecutive_zero": 0,
-    "disabled_runs_remaining": 0,
-    "last_success_at": "2026-07-30T10:32:28.955367"
-  },
-  "Vanta": {
-    "last_checked_at": "2026-07-30T10:32:29.568767",
-    "last_found": 101,
-    "consecutive_zero": 0,
-    "disabled_runs_remaining": 0,
-    "last_success_at": "2026-07-30T10:32:29.568775"
-  },
-  "Watershed": {
-    "last_checked_at": "2026-07-30T10:32:30.107668",
-    "last_found": 38,
-    "consecutive_zero": 0,
-    "disabled_runs_remaining": 0,
-    "last_success_at": "2026-07-30T10:32:30.107677"
-  },
-  "gigaml": {
-    "last_checked_at": "2026-07-30T10:32:30.644408",
-    "last_found": 31,
-    "consecutive_zero": 0,
-    "disabled_runs_remaining": 0,
-    "last_success_at": "2026-07-30T10:32:30.644416"
-  },
-  "Cartesia": {
-    "last_checked_at": "2026-07-30T10:32:31.196941",
-    "last_found": 29,
-    "consecutive_zero": 0,
-    "disabled_runs_remaining": 0,
-    "last_success_at": "2026-07-30T10:32:31.196950"
-  },
-  "Ema": {
-    "last_checked_at": "2026-07-30T10:32:31.748409",
-    "last_found": 36,
-    "consecutive_zero": 0,
-    "disabled_runs_remaining": 0,
-    "last_success_at": "2026-07-30T10:32:31.748417"
-  },
-  "Granica": {
-    "last_checked_at": "2026-07-30T10:32:32.283161",
+    "last_checked_at": "2026-07-30T14:18:58.683175",
     "last_found": 8,
     "consecutive_zero": 0,
     "disabled_runs_remaining": 0,
-    "last_success_at": "2026-07-30T10:32:32.283170"
+    "last_success_at": "2026-07-30T14:18:58.683190"
   },
-  "Commure": {
-    "last_checked_at": "2026-07-30T10:32:32.854321",
-    "last_found": 65,
-    "consecutive_zero": 0,
-    "disabled_runs_remaining": 0,
-    "last_success_at": "2026-07-30T10:32:32.854329"
-  },
-  "Mercor": {
-    "last_checked_at": "2026-07-30T10:32:33.652717",
-    "last_found": 77,
-    "consecutive_zero": 0,
-    "disabled_runs_remaining": 0,
-    "last_success_at": "2026-07-30T10:32:33.652730"
-  },
-  "JuniperSquare": {
-    "last_checked_at": "2026-07-30T10:32:34.222630",
-    "last_found": 41,
-    "consecutive_zero": 0,
-    "disabled_runs_remaining": 0,
-    "last_success_at": "2026-07-30T10:32:34.222640"
-  },
-  "AcaiTravel": {
-    "last_checked_at": "2026-07-30T10:32:34.766862",
-    "last_found": 3,
-    "consecutive_zero": 0,
-    "disabled_runs_remaining": 0,
-    "last_success_at": "2026-07-30T10:32:34.766871"
-  },
-  "AltimateAI": {
-    "last_checked_at": "2026-07-30T10:32:35.295200",
-    "last_found": 4,
-    "consecutive_zero": 0,
-    "disabled_runs_remaining": 0,
-    "last_success_at": "2026-07-30T10:32:35.295209"
-  },
-  "Upflow": {
-    "last_checked_at": "2026-07-30T10:32:35.819615",
+  "Netradyne": {
+    "last_checked_at": "2026-07-30T14:18:59.154174",
     "last_found": 1,
     "consecutive_zero": 0,
     "disabled_runs_remaining": 0,
-    "last_success_at": "2026-07-30T10:32:35.819624"
+    "last_success_at": "2026-07-30T14:18:59.154191"
   },
-  "Articul8": {
-    "last_checked_at": "2026-07-30T10:32:36.415891",
-    "last_found": 20,
+  "Samsara": {
+    "last_checked_at": "2026-07-30T14:18:59.627010",
+    "last_found": 310,
     "consecutive_zero": 0,
     "disabled_runs_remaining": 0,
-    "last_success_at": "2026-07-30T10:32:36.415900"
+    "last_success_at": "2026-07-30T14:18:59.627026"
   },
-  "Axion": {
-    "last_checked_at": "2026-07-30T10:32:36.951174",
-    "last_found": 10,
+  "Slice": {
+    "last_checked_at": "2026-07-30T14:19:00.081416",
+    "last_found": 1,
     "consecutive_zero": 0,
     "disabled_runs_remaining": 0,
-    "last_success_at": "2026-07-30T10:32:36.951192"
+    "last_success_at": "2026-07-30T14:19:00.081431"
   },
-  "Axelera AI": {
-    "last_checked_at": "2026-07-30T10:32:37.544889",
+  "Groww": {
+    "last_checked_at": "2026-07-30T14:19:00.580611",
+    "last_found": 11,
+    "consecutive_zero": 0,
+    "disabled_runs_remaining": 0,
+    "last_success_at": "2026-07-30T14:19:00.580626"
+  },
+  "Pitchbookdata": {
+    "last_checked_at": "2026-07-30T14:19:01.232356",
+    "last_found": 43,
+    "consecutive_zero": 0,
+    "disabled_runs_remaining": 0,
+    "last_success_at": "2026-07-30T14:19:01.232373"
+  },
+  "Anthropic": {
+    "last_checked_at": "2026-07-30T14:19:01.779663",
+    "last_found": 401,
+    "consecutive_zero": 0,
+    "disabled_runs_remaining": 0,
+    "last_success_at": "2026-07-30T14:19:01.779679"
+  },
+  "OneTrust": {
+    "last_checked_at": "2026-07-30T14:19:02.261954",
+    "last_found": 88,
+    "consecutive_zero": 0,
+    "disabled_runs_remaining": 0,
+    "last_success_at": "2026-07-30T14:19:02.261970"
+  },
+  "Airbnb": {
+    "last_checked_at": "2026-07-30T14:19:02.731130",
+    "last_found": 188,
+    "consecutive_zero": 0,
+    "disabled_runs_remaining": 0,
+    "last_success_at": "2026-07-30T14:19:02.731146"
+  },
+  "Dropbox": {
+    "last_checked_at": "2026-07-30T14:19:03.197220",
+    "last_found": 30,
+    "consecutive_zero": 0,
+    "disabled_runs_remaining": 0,
+    "last_success_at": "2026-07-30T14:19:03.197237"
+  },
+  "Stripe": {
+    "last_checked_at": "2026-07-30T14:19:03.673344",
+    "last_found": 1,
+    "consecutive_zero": 0,
+    "disabled_runs_remaining": 0,
+    "last_success_at": "2026-07-30T14:19:03.673359"
+  },
+  "Lyft": {
+    "last_checked_at": "2026-07-30T14:19:04.132243",
+    "last_found": 163,
+    "consecutive_zero": 0,
+    "disabled_runs_remaining": 0,
+    "last_success_at": "2026-07-30T14:19:04.132258"
+  },
+  "Betterment": {
+    "last_checked_at": "2026-07-30T14:19:04.614843",
+    "last_found": 1,
+    "consecutive_zero": 0,
+    "disabled_runs_remaining": 0,
+    "last_success_at": "2026-07-30T14:19:04.614858"
+  },
+  "Instacart": {
+    "last_checked_at": "2026-07-30T14:19:05.077650",
+    "last_found": 1,
+    "consecutive_zero": 0,
+    "disabled_runs_remaining": 0,
+    "last_success_at": "2026-07-30T14:19:05.077666"
+  },
+  "GoDaddy": {
+    "last_checked_at": "2026-07-30T14:19:07.103253",
+    "last_found": 1,
+    "consecutive_zero": 0,
+    "disabled_runs_remaining": 0,
+    "last_success_at": "2026-07-30T14:19:07.103269"
+  },
+  "Webflow": {
+    "last_checked_at": "2026-07-30T14:19:07.596690",
+    "last_found": 22,
+    "consecutive_zero": 0,
+    "disabled_runs_remaining": 0,
+    "last_success_at": "2026-07-30T14:19:07.596705"
+  },
+  "Netlify": {
+    "last_checked_at": "2026-07-30T14:19:08.064385",
+    "last_found": 5,
+    "consecutive_zero": 0,
+    "disabled_runs_remaining": 0,
+    "last_success_at": "2026-07-30T14:19:08.064400"
+  },
+  "Postman": {
+    "last_checked_at": "2026-07-30T14:19:08.552242",
+    "last_found": 107,
+    "consecutive_zero": 0,
+    "disabled_runs_remaining": 0,
+    "last_success_at": "2026-07-30T14:19:08.552258"
+  },
+  "Mercury": {
+    "last_checked_at": "2026-07-30T14:19:09.038625",
+    "last_found": 57,
+    "consecutive_zero": 0,
+    "disabled_runs_remaining": 0,
+    "last_success_at": "2026-07-30T14:19:09.038641"
+  },
+  "Zapier": {
+    "last_checked_at": "2026-07-30T14:19:09.524547",
     "last_found": 14,
     "consecutive_zero": 0,
     "disabled_runs_remaining": 0,
-    "last_success_at": "2026-07-30T10:32:37.544897"
+    "last_success_at": "2026-07-30T14:19:09.524561"
   },
-  "Poshmark": {
-    "last_checked_at": "2026-07-30T10:32:38.084264",
-    "last_found": 28,
+  "Ramp": {
+    "last_checked_at": "2026-07-30T14:19:10.018037",
+    "last_found": 123,
     "consecutive_zero": 0,
     "disabled_runs_remaining": 0,
-    "last_success_at": "2026-07-30T10:32:38.084275"
+    "last_success_at": "2026-07-30T14:19:10.018054"
   },
-  "SigNoz": {
-    "last_checked_at": "2026-07-30T10:32:38.668430",
-    "last_found": 15,
+  "Notion": {
+    "last_checked_at": "2026-07-30T14:19:10.505085",
+    "last_found": 115,
     "consecutive_zero": 0,
     "disabled_runs_remaining": 0,
-    "last_success_at": "2026-07-30T10:32:38.668437"
+    "last_success_at": "2026-07-30T14:19:10.505101"
   },
-  "Plane Software, Inc.": {
-    "last_checked_at": "2026-07-30T10:32:39.204824",
-    "last_found": 10,
+  "Linear": {
+    "last_checked_at": "2026-07-30T14:19:11.014421",
+    "last_found": 23,
     "consecutive_zero": 0,
     "disabled_runs_remaining": 0,
-    "last_success_at": "2026-07-30T10:32:39.204831"
+    "last_success_at": "2026-07-30T14:19:11.014437"
   },
-  "Kraken": {
-    "last_checked_at": "2026-07-30T10:32:40.445237",
+  "Supabase": {
+    "last_checked_at": "2026-07-30T14:19:11.535586",
+    "last_found": 56,
+    "consecutive_zero": 0,
+    "disabled_runs_remaining": 0,
+    "last_success_at": "2026-07-30T14:19:11.535602"
+  },
+  "Vanta": {
+    "last_checked_at": "2026-07-30T14:19:12.123355",
+    "last_found": 101,
+    "consecutive_zero": 0,
+    "disabled_runs_remaining": 0,
+    "last_success_at": "2026-07-30T14:19:12.123370"
+  },
+  "Watershed": {
+    "last_checked_at": "2026-07-30T14:19:12.574361",
+    "last_found": 38,
+    "consecutive_zero": 0,
+    "disabled_runs_remaining": 0,
+    "last_success_at": "2026-07-30T14:19:12.574378"
+  },
+  "gigaml": {
+    "last_checked_at": "2026-07-30T14:19:13.056051",
+    "last_found": 31,
+    "consecutive_zero": 0,
+    "disabled_runs_remaining": 0,
+    "last_success_at": "2026-07-30T14:19:13.056067"
+  },
+  "Cartesia": {
+    "last_checked_at": "2026-07-30T14:19:13.540518",
+    "last_found": 29,
+    "consecutive_zero": 0,
+    "disabled_runs_remaining": 0,
+    "last_success_at": "2026-07-30T14:19:13.540534"
+  },
+  "Ema": {
+    "last_checked_at": "2026-07-30T14:19:14.364531",
+    "last_found": 36,
+    "consecutive_zero": 0,
+    "disabled_runs_remaining": 0,
+    "last_success_at": "2026-07-30T14:19:14.364546"
+  },
+  "Granica": {
+    "last_checked_at": "2026-07-30T14:19:14.845624",
+    "last_found": 8,
+    "consecutive_zero": 0,
+    "disabled_runs_remaining": 0,
+    "last_success_at": "2026-07-30T14:19:14.845638"
+  },
+  "Commure": {
+    "last_checked_at": "2026-07-30T14:19:15.867753",
     "last_found": 66,
     "consecutive_zero": 0,
     "disabled_runs_remaining": 0,
-    "last_success_at": "2026-07-30T10:32:40.445249"
+    "last_success_at": "2026-07-30T14:19:15.867770"
+  },
+  "Mercor": {
+    "last_checked_at": "2026-07-30T14:19:16.379718",
+    "last_found": 77,
+    "consecutive_zero": 0,
+    "disabled_runs_remaining": 0,
+    "last_success_at": "2026-07-30T14:19:16.379732"
+  },
+  "JuniperSquare": {
+    "last_checked_at": "2026-07-30T14:19:17.229395",
+    "last_found": 40,
+    "consecutive_zero": 0,
+    "disabled_runs_remaining": 0,
+    "last_success_at": "2026-07-30T14:19:17.229411"
+  },
+  "AcaiTravel": {
+    "last_checked_at": "2026-07-30T14:19:17.713931",
+    "last_found": 3,
+    "consecutive_zero": 0,
+    "disabled_runs_remaining": 0,
+    "last_success_at": "2026-07-30T14:19:17.713947"
+  },
+  "AltimateAI": {
+    "last_checked_at": "2026-07-30T14:19:18.238513",
+    "last_found": 4,
+    "consecutive_zero": 0,
+    "disabled_runs_remaining": 0,
+    "last_success_at": "2026-07-30T14:19:18.238530"
+  },
+  "Upflow": {
+    "last_checked_at": "2026-07-30T14:19:18.717378",
+    "last_found": 1,
+    "consecutive_zero": 0,
+    "disabled_runs_remaining": 0,
+    "last_success_at": "2026-07-30T14:19:18.717392"
+  },
+  "Articul8": {
+    "last_checked_at": "2026-07-30T14:19:19.186787",
+    "last_found": 20,
+    "consecutive_zero": 0,
+    "disabled_runs_remaining": 0,
+    "last_success_at": "2026-07-30T14:19:19.186803"
+  },
+  "Axion": {
+    "last_checked_at": "2026-07-30T14:19:19.715027",
+    "last_found": 10,
+    "consecutive_zero": 0,
+    "disabled_runs_remaining": 0,
+    "last_success_at": "2026-07-30T14:19:19.715042"
+  },
+  "Axelera AI": {
+    "last_checked_at": "2026-07-30T14:19:20.275922",
+    "last_found": 14,
+    "consecutive_zero": 0,
+    "disabled_runs_remaining": 0,
+    "last_success_at": "2026-07-30T14:19:20.275937"
+  },
+  "Poshmark": {
+    "last_checked_at": "2026-07-30T14:19:20.761542",
+    "last_found": 28,
+    "consecutive_zero": 0,
+    "disabled_runs_remaining": 0,
+    "last_success_at": "2026-07-30T14:19:20.761559"
+  },
+  "SigNoz": {
+    "last_checked_at": "2026-07-30T14:19:21.229618",
+    "last_found": 15,
+    "consecutive_zero": 0,
+    "disabled_runs_remaining": 0,
+    "last_success_at": "2026-07-30T14:19:21.229633"
+  },
+  "Plane Software, Inc.": {
+    "last_checked_at": "2026-07-30T14:19:21.715611",
+    "last_found": 10,
+    "consecutive_zero": 0,
+    "disabled_runs_remaining": 0,
+    "last_success_at": "2026-07-30T14:19:21.715628"
+  },
+  "Kraken": {
+    "last_checked_at": "2026-07-30T14:19:23.681066",
+    "last_found": 68,
+    "consecutive_zero": 0,
+    "disabled_runs_remaining": 0,
+    "last_success_at": "2026-07-30T14:19:23.681082"
   },
   "Deel": {
-    "last_checked_at": "2026-07-30T10:32:41.058133",
+    "last_checked_at": "2026-07-30T14:19:24.118113",
     "last_found": 0,
     "consecutive_zero": 0,
     "disabled_runs_remaining": 0,
     "last_success_at": "2026-06-28T11:51:51.389828"
   },
   "ElevenLabs": {
-    "last_checked_at": "2026-07-30T10:32:43.238597",
-    "last_found": 217,
+    "last_checked_at": "2026-07-30T14:19:27.029504",
+    "last_found": 218,
     "consecutive_zero": 0,
     "disabled_runs_remaining": 0,
-    "last_success_at": "2026-07-30T10:32:43.238613"
+    "last_success_at": "2026-07-30T14:19:27.029519"
   },
   "Decagon": {
-    "last_checked_at": "2026-07-30T10:32:43.825415",
+    "last_checked_at": "2026-07-30T14:19:27.559229",
     "last_found": 115,
     "consecutive_zero": 0,
     "disabled_runs_remaining": 0,
-    "last_success_at": "2026-07-30T10:32:43.825423"
+    "last_success_at": "2026-07-30T14:19:27.559245"
   },
   "Lovable": {
-    "last_checked_at": "2026-07-30T10:32:44.387579",
+    "last_checked_at": "2026-07-30T14:19:28.069337",
     "last_found": 63,
     "consecutive_zero": 0,
     "disabled_runs_remaining": 0,
-    "last_success_at": "2026-07-30T10:32:44.387587"
+    "last_success_at": "2026-07-30T14:19:28.069353"
   },
   "Assembled": {
-    "last_checked_at": "2026-07-30T10:32:44.930807",
+    "last_checked_at": "2026-07-30T14:19:28.556375",
     "last_found": 22,
     "consecutive_zero": 0,
     "disabled_runs_remaining": 0,
-    "last_success_at": "2026-07-30T10:32:44.930817"
+    "last_success_at": "2026-07-30T14:19:28.556390"
   },
   "Sierra": {
-    "last_checked_at": "2026-07-30T10:32:46.854015",
+    "last_checked_at": "2026-07-30T14:19:29.130534",
     "last_found": 172,
     "consecutive_zero": 0,
     "disabled_runs_remaining": 0,
-    "last_success_at": "2026-07-30T10:32:46.854025"
+    "last_success_at": "2026-07-30T14:19:29.130549"
   },
   "Turnkey": {
-    "last_checked_at": "2026-07-30T10:32:47.460089",
+    "last_checked_at": "2026-07-30T14:19:29.606705",
     "last_found": 13,
     "consecutive_zero": 0,
     "disabled_runs_remaining": 0,
-    "last_success_at": "2026-07-30T10:32:47.460099"
+    "last_success_at": "2026-07-30T14:19:29.606721"
   },
   "Campfire": {
-    "last_checked_at": "2026-07-30T10:32:48.007258",
+    "last_checked_at": "2026-07-30T14:19:30.098501",
     "last_found": 31,
     "consecutive_zero": 0,
     "disabled_runs_remaining": 0,
-    "last_success_at": "2026-07-30T10:32:48.007274"
+    "last_success_at": "2026-07-30T14:19:30.098515"
   },
   "LI.FI": {
-    "last_checked_at": "2026-07-30T10:32:48.558671",
+    "last_checked_at": "2026-07-30T14:19:30.712504",
     "last_found": 0,
     "consecutive_zero": 0,
     "disabled_runs_remaining": 0,
     "last_success_at": "2026-06-29T04:43:32.071995"
   },
   "Clerk": {
-    "last_checked_at": "2026-07-30T10:32:49.080938",
+    "last_checked_at": "2026-07-30T14:19:31.190246",
     "last_found": 0,
     "consecutive_zero": 0,
     "disabled_runs_remaining": 0,
     "last_success_at": "2026-05-22T12:28:17.711904"
   },
   "Fin": {
-    "last_checked_at": "2026-07-30T10:32:49.613881",
+    "last_checked_at": "2026-07-30T14:19:31.660362",
     "last_found": 7,
     "consecutive_zero": 0,
     "disabled_runs_remaining": 0,
-    "last_success_at": "2026-07-30T10:32:49.613889"
+    "last_success_at": "2026-07-30T14:19:31.660378"
   },
   "Jellyfish": {
-    "last_checked_at": "2026-07-30T10:32:50.140496",
-    "last_found": 11,
+    "last_checked_at": "2026-07-30T14:19:32.236703",
+    "last_found": 10,
     "consecutive_zero": 0,
     "disabled_runs_remaining": 0,
-    "last_success_at": "2026-07-30T10:32:50.140505"
+    "last_success_at": "2026-07-30T14:19:32.236721"
   },
   "Super.com": {
-    "last_checked_at": "2026-07-30T10:32:50.700499",
+    "last_checked_at": "2026-07-30T14:19:32.715790",
     "last_found": 19,
     "consecutive_zero": 0,
     "disabled_runs_remaining": 0,
-    "last_success_at": "2026-07-30T10:32:50.700507"
+    "last_success_at": "2026-07-30T14:19:32.715805"
   },
   "Protege": {
-    "last_checked_at": "2026-07-30T10:32:51.237566",
+    "last_checked_at": "2026-07-30T14:19:33.192314",
     "last_found": 12,
     "consecutive_zero": 0,
     "disabled_runs_remaining": 0,
-    "last_success_at": "2026-07-30T10:32:51.237574"
+    "last_success_at": "2026-07-30T14:19:33.192330"
   },
   "Winona": {
-    "last_checked_at": "2026-07-30T10:32:51.775425",
+    "last_checked_at": "2026-07-30T14:19:33.658306",
     "last_found": 5,
     "consecutive_zero": 0,
     "disabled_runs_remaining": 0,
-    "last_success_at": "2026-07-30T10:32:51.775432"
+    "last_success_at": "2026-07-30T14:19:33.658322"
   },
   "Harvey": {
-    "last_checked_at": "2026-07-30T10:32:52.458246",
+    "last_checked_at": "2026-07-30T14:19:34.310186",
     "last_found": 348,
     "consecutive_zero": 0,
     "disabled_runs_remaining": 0,
-    "last_success_at": "2026-07-30T10:32:52.458255"
+    "last_success_at": "2026-07-30T14:19:34.310201"
   },
   "Anyscale": {
-    "last_checked_at": "2026-07-30T10:32:52.999924",
+    "last_checked_at": "2026-07-30T14:19:34.789038",
     "last_found": 21,
     "consecutive_zero": 0,
     "disabled_runs_remaining": 0,
-    "last_success_at": "2026-07-30T10:32:52.999933"
+    "last_success_at": "2026-07-30T14:19:34.789054"
   },
   "Weaviate": {
-    "last_checked_at": "2026-07-30T10:32:53.523405",
+    "last_checked_at": "2026-07-30T14:19:35.261147",
     "last_found": 2,
     "consecutive_zero": 0,
     "disabled_runs_remaining": 0,
-    "last_success_at": "2026-07-30T10:32:53.523412"
+    "last_success_at": "2026-07-30T14:19:35.261162"
   },
   "Apollo GraphQL": {
-    "last_checked_at": "2026-07-30T10:32:54.063453",
+    "last_checked_at": "2026-07-30T14:19:35.724738",
     "last_found": 12,
     "consecutive_zero": 0,
     "disabled_runs_remaining": 0,
-    "last_success_at": "2026-07-30T10:32:54.063461"
+    "last_success_at": "2026-07-30T14:19:35.724754"
   },
   "Resend": {
-    "last_checked_at": "2026-07-30T10:32:54.657618",
+    "last_checked_at": "2026-07-30T14:19:36.203704",
     "last_found": 10,
     "consecutive_zero": 0,
     "disabled_runs_remaining": 0,
-    "last_success_at": "2026-07-30T10:32:54.657626"
+    "last_success_at": "2026-07-30T14:19:36.203719"
   },
   "Gamma": {
-    "last_checked_at": "2026-07-30T10:32:55.198871",
+    "last_checked_at": "2026-07-30T14:19:36.718635",
     "last_found": 32,
     "consecutive_zero": 0,
     "disabled_runs_remaining": 0,
-    "last_success_at": "2026-07-30T10:32:55.198879"
+    "last_success_at": "2026-07-30T14:19:36.718651"
   },
   "Sanity": {
-    "last_checked_at": "2026-07-30T10:32:55.770571",
+    "last_checked_at": "2026-07-30T14:19:37.229817",
     "last_found": 25,
     "consecutive_zero": 0,
     "disabled_runs_remaining": 0,
-    "last_success_at": "2026-07-30T10:32:55.770581"
+    "last_success_at": "2026-07-30T14:19:37.229833"
   },
   "Sahara": {
-    "last_checked_at": "2026-07-30T10:32:56.314684",
+    "last_checked_at": "2026-07-30T14:19:37.722988",
     "last_found": 3,
     "consecutive_zero": 0,
     "disabled_runs_remaining": 0,
-    "last_success_at": "2026-07-30T10:32:56.314694"
+    "last_success_at": "2026-07-30T14:19:37.723004"
   },
   "Brainstorm Force": {
-    "last_checked_at": "2026-07-30T10:32:57.402130",
+    "last_checked_at": "2026-07-30T14:19:38.443620",
     "last_found": 12,
     "consecutive_zero": 0,
     "disabled_runs_remaining": 0,
-    "last_success_at": "2026-07-30T10:32:57.402140"
+    "last_success_at": "2026-07-30T14:19:38.443636"
   },
   "WPMU DEV": {
-    "last_checked_at": "2026-07-30T10:32:57.965222",
+    "last_checked_at": "2026-07-30T14:19:38.990666",
     "last_found": 3,
     "consecutive_zero": 0,
     "disabled_runs_remaining": 0,
-    "last_success_at": "2026-07-30T10:32:57.965233"
+    "last_success_at": "2026-07-30T14:19:38.990683"
   },
   "Navana Tech": {
-    "last_checked_at": "2026-07-30T10:32:58.572924",
+    "last_checked_at": "2026-07-30T14:19:39.684392",
     "last_found": 1,
     "consecutive_zero": 0,
     "disabled_runs_remaining": 0,
-    "last_success_at": "2026-07-30T10:32:58.572932"
+    "last_success_at": "2026-07-30T14:19:39.684409"
   },
   "Hevo Data": {
-    "last_checked_at": "2026-07-30T10:32:59.500615",
+    "last_checked_at": "2026-07-30T14:19:41.293703",
     "last_found": 41,
     "consecutive_zero": 0,
     "disabled_runs_remaining": 0,
-    "last_success_at": "2026-07-30T10:32:59.500624"
+    "last_success_at": "2026-07-30T14:19:41.293719"
   },
   "Zomato": {
-    "last_checked_at": "2026-07-30T10:33:00.442081",
+    "last_checked_at": "2026-07-30T14:19:42.188847",
     "last_found": 3,
     "consecutive_zero": 0,
     "disabled_runs_remaining": 0,
-    "last_success_at": "2026-07-30T10:33:00.442090"
+    "last_success_at": "2026-07-30T14:19:42.188860"
   },
   "Bosch India": {
-    "last_checked_at": "2026-07-30T10:33:01.375784",
+    "last_checked_at": "2026-07-30T14:19:43.061406",
     "last_found": 100,
     "consecutive_zero": 0,
     "disabled_runs_remaining": 0,
-    "last_success_at": "2026-07-30T10:33:01.375795"
+    "last_success_at": "2026-07-30T14:19:43.061421"
   },
   "Visa": {
-    "last_checked_at": "2026-07-30T10:33:02.246034",
+    "last_checked_at": "2026-07-30T14:19:43.889773",
     "last_found": 2,
     "consecutive_zero": 0,
     "disabled_runs_remaining": 0,
-    "last_success_at": "2026-07-30T10:33:02.246042"
+    "last_success_at": "2026-07-30T14:19:43.889788"
   },
   "LinkedIn India": {
-    "last_checked_at": "2026-07-30T10:33:03.121316",
+    "last_checked_at": "2026-07-30T14:19:44.766831",
     "last_found": 100,
     "consecutive_zero": 0,
     "disabled_runs_remaining": 0,
-    "last_success_at": "2026-07-30T10:33:03.121332"
+    "last_success_at": "2026-07-30T14:19:44.766849"
   },
   "ServiceNow": {
-    "last_checked_at": "2026-07-30T10:33:04.063526",
+    "last_checked_at": "2026-07-30T14:19:45.646041",
     "last_found": 100,
     "consecutive_zero": 0,
     "disabled_runs_remaining": 0,
-    "last_success_at": "2026-07-30T10:33:04.063534"
+    "last_success_at": "2026-07-30T14:19:45.646057"
   },
   "IFS": {
-    "last_checked_at": "2026-07-30T10:33:04.978104",
+    "last_checked_at": "2026-07-30T14:19:46.489526",
     "last_found": 100,
     "consecutive_zero": 0,
     "disabled_runs_remaining": 0,
-    "last_success_at": "2026-07-30T10:33:04.978114"
+    "last_success_at": "2026-07-30T14:19:46.489541"
   },
   "Saggezza India Pvt. Ltd": {
-    "last_checked_at": "2026-07-30T10:33:05.939988",
+    "last_checked_at": "2026-07-30T14:19:47.377782",
     "last_found": 2,
     "consecutive_zero": 0,
     "disabled_runs_remaining": 0,
-    "last_success_at": "2026-07-30T10:33:05.940005"
+    "last_success_at": "2026-07-30T14:19:47.377797"
   },
   "Utility Hub India LLP": {
-    "last_checked_at": "2026-07-30T10:33:06.783341",
+    "last_checked_at": "2026-07-30T14:19:48.171735",
     "last_found": 2,
     "consecutive_zero": 0,
     "disabled_runs_remaining": 0,
-    "last_success_at": "2026-07-30T10:33:06.783351"
+    "last_success_at": "2026-07-30T14:19:48.171752"
   },
   "Version 1": {
-    "last_checked_at": "2026-07-30T10:33:07.658567",
+    "last_checked_at": "2026-07-30T14:19:48.997529",
     "last_found": 100,
     "consecutive_zero": 0,
     "disabled_runs_remaining": 0,
-    "last_success_at": "2026-07-30T10:33:07.658575"
+    "last_success_at": "2026-07-30T14:19:48.997545"
   },
   "Cami.AI": {
-    "last_checked_at": "2026-07-30T10:33:08.511536",
+    "last_checked_at": "2026-07-30T14:19:49.787805",
     "last_found": 10,
     "consecutive_zero": 0,
     "disabled_runs_remaining": 0,
-    "last_success_at": "2026-07-30T10:33:08.511545"
+    "last_success_at": "2026-07-30T14:19:49.787820"
   },
   "Raks IT Solutions Pvt Ltd": {
-    "last_checked_at": "2026-07-30T10:33:09.361341",
+    "last_checked_at": "2026-07-30T14:19:50.576198",
     "last_found": 10,
     "consecutive_zero": 0,
     "disabled_runs_remaining": 0,
-    "last_success_at": "2026-07-30T10:33:09.361349"
+    "last_success_at": "2026-07-30T14:19:50.576213"
   },
   "Ziffity Solutions": {
-    "last_checked_at": "2026-07-30T10:33:10.198889",
+    "last_checked_at": "2026-07-30T14:19:51.394805",
     "last_found": 3,
     "consecutive_zero": 0,
     "disabled_runs_remaining": 0,
-    "last_success_at": "2026-07-30T10:33:10.198899"
+    "last_success_at": "2026-07-30T14:19:51.394822"
   },
   "Aspire": {
-    "last_checked_at": "2026-07-30T10:33:10.954997",
+    "last_checked_at": "2026-07-30T14:19:52.274791",
     "last_found": 0,
     "consecutive_zero": 0,
     "disabled_runs_remaining": 0,
     "last_success_at": "2026-05-05T17:46:44.437167"
   },
   "Armada": {
-    "last_checked_at": "2026-07-30T10:33:11.428218",
+    "last_checked_at": "2026-07-30T14:19:52.757584",
     "last_found": 59,
     "consecutive_zero": 0,
     "disabled_runs_remaining": 0,
-    "last_success_at": "2026-07-30T10:33:11.428235"
+    "last_success_at": "2026-07-30T14:19:52.757600"
   },
   "Motive": {
-    "last_checked_at": "2026-07-30T10:33:11.908714",
+    "last_checked_at": "2026-07-30T14:19:53.219334",
     "last_found": 82,
     "consecutive_zero": 0,
     "disabled_runs_remaining": 0,
-    "last_success_at": "2026-07-30T10:33:11.908722"
+    "last_success_at": "2026-07-30T14:19:53.219350"
   },
   "Twilio": {
-    "last_checked_at": "2026-07-30T10:33:12.383115",
+    "last_checked_at": "2026-07-30T14:19:53.698203",
     "last_found": 187,
     "consecutive_zero": 0,
     "disabled_runs_remaining": 0,
-    "last_success_at": "2026-07-30T10:33:12.383123"
+    "last_success_at": "2026-07-30T14:19:53.698219"
   },
   "Zynga": {
-    "last_checked_at": "2026-07-30T10:33:12.853757",
+    "last_checked_at": "2026-07-30T14:19:54.240852",
     "last_found": 52,
     "consecutive_zero": 0,
     "disabled_runs_remaining": 0,
-    "last_success_at": "2026-07-30T10:33:12.853765"
+    "last_success_at": "2026-07-30T14:19:54.240866"
   },
   "HighLevel": {
-    "last_checked_at": "2026-07-30T10:33:13.641684",
+    "last_checked_at": "2026-07-30T14:19:55.864225",
     "last_found": 82,
     "consecutive_zero": 0,
     "disabled_runs_remaining": 0,
-    "last_success_at": "2026-07-30T10:33:13.641693"
+    "last_success_at": "2026-07-30T14:19:55.864240"
   },
   "Yassir": {
-    "last_checked_at": "2026-07-30T10:33:14.475525",
-    "last_found": 153,
+    "last_checked_at": "2026-07-30T14:19:58.172840",
+    "last_found": 155,
     "consecutive_zero": 0,
     "disabled_runs_remaining": 0,
-    "last_success_at": "2026-07-30T10:33:14.475536"
+    "last_success_at": "2026-07-30T14:19:58.172855"
   },
   "InMobi": {
-    "last_checked_at": "2026-07-30T10:33:14.948188",
-    "last_found": 71,
+    "last_checked_at": "2026-07-30T14:19:58.726946",
+    "last_found": 70,
     "consecutive_zero": 0,
     "disabled_runs_remaining": 0,
-    "last_success_at": "2026-07-30T10:33:14.948197"
+    "last_success_at": "2026-07-30T14:19:58.726962"
   },
   "Entain India": {
-    "last_checked_at": "2026-07-30T10:33:15.860554",
+    "last_checked_at": "2026-07-30T14:19:59.626774",
     "last_found": 100,
     "consecutive_zero": 0,
     "disabled_runs_remaining": 0,
-    "last_success_at": "2026-07-30T10:33:15.860562"
+    "last_success_at": "2026-07-30T14:19:59.626789"
   },
   "Hitachi Solutions India": {
-    "last_checked_at": "2026-07-30T10:33:16.717408",
-    "last_found": 50,
+    "last_checked_at": "2026-07-30T14:20:00.420455",
+    "last_found": 51,
     "consecutive_zero": 0,
     "disabled_runs_remaining": 0,
-    "last_success_at": "2026-07-30T10:33:16.717415"
+    "last_success_at": "2026-07-30T14:20:00.420471"
   },
   "Senior India Pvt Ltd": {
-    "last_checked_at": "2026-07-30T10:33:17.345437",
+    "last_checked_at": "2026-07-30T14:20:00.999696",
     "last_found": 100,
     "consecutive_zero": 0,
     "disabled_runs_remaining": 0,
-    "last_success_at": "2026-07-30T10:33:17.345447"
+    "last_success_at": "2026-07-30T14:20:00.999712"
   },
   "ixigo": {
-    "last_checked_at": "2026-07-30T10:33:18.175923",
+    "last_checked_at": "2026-07-30T14:20:01.828869",
     "last_found": 9,
     "consecutive_zero": 0,
     "disabled_runs_remaining": 0,
-    "last_success_at": "2026-07-30T10:33:18.175937"
+    "last_success_at": "2026-07-30T14:20:01.828884"
   },
   "WNS Global Services": {
-    "last_checked_at": "2026-07-30T10:33:19.028371",
+    "last_checked_at": "2026-07-30T14:20:02.806241",
     "last_found": 100,
     "consecutive_zero": 0,
     "disabled_runs_remaining": 0,
-    "last_success_at": "2026-07-30T10:33:19.028385"
+    "last_success_at": "2026-07-30T14:20:02.806256"
   },
   "T-Systems ICT India Pvt Ltd": {
-    "last_checked_at": "2026-07-30T10:33:19.951188",
-    "last_found": 80,
+    "last_checked_at": "2026-07-30T14:20:03.686497",
+    "last_found": 75,
     "consecutive_zero": 0,
     "disabled_runs_remaining": 0,
-    "last_success_at": "2026-07-30T10:33:19.951204"
+    "last_success_at": "2026-07-30T14:20:03.686514"
   },
   "NEC Software Solutions India": {
-    "last_checked_at": "2026-07-30T10:33:20.857695",
+    "last_checked_at": "2026-07-30T14:20:04.624690",
     "last_found": 100,
     "consecutive_zero": 0,
     "disabled_runs_remaining": 0,
-    "last_success_at": "2026-07-30T10:33:20.857711"
+    "last_success_at": "2026-07-30T14:20:04.624706"
   },
   "IRIS Software": {
-    "last_checked_at": "2026-07-30T10:33:21.701004",
+    "last_checked_at": "2026-07-30T14:20:05.425625",
     "last_found": 7,
     "consecutive_zero": 0,
     "disabled_runs_remaining": 0,
-    "last_success_at": "2026-07-30T10:33:21.701019"
+    "last_success_at": "2026-07-30T14:20:05.425640"
   },
   "Dr. Reddy's Laboratories": {
-    "last_checked_at": "2026-07-30T10:33:22.551412",
-    "last_found": 91,
+    "last_checked_at": "2026-07-30T14:20:06.303858",
+    "last_found": 92,
     "consecutive_zero": 0,
     "disabled_runs_remaining": 0,
-    "last_success_at": "2026-07-30T10:33:22.551421"
+    "last_success_at": "2026-07-30T14:20:06.303875"
   },
   "Cresta": {
-    "last_checked_at": "2026-07-30T10:33:23.069799",
-    "last_found": 99,
+    "last_checked_at": "2026-07-30T14:20:06.770573",
+    "last_found": 98,
     "consecutive_zero": 0,
     "disabled_runs_remaining": 0,
-    "last_success_at": "2026-07-30T10:33:23.069808"
+    "last_success_at": "2026-07-30T14:20:06.770590"
   },
   "Cloudbeds": {
-    "last_checked_at": "2026-07-30T10:33:23.540796",
+    "last_checked_at": "2026-07-30T14:20:07.227753",
     "last_found": 54,
     "consecutive_zero": 0,
     "disabled_runs_remaining": 0,
-    "last_success_at": "2026-07-30T10:33:23.540804"
+    "last_success_at": "2026-07-30T14:20:07.227768"
   },
   "Remote": {
-    "last_checked_at": "2026-07-30T10:33:24.019093",
-    "last_found": 228,
+    "last_checked_at": "2026-07-30T14:20:08.515813",
+    "last_found": 214,
     "consecutive_zero": 0,
     "disabled_runs_remaining": 0,
-    "last_success_at": "2026-07-30T10:33:24.019103"
+    "last_success_at": "2026-07-30T14:20:08.515826"
   },
   "Algolia": {
-    "last_checked_at": "2026-07-30T10:33:24.492754",
+    "last_checked_at": "2026-07-30T14:20:09.008157",
     "last_found": 41,
     "consecutive_zero": 0,
     "disabled_runs_remaining": 0,
-    "last_success_at": "2026-07-30T10:33:24.492767"
+    "last_success_at": "2026-07-30T14:20:09.008173"
   },
   "Omada Health": {
-    "last_checked_at": "2026-07-30T10:33:24.968570",
+    "last_checked_at": "2026-07-30T14:20:09.523970",
     "last_found": 29,
     "consecutive_zero": 0,
     "disabled_runs_remaining": 0,
-    "last_success_at": "2026-07-30T10:33:24.968579"
+    "last_success_at": "2026-07-30T14:20:09.523986"
   },
   "Mindtickle": {
-    "last_checked_at": "2026-07-30T10:33:25.586943",
+    "last_checked_at": "2026-07-30T14:20:10.842560",
     "last_found": 20,
     "consecutive_zero": 0,
     "disabled_runs_remaining": 0,
-    "last_success_at": "2026-07-30T10:33:25.586954"
+    "last_success_at": "2026-07-30T14:20:10.842575"
   },
   "100ms": {
-    "last_checked_at": "2026-07-30T10:33:26.136918",
+    "last_checked_at": "2026-07-30T14:20:11.800123",
     "last_found": 10,
     "consecutive_zero": 0,
     "disabled_runs_remaining": 0,
-    "last_success_at": "2026-07-30T10:33:26.136927"
+    "last_success_at": "2026-07-30T14:20:11.800140"
   },
   "Gushwork": {
-    "last_checked_at": "2026-07-30T10:33:26.718880",
+    "last_checked_at": "2026-07-30T14:20:12.804987",
     "last_found": 16,
     "consecutive_zero": 0,
     "disabled_runs_remaining": 0,
-    "last_success_at": "2026-07-30T10:33:26.718890"
+    "last_success_at": "2026-07-30T14:20:12.805004"
   },
   "BitGo": {
-    "last_checked_at": "2026-07-30T10:33:27.189871",
+    "last_checked_at": "2026-07-30T14:20:13.263766",
     "last_found": 39,
     "consecutive_zero": 0,
     "disabled_runs_remaining": 0,
-    "last_success_at": "2026-07-30T10:33:27.189879"
+    "last_success_at": "2026-07-30T14:20:13.263783"
   },
   "E42": {
-    "last_checked_at": "2026-07-30T10:33:37.173816",
+    "last_checked_at": "2026-07-30T14:20:23.179566",
     "last_found": 3,
     "consecutive_zero": 0,
     "disabled_runs_remaining": 0,
-    "last_success_at": "2026-07-30T10:33:37.173824"
+    "last_success_at": "2026-07-30T14:20:23.179582"
   },
   "RunwayML": {
-    "last_checked_at": "2026-07-30T10:33:38.018704",
+    "last_checked_at": "2026-07-30T14:20:23.810180",
     "last_found": 0,
     "consecutive_zero": 0,
     "disabled_runs_remaining": 0,
     "last_success_at": "2026-04-08T05:53:07.021009"
   },
   "Grammarly": {
-    "last_checked_at": "2026-07-30T10:33:38.723298",
+    "last_checked_at": "2026-07-30T14:20:24.445644",
     "last_found": 0,
     "consecutive_zero": 0,
     "disabled_runs_remaining": 0,
     "last_success_at": "2026-04-01T13:53:48.366906"
   },
   "Centivo": {
-    "last_checked_at": "2026-07-30T10:33:39.258737",
+    "last_checked_at": "2026-07-30T14:20:24.925983",
     "last_found": 13,
     "consecutive_zero": 0,
     "disabled_runs_remaining": 0,
-    "last_success_at": "2026-07-30T10:33:39.258745"
+    "last_success_at": "2026-07-30T14:20:24.926000"
   },
   "LiveKit": {
-    "last_checked_at": "2026-07-30T10:33:39.865227",
+    "last_checked_at": "2026-07-30T14:20:25.453445",
     "last_found": 27,
     "consecutive_zero": 0,
     "disabled_runs_remaining": 0,
-    "last_success_at": "2026-07-30T10:33:39.865235"
+    "last_success_at": "2026-07-30T14:20:25.453461"
   },
   "EasyPost": {
-    "last_checked_at": "2026-07-30T10:33:40.493850",
+    "last_checked_at": "2026-07-30T14:20:26.550191",
     "last_found": 8,
     "consecutive_zero": 0,
     "disabled_runs_remaining": 0,
-    "last_success_at": "2026-07-30T10:33:40.493866"
+    "last_success_at": "2026-07-30T14:20:26.550207"
   },
   "Ethos Life": {
-    "last_checked_at": "2026-07-30T10:33:40.965438",
+    "last_checked_at": "2026-07-30T14:20:27.022057",
     "last_found": 56,
     "consecutive_zero": 0,
     "disabled_runs_remaining": 0,
-    "last_success_at": "2026-07-30T10:33:40.965451"
+    "last_success_at": "2026-07-30T14:20:27.022073"
   },
   "Acorns": {
-    "last_checked_at": "2026-07-30T10:33:41.503790",
+    "last_checked_at": "2026-07-30T14:20:27.502681",
     "last_found": 10,
     "consecutive_zero": 0,
     "disabled_runs_remaining": 0,
-    "last_success_at": "2026-07-30T10:33:41.503801"
+    "last_success_at": "2026-07-30T14:20:27.502697"
   },
   "Chili Piper": {
-    "last_checked_at": "2026-07-30T10:33:42.078051",
+    "last_checked_at": "2026-07-30T14:20:28.026707",
     "last_found": 3,
     "consecutive_zero": 0,
     "disabled_runs_remaining": 0,
-    "last_success_at": "2026-07-30T10:33:42.078060"
+    "last_success_at": "2026-07-30T14:20:28.026724"
   },
   "Siena AI": {
-    "last_checked_at": "2026-07-30T10:33:42.622716",
+    "last_checked_at": "2026-07-30T14:20:28.555967",
     "last_found": 18,
     "consecutive_zero": 0,
     "disabled_runs_remaining": 0,
-    "last_success_at": "2026-07-30T10:33:42.622724"
+    "last_success_at": "2026-07-30T14:20:28.555981"
   },
   "MagicSchool": {
-    "last_checked_at": "2026-07-30T10:33:43.151655",
+    "last_checked_at": "2026-07-30T14:20:29.012829",
     "last_found": 0,
     "consecutive_zero": 0,
     "disabled_runs_remaining": 0,
     "last_success_at": "2026-07-09T18:04:38.183626"
   },
   "DataBento": {
-    "last_checked_at": "2026-07-30T10:33:43.619886",
+    "last_checked_at": "2026-07-30T14:20:29.480632",
     "last_found": 15,
     "consecutive_zero": 0,
     "disabled_runs_remaining": 0,
-    "last_success_at": "2026-07-30T10:33:43.619896"
+    "last_success_at": "2026-07-30T14:20:29.480647"
   },
   "GoodLeap": {
-    "last_checked_at": "2026-07-30T10:33:44.252884",
+    "last_checked_at": "2026-07-30T14:20:30.898795",
     "last_found": 21,
     "consecutive_zero": 0,
     "disabled_runs_remaining": 0,
-    "last_success_at": "2026-07-30T10:33:44.252892"
+    "last_success_at": "2026-07-30T14:20:30.898810"
   },
   "Razorpay": {
-    "last_checked_at": "2026-07-30T10:33:44.735928",
-    "last_found": 26,
+    "last_checked_at": "2026-07-30T14:20:31.385794",
+    "last_found": 28,
     "consecutive_zero": 0,
     "disabled_runs_remaining": 0,
-    "last_success_at": "2026-07-30T10:33:44.735936"
+    "last_success_at": "2026-07-30T14:20:31.385810"
   },
   "Level AI": {
-    "last_checked_at": "2026-07-30T10:33:45.370264",
+    "last_checked_at": "2026-07-30T14:20:32.594152",
     "last_found": 24,
     "consecutive_zero": 0,
     "disabled_runs_remaining": 0,
-    "last_success_at": "2026-07-30T10:33:45.370273"
+    "last_success_at": "2026-07-30T14:20:32.594168"
   },
   "Plivo": {
-    "last_checked_at": "2026-07-30T10:33:46.025931",
+    "last_checked_at": "2026-07-30T14:20:33.704717",
     "last_found": 0,
     "consecutive_zero": 0,
     "disabled_runs_remaining": 0,
     "last_success_at": "2026-05-29T04:27:01.985864"
   },
   "Meesho": {
-    "last_checked_at": "2026-07-30T10:33:46.719921",
+    "last_checked_at": "2026-07-30T14:20:35.171073",
     "last_found": 49,
     "consecutive_zero": 0,
     "disabled_runs_remaining": 0,
-    "last_success_at": "2026-07-30T10:33:46.719930"
+    "last_success_at": "2026-07-30T14:20:35.171090"
   },
   "PostHog": {
-    "last_checked_at": "2026-07-30T10:33:47.264722",
+    "last_checked_at": "2026-07-30T14:20:35.654686",
     "last_found": 9,
     "consecutive_zero": 0,
     "disabled_runs_remaining": 0,
-    "last_success_at": "2026-07-30T10:33:47.264738"
+    "last_success_at": "2026-07-30T14:20:35.654701"
   },
   "Raycast": {
-    "last_checked_at": "2026-07-30T10:33:47.791668",
+    "last_checked_at": "2026-07-30T14:20:36.113078",
     "last_found": 0,
     "consecutive_zero": 0,
     "disabled_runs_remaining": 0,
     "last_success_at": "2026-04-08T07:48:34.851104"
   },
   "Jumio": {
-    "last_checked_at": "2026-07-30T10:33:48.261252",
+    "last_checked_at": "2026-07-30T14:20:36.574547",
     "last_found": 28,
     "consecutive_zero": 0,
     "disabled_runs_remaining": 0,
-    "last_success_at": "2026-07-30T10:33:48.261262"
+    "last_success_at": "2026-07-30T14:20:36.574563"
   },
   "CRED": {
-    "last_checked_at": "2026-07-30T10:33:48.792053",
+    "last_checked_at": "2026-07-30T14:20:37.416342",
     "last_found": 3,
     "consecutive_zero": 0,
     "disabled_runs_remaining": 0,
-    "last_success_at": "2026-07-30T10:33:48.792061"
+    "last_success_at": "2026-07-30T14:20:37.416354"
   },
   "Paytm": {
-    "last_checked_at": "2026-07-30T10:33:49.690781",
-    "last_found": 235,
+    "last_checked_at": "2026-07-30T14:20:39.275643",
+    "last_found": 236,
     "consecutive_zero": 0,
     "disabled_runs_remaining": 0,
-    "last_success_at": "2026-07-30T10:33:49.690790"
+    "last_success_at": "2026-07-30T14:20:39.275659"
   },
   "Zeta": {
-    "last_checked_at": "2026-07-30T10:33:50.840627",
+    "last_checked_at": "2026-07-30T14:20:40.716086",
     "last_found": 24,
     "consecutive_zero": 0,
     "disabled_runs_remaining": 0,
-    "last_success_at": "2026-07-30T10:33:50.840636"
+    "last_success_at": "2026-07-30T14:20:40.716100"
   },
   "Dream Sports": {
-    "last_checked_at": "2026-07-30T10:33:51.426957",
+    "last_checked_at": "2026-07-30T14:20:41.633630",
     "last_found": 0,
     "consecutive_zero": 0,
     "disabled_runs_remaining": 0,
     "last_success_at": "2026-07-15T23:05:26.163547"
   },
   "Druva": {
-    "last_checked_at": "2026-07-30T10:33:51.895488",
+    "last_checked_at": "2026-07-30T14:20:42.088183",
     "last_found": 27,
     "consecutive_zero": 0,
     "disabled_runs_remaining": 0,
-    "last_success_at": "2026-07-30T10:33:51.895497"
+    "last_success_at": "2026-07-30T14:20:42.088199"
   },
   "Zenoti": {
-    "last_checked_at": "2026-07-30T10:33:52.366513",
+    "last_checked_at": "2026-07-30T14:20:42.550503",
     "last_found": 36,
     "consecutive_zero": 0,
     "disabled_runs_remaining": 0,
-    "last_success_at": "2026-07-30T10:33:52.366526"
+    "last_success_at": "2026-07-30T14:20:42.550517"
   },
   "Porter": {
-    "last_checked_at": "2026-07-30T10:33:53.012326",
+    "last_checked_at": "2026-07-30T14:20:43.804349",
     "last_found": 27,
     "consecutive_zero": 0,
     "disabled_runs_remaining": 0,
-    "last_success_at": "2026-07-30T10:33:53.012338"
+    "last_success_at": "2026-07-30T14:20:43.804366"
   },
   "BrowserStack": {
-    "last_checked_at": "2026-07-30T10:34:05.691886",
-    "last_found": 36,
+    "last_checked_at": "2026-07-30T14:20:54.194468",
+    "last_found": 40,
     "consecutive_zero": 0,
     "disabled_runs_remaining": 0,
-    "last_success_at": "2026-07-30T10:34:05.691894",
+    "last_success_at": "2026-07-30T14:20:54.194484",
     "auto_disabled_at": "2026-02-13T20:51:43.238126",
     "last_skipped_at": "2026-02-14T02:40:23.739327"
   },
@@ -978,31 +978,31 @@
     "last_checked_at": "2026-07-30T10:34:12.862294",
     "last_found": 0,
     "consecutive_zero": 499,
-    "disabled_runs_remaining": 2,
+    "disabled_runs_remaining": 1,
     "auto_disabled_at": "2026-07-30T10:34:12.862306",
-    "last_skipped_at": "2026-07-30T06:35:30.011476"
+    "last_skipped_at": "2026-07-30T14:20:54.194543"
   },
   "TransUnion": {
     "last_checked_at": "2026-07-30T10:34:20.242610",
     "last_found": 0,
     "consecutive_zero": 499,
-    "disabled_runs_remaining": 2,
+    "disabled_runs_remaining": 1,
     "auto_disabled_at": "2026-07-30T10:34:20.242628",
-    "last_skipped_at": "2026-07-30T06:35:30.011492"
+    "last_skipped_at": "2026-07-30T14:20:54.194560"
   },
   "Adobe": {
-    "last_checked_at": "2026-07-30T10:34:26.810835",
+    "last_checked_at": "2026-07-30T14:21:02.508163",
     "last_found": 40,
     "consecutive_zero": 0,
     "disabled_runs_remaining": 0,
-    "last_success_at": "2026-07-30T10:34:26.810850"
+    "last_success_at": "2026-07-30T14:21:02.508179"
   },
   "Wood Mackenzie": {
-    "last_checked_at": "2026-07-30T10:34:39.226332",
+    "last_checked_at": "2026-07-30T14:21:13.010689",
     "last_found": 40,
     "consecutive_zero": 0,
     "disabled_runs_remaining": 0,
-    "last_success_at": "2026-07-30T10:34:39.226344",
+    "last_success_at": "2026-07-30T14:21:13.010706",
     "auto_disabled_at": "2026-05-30T06:57:14.470022",
     "last_skipped_at": "2026-05-30T13:56:33.947761"
   },
@@ -1010,144 +1010,144 @@
     "last_checked_at": "2026-07-30T10:34:45.901399",
     "last_found": 0,
     "consecutive_zero": 4,
-    "disabled_runs_remaining": 2,
+    "disabled_runs_remaining": 1,
     "last_success_at": "2026-07-29T17:24:22.365360",
     "auto_disabled_at": "2026-07-30T10:34:45.901411",
-    "last_skipped_at": "2026-07-30T06:35:47.906670"
+    "last_skipped_at": "2026-07-30T14:21:13.010762"
   },
   "Pine Labs": {
     "last_checked_at": "2026-07-30T10:34:56.278749",
     "last_found": 0,
     "consecutive_zero": 14,
-    "disabled_runs_remaining": 2,
+    "disabled_runs_remaining": 1,
     "auto_disabled_at": "2026-07-30T10:34:56.278762",
-    "last_skipped_at": "2026-07-30T06:35:47.906695",
+    "last_skipped_at": "2026-07-30T14:21:13.010779",
     "last_success_at": "2026-07-25T23:02:44.206739"
   },
   "PayU India": {
-    "last_checked_at": "2026-07-30T10:35:05.621968",
+    "last_checked_at": "2026-07-30T14:21:23.112134",
     "last_found": 11,
     "consecutive_zero": 0,
     "disabled_runs_remaining": 0,
     "auto_disabled_at": "2026-07-26T13:44:50.818254",
     "last_skipped_at": "2026-07-26T17:12:01.213376",
-    "last_success_at": "2026-07-30T10:35:05.621983"
+    "last_success_at": "2026-07-30T14:21:23.112150"
   },
   "HighRadius": {
     "last_checked_at": "2026-07-30T10:35:16.173202",
     "last_found": 0,
     "consecutive_zero": 35,
-    "disabled_runs_remaining": 2,
+    "disabled_runs_remaining": 1,
     "auto_disabled_at": "2026-07-30T10:35:16.173214",
-    "last_skipped_at": "2026-07-30T06:35:55.192348",
+    "last_skipped_at": "2026-07-30T14:21:23.112219",
     "last_success_at": "2026-07-18T17:06:17.827640"
   },
   "Darwinbox": {
-    "last_checked_at": "2026-07-30T10:35:29.222196",
+    "last_checked_at": "2026-07-30T14:21:35.878861",
     "last_found": 1,
     "consecutive_zero": 0,
     "disabled_runs_remaining": 0,
-    "last_success_at": "2026-07-30T10:35:29.222205",
+    "last_success_at": "2026-07-30T14:21:35.878878",
     "auto_disabled_at": "2026-07-19T10:00:56.566336",
     "last_skipped_at": "2026-07-19T13:40:35.993835"
   },
   "Sarvam AI": {
-    "last_checked_at": "2026-07-30T02:52:36.212035",
+    "last_checked_at": "2026-07-30T14:21:37.008390",
     "last_found": 0,
-    "consecutive_zero": 159,
-    "disabled_runs_remaining": 0,
+    "consecutive_zero": 160,
+    "disabled_runs_remaining": 2,
     "last_success_at": "2026-05-25T10:25:03.370107",
-    "auto_disabled_at": "2026-07-30T02:52:36.212053",
+    "auto_disabled_at": "2026-07-30T14:21:37.008409",
     "last_skipped_at": "2026-07-30T10:35:29.222268"
   },
   "Motion": {
-    "last_checked_at": "2026-07-30T10:35:38.701396",
+    "last_checked_at": "2026-07-30T14:21:39.290874",
     "last_found": 1,
     "consecutive_zero": 0,
     "disabled_runs_remaining": 0,
-    "last_success_at": "2026-07-30T10:35:38.701410"
+    "last_success_at": "2026-07-30T14:21:39.290891"
   },
   "Kickoff": {
-    "last_checked_at": "2026-07-30T10:35:46.218544",
+    "last_checked_at": "2026-07-30T14:21:41.178101",
     "last_found": 2,
     "consecutive_zero": 0,
     "disabled_runs_remaining": 0,
-    "last_success_at": "2026-07-30T10:35:46.218558"
+    "last_success_at": "2026-07-30T14:21:41.178118"
   },
   "SiteZeus": {
-    "last_checked_at": "2026-07-30T10:35:57.482586",
+    "last_checked_at": "2026-07-30T14:21:43.100353",
     "last_found": 3,
     "consecutive_zero": 0,
     "disabled_runs_remaining": 0,
-    "last_success_at": "2026-07-30T10:35:57.482602"
+    "last_success_at": "2026-07-30T14:21:43.100369"
   },
   "Dapper Labs": {
-    "last_checked_at": "2026-07-30T10:36:19.555491",
+    "last_checked_at": "2026-07-30T14:21:45.242191",
     "last_found": 2,
     "consecutive_zero": 0,
     "disabled_runs_remaining": 0,
-    "last_success_at": "2026-07-30T10:36:19.555506",
+    "last_success_at": "2026-07-30T14:21:45.242208",
     "auto_disabled_at": "2026-06-22T12:20:28.205041",
     "last_skipped_at": "2026-06-22T22:12:41.887414"
   },
   "Real": {
-    "last_checked_at": "2026-07-30T10:36:20.097409",
+    "last_checked_at": "2026-07-30T14:21:45.720458",
     "last_found": 13,
     "consecutive_zero": 0,
     "disabled_runs_remaining": 0,
-    "last_success_at": "2026-07-30T10:36:20.097424"
+    "last_success_at": "2026-07-30T14:21:45.720472"
   },
   "Qventus": {
-    "last_checked_at": "2026-07-30T10:36:20.623156",
+    "last_checked_at": "2026-07-30T14:21:46.175169",
     "last_found": 0
   },
   "G2i": {
-    "last_checked_at": "2026-07-30T10:36:21.564998",
-    "last_found": 16,
+    "last_checked_at": "2026-07-30T14:21:48.057616",
+    "last_found": 17,
     "consecutive_zero": 0,
     "disabled_runs_remaining": 0,
-    "last_success_at": "2026-07-30T10:36:21.565012"
+    "last_success_at": "2026-07-30T14:21:48.057632"
   },
   "Jerry.ai": {
-    "last_checked_at": "2026-07-30T10:36:22.397964",
+    "last_checked_at": "2026-07-30T14:21:49.493917",
     "last_found": 47,
     "consecutive_zero": 0,
     "disabled_runs_remaining": 0,
-    "last_success_at": "2026-07-30T10:36:22.397974"
+    "last_success_at": "2026-07-30T14:21:49.493931"
   },
   "Arbor": {
-    "last_checked_at": "2026-07-30T10:36:22.928502",
+    "last_checked_at": "2026-07-30T14:21:49.984975",
     "last_found": 3,
     "consecutive_zero": 0,
     "disabled_runs_remaining": 0,
-    "last_success_at": "2026-07-30T10:36:22.928515"
+    "last_success_at": "2026-07-30T14:21:49.984989"
   },
   "Airwallex": {
-    "last_checked_at": "2026-07-30T10:36:27.397391",
-    "last_found": 612,
+    "last_checked_at": "2026-07-30T14:21:54.511500",
+    "last_found": 617,
     "consecutive_zero": 0,
     "disabled_runs_remaining": 0,
-    "last_success_at": "2026-07-30T10:36:27.397407"
+    "last_success_at": "2026-07-30T14:21:54.511516"
   },
   "Snowflake": {
-    "last_checked_at": "2026-07-30T10:36:31.897006",
-    "last_found": 412,
+    "last_checked_at": "2026-07-30T14:21:57.174032",
+    "last_found": 411,
     "consecutive_zero": 0,
     "disabled_runs_remaining": 0,
-    "last_success_at": "2026-07-30T10:36:31.897021"
+    "last_success_at": "2026-07-30T14:21:57.174049"
   },
   "Handshake": {
-    "last_checked_at": "2026-07-30T10:36:32.494158",
+    "last_checked_at": "2026-07-30T14:21:57.729460",
     "last_found": 129,
     "consecutive_zero": 0,
     "disabled_runs_remaining": 0,
-    "last_success_at": "2026-07-30T10:36:32.494173"
+    "last_success_at": "2026-07-30T14:21:57.729476"
   },
   "Writer": {
-    "last_checked_at": "2026-07-30T10:36:33.080415",
+    "last_checked_at": "2026-07-30T14:21:58.251310",
     "last_found": 55,
     "consecutive_zero": 0,
     "disabled_runs_remaining": 0,
-    "last_success_at": "2026-07-30T10:36:33.080426"
+    "last_success_at": "2026-07-30T14:21:58.251327"
   }
 }
